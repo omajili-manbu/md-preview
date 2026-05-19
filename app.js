@@ -267,6 +267,7 @@
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
       readingProgressBar.style.width = scrollPercent + '%';
+      progressBar.style.width = scrollPercent + '%';
     });
   }
   
