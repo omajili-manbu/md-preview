@@ -4,7 +4,7 @@
 
 ## 开始使用
 
-请查看 [快速入门](docs/getting-started.md) 了解基本使用方法。
+请查看 [快速入门](getting-started.md) 了解基本使用方法。
 
 ## 功能特性
 

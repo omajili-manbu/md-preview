@@ -18,5 +18,5 @@
 
 ## 下一步
 
-- 学习 [Markdown 语法](docs/examples/markdown-syntax.md)
-- 了解 [部署选项](docs/advanced/deployment.md)
+- 学习 [Markdown 语法](examples/markdown-syntax.md)
+- 了解 [部署选项](advanced/deployment.md)
