@@ -4,11 +4,12 @@
 
 ## 功能特点
 
-- 📂 树形文件结构展示
-- 📱 完美适配移动端
-- 🎨 优雅的浅紫浅粉色系设计
-- ✨ 流畅的动画效果
-- 🔒 纯前端，无需后端支持
+- 📂 **自动发现** - 通过 GitHub API 自动扫描仓库中的所有 .md 文件
+- 🌳 **树形文件结构** - 自动构建文档目录树
+- 📱 **完美适配移动端** - 响应式设计，支持各种设备
+- 🎨 **优雅设计** - 浅紫浅粉色系，极简风格
+- ✨ **流畅动画** - 丝滑的加载和导航效果
+- 🔒 **纯前端** - 无需后端或构建工具
 
 ## 快速开始
 
@@ -19,40 +20,36 @@
    - `styles.css`
    - `app.js`
 
-2. 编辑 `app.js` 中的 `CONFIG.files` 配置，添加你的 Markdown 文件列表
+2. 编辑 `app.js` 中的 `CONFIG` 配置你的仓库信息：
+   ```javascript
+   const CONFIG = {
+     owner: '你的用户名',
+     repo: '你的仓库名'
+   };
+   ```
 
 3. 在仓库设置中启用 GitHub Pages，选择 `main` 分支或其他分支
 
 4. 访问 `https://你的用户名.github.io/仓库名/`
 
-### 配置文件列表
+### 添加新文档
 
-在 `app.js` 中编辑 `CONFIG.files`：
+只需在仓库的任何位置添加 `.md` 文件，系统会自动发现并显示在侧边栏！
+
+## 配置说明
+
+在 `app.js` 中配置：
 
 ```javascript
 const CONFIG = {
-  files: [
-    {
-      name: 'README.md',
-      type: 'file',
-      path: 'README.md'
-    },
-    {
-      name: 'docs',
-      type: 'folder',
-      children: [
-        {
-          name: 'guide.md',
-          type: 'file',
-          path: 'docs/guide.md'
-        }
-      ]
-    }
-  ]
+  owner: 'theforeveriris',  // 你的 GitHub 用户名
+  repo: 'md-preview'        // 你的仓库名称
 };
 ```
 
-## 文件结构说明
+## 文件结构
+
+你的仓库可以有任意的文件结构，所有 .md 文件都会被自动发现：
 
 ```
 你的仓库/
@@ -60,8 +57,11 @@ const CONFIG = {
 ├── styles.css       # 样式文件（必须在根目录）
 ├── app.js          # 功能逻辑和配置（必须在根目录）
 ├── README.md        # 你的文档
-└── docs/
-    └── guide.md     # 其他文档
+├── docs/           # 任意结构的文档目录
+│   ├── guide.md
+│   └── ...
+└── any/            # 任意位置的文档
+    └── file.md
 ```
 
 ## 代码示例
@@ -86,6 +86,6 @@ console.log(greeting);
 
 | 功能 | 描述 |
 |------|------|
-| 文件浏览 | 树形结构导航 |
+| 自动发现 | 通过 GitHub API 扫描所有 .md 文件 |
 | 实时预览 | Markdown 即时渲染 |
 | 响应式布局 | 支持各种屏幕尺寸 |

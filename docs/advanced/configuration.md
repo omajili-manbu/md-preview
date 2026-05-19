@@ -1,54 +1,36 @@
 # 高级配置
 
-学习如何自定义和扩展你的 Markdown 预览器。
+学习如何配置你的 Markdown 预览器。
 
-## 配置文件结构
+## 基本配置
 
-在 `app.js` 中编辑 `CONFIG.files`：
+在 `app.js` 中配置仓库信息：
 
 ```javascript
 const CONFIG = {
-  files: [
-    {
-      name: 'README.md',
-      type: 'file',
-      path: 'README.md'
-    },
-    {
-      name: 'docs',
-      type: 'folder',
-      children: [
-        {
-          name: 'guide.md',
-          type: 'file',
-          path: 'docs/guide.md'
-        }
-      ]
-    }
-  ]
+  owner: '你的用户名',
+  repo: '你的仓库名'
 };
 ```
 
-## 添加新文件
+## 自动发现说明
 
-1. 在 `CONFIG.files` 中添加新条目
-2. 设置 `type: 'file'`
-3. 指定正确的 `path`
+本工具通过 GitHub API 自动发现仓库中的所有 `.md` 文件，无需手动配置文件列表！
 
-## 创建新文件夹
+## 如何添加新文档
 
-```javascript
-{
-  name: '新文件夹',
-  type: 'folder',
-  children: [
-    // 在这里添加文件
-  ]
-}
-```
+1. 在仓库的任意位置创建新的 `.md` 文件
+2. 提交并推送到 GitHub
+3. 刷新页面，新文档会自动出现在侧边栏
+
+## 自动排序
+
+文件树会自动排序：
+- 文件夹排在前面
+- 按名称字母顺序排列
 
 ## 最佳实践
 
-- 保持结构清晰
 - 使用有意义的文件名
-- 定期更新文件列表
+- 保持文档结构清晰
+- 定期更新文档

@@ -2,69 +2,43 @@
 
 ## 配置对象 (CONFIG)
 
-主配置文件，包含所有文档的结构信息。
+主配置文件，包含仓库信息。
 
 ### 属性
 
-#### `files` (Array)
+#### `owner` (String)
 
-文件树数组，包含文件夹和文件的定义。
+GitHub 用户名或组织名。
 
-### 文件对象
+#### `repo` (String)
 
-```javascript
-{
-  name: '文件名',
-  type: 'file',
-  path: '相对于根目录的路径'
-}
-```
-
-### 文件夹对象
-
-```javascript
-{
-  name: '文件夹名',
-  type: 'folder',
-  children: [
-    // 嵌套的文件或文件夹
-  ]
-}
-```
+仓库名称。
 
 ### 示例配置
 
 ```javascript
 const CONFIG = {
-  files: [
-    {
-      name: 'README.md',
-      type: 'file',
-      path: 'README.md'
-    },
-    {
-      name: 'docs',
-      type: 'folder',
-      children: [
-        {
-          name: 'guide.md',
-          type: 'file',
-          path: 'docs/guide.md'
-        }
-      ]
-    }
-  ]
+  owner: 'theforeveriris',
+  repo: 'md-preview'
 };
 ```
+
+## 自动发现原理
+
+本工具通过 GitHub API 获取仓库的 Git 树结构：
+
+1. 请求：`GET /repos/{owner}/{repo}/git/trees/main?recursive=1`
+2. 解析返回的树结构，筛选所有 .md 文件
+3. 自动构建文件夹层级
+4. 渲染到侧边栏
 
 ## 路径规则
 
 - 所有路径相对于仓库根目录
 - 使用正斜杠 `/` 分隔路径
-- 确保路径与实际文件位置一致
 
 ## 注意事项
 
-1. **文件名大小写**：某些文件系统区分大小写
-2. **路径分隔符**：始终使用 `/` 而非 `\`
-3. **文件扩展名**：确保包含 `.md` 扩展名
+1. **分支名**：默认使用 `main` 分支，如果使用其他分支需要在代码中修改
+2. **GitHub API 限制**：GitHub API 有速率限制，但对于文档预览来说足够用了
+3. **文件扩展名**：只识别 `.md` 扩展名的文件

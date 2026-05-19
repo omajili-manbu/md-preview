@@ -25,15 +25,15 @@ fileEl.addEventListener('click', (e) => {
   e.preventDefault();
   loadMarkdownFile(item.path);
   setActiveFile(fileEl);
+  closeSidebarOnMobile();
 });
 ```
 
-## 侧边栏事件
+## 侧边栏事件（移动端）
 
 ### 切换侧边栏
 
 ```javascript
-sidebarToggle.addEventListener('click', toggleSidebar);
 mobileMenuBtn.addEventListener('click', toggleSidebar);
 ```
 
@@ -57,7 +57,7 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('scroll', () => {
   const scrollTop = window.scrollY;
   const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-  const scrollPercent = (scrollTop / docHeight) * 100;
+  const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
   readingProgressBar.style.width = scrollPercent + '%';
 });
 ```

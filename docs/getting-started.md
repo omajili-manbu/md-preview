@@ -12,8 +12,11 @@
 2. 点击侧边栏中的文件
 3. 开始阅读
 
+## 添加新文档
+
+直接在你的仓库中添加新的 `.md` 文件，系统会自动发现并显示在侧边栏！
+
 ## 下一步
 
-- 查看 [高级配置](docs/advanced/configuration.md)
 - 学习 [Markdown 语法](docs/examples/markdown-syntax.md)
 - 了解 [部署选项](docs/advanced/deployment.md)
