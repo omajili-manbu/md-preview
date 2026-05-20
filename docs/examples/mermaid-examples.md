@@ -870,36 +870,24 @@ C4Context
 ### 销售数据趋势图
 
 ```txt
----
-config:
-    xyChart:
-        width: 900
-        height: 500
----
-xychart-beta
-    title "月度销售额统计"
-    x-axis [1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
-    y-axis "销售额（万元）" 0 --> 200
-    bar [30, 45, 42, 55, 70, 65, 80, 85, 90, 120, 150, 180]
-    line [25, 40, 45, 50, 60, 62, 70, 75, 80, 100, 130, 160]
+xychart-beta horizontal
+    title "Quarterly Report"
+    x-axis [Q1, Q2, Q3, Q4]
+    y-axis "Revenue (k$)" 0 --> 100
+    bar [65, 59, 80, 81]
+    line [60, 55, 75, 85]
 
 ```
 
 **渲染效果：**
 
 ```mermaid
----
-config:
-    xyChart:
-        width: 900
-        height: 500
----
-xychart-beta
-    title "月度销售额统计"
-    x-axis [1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
-    y-axis "销售额（万元）" 0 --> 200
-    bar [30, 45, 42, 55, 70, 65, 80, 85, 90, 120, 150, 180]
-    line [25, 40, 45, 50, 60, 62, 70, 75, 80, 100, 130, 160]
+xychart-beta horizontal
+    title "Quarterly Report"
+    x-axis [Q1, Q2, Q3, Q4]
+    y-axis "Revenue (k$)" 0 --> 100
+    bar [65, 59, 80, 81]
+    line [60, 55, 75, 85]
 
 ```
 
