@@ -394,6 +394,21 @@ body {
   line-height: 1.6;
 }
 
+.mermaid-diagram {
+  margin: 1.5em 0;
+  padding: 1.5em;
+  background: var(--color-surface);
+  border-radius: 12px;
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
 .markdown-body blockquote {
   border-left: 3px solid var(--color-accent-purple);
   padding-left: 1.25em;

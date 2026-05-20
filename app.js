@@ -21,6 +21,35 @@
   let currentFilePath = '';
   let currentHeadings = [];
   
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#d4a5c9',
+      primaryTextColor: '#333333',
+      primaryBorderColor: '#d4a5c9',
+      lineColor: '#888888',
+      secondaryColor: '#f2c4ce',
+      tertiaryColor: '#f8f8f8',
+      background: '#ffffff',
+      mainBkg: '#ffffff',
+      nodeBorder: '#d4a5c9',
+      clusterBkg: '#f8f8f8',
+      titleColor: '#333333',
+      edgeLabelBackground: '#ffffff'
+    },
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    },
+    sequence: {
+      useMaxWidth: true,
+      diagramMarginX: 20,
+      diagramMarginY: 20
+    }
+  });
+  
   function init() {
     loadFileTree();
     setupEventListeners();
@@ -193,6 +222,36 @@
     });
     
     interceptLinks(currentPath);
+    renderMermaidDiagrams();
+  }
+  
+  async function renderMermaidDiagrams() {
+    const mermaidBlocks = document.querySelectorAll('.language-mermaid');
+    
+    for (let i = 0; i < mermaidBlocks.length; i++) {
+      const block = mermaidBlocks[i];
+      const codeElement = block.querySelector('code');
+      if (!codeElement) continue;
+      
+      const mermaidCode = codeElement.textContent;
+      const id = 'mermaid-' + i;
+      
+      try {
+        const { svg } = await mermaid.render(id, mermaidCode);
+        const container = document.createElement('div');
+        container.className = 'mermaid-diagram';
+        container.innerHTML = svg;
+        
+        const preElement = block.closest('pre');
+        if (preElement) {
+          preElement.replaceWith(container);
+        }
+      } catch (error) {
+        console.error('Mermaid rendering error:', error);
+        block.closest('pre').style.borderColor = '#ff6b6b';
+        block.closest('pre').title = 'Mermaid 渲染错误: ' + error.message;
+      }
+    }
   }
   
   function interceptLinks(currentPath) {
