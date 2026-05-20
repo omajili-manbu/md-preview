@@ -1,7 +1,7 @@
 (function() {
   window.MarkdownPreview = window.MarkdownPreview || {};
   
-  const { dom, state } = window.MarkdownPreview;
+  const { dom, state, CONFIG } = window.MarkdownPreview;
   
   async function loadMarkdownFile(path) {
     try {
@@ -16,6 +16,7 @@
       state.currentFilePath = path;
       renderMarkdown(markdown, path);
       extractAndRenderIndex(markdown);
+      updateEditButton(path);
     } catch (error) {
       console.error('Error loading markdown:', error);
       dom.markdownContent.innerHTML = '<div class="welcome-state"><p class="welcome-text">无法加载文件</p></div>';
@@ -146,6 +147,22 @@
     item.classList.add('active');
   }
   
+  function updateEditButton(path) {
+    if (!dom.editPageBtn || !dom.pageHeader) return;
+    
+    if (!path) {
+      dom.pageHeader.style.display = 'none';
+      return;
+    }
+    
+    dom.pageHeader.style.display = 'flex';
+    
+    // GitHub 编辑链接格式
+    // https://github.com/[owner]/[repo]/edit/[branch]/[path]
+    const editUrl = `https://github.com/${CONFIG.owner}/${CONFIG.repo}/edit/main/${path}`;
+    dom.editPageBtn.href = editUrl;
+  }
+  
   window.MarkdownPreview.markdown = {
     loadMarkdownFile,
     renderMarkdown,
@@ -153,6 +170,7 @@
     simplifyPath,
     extractAndRenderIndex,
     renderIndex,
-    setActiveIndexItem
+    setActiveIndexItem,
+    updateEditButton
   };
 })();
