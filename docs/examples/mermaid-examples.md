@@ -762,11 +762,11 @@ quadrantChart
     quadrant-2 重点规划
     quadrant-3 暂缓考虑
     quadrant-4 审慎评估
-    功能A: [0.3, 0.6]
-    功能B: [0.7, 0.8]
-    功能C: [0.2, 0.3]
-    功能D: [0.8, 0.4]
-    功能E: [0.5, 0.5]
+    功能A: [0.30, 0.60]
+    功能B: [0.70, 0.80]
+    功能C: [0.20, 0.30]
+    功能D: [0.80, 0.40]
+    功能E: [0.50, 0.50]
 ```
 
 **渲染效果：**
@@ -780,11 +780,11 @@ quadrantChart
     quadrant-2 重点规划
     quadrant-3 暂缓考虑
     quadrant-4 审慎评估
-    功能A: [0.3, 0.6]
-    功能B: [0.7, 0.8]
-    功能C: [0.2, 0.3]
-    功能D: [0.8, 0.4]
-    功能E: [0.5, 0.5]
+    功能A: [0.30, 0.60]
+    功能B: [0.70, 0.80]
+    功能C: [0.20, 0.30]
+    功能D: [0.80, 0.40]
+    功能E: [0.50, 0.50]
 ```
 
 ---
@@ -794,23 +794,15 @@ quadrantChart
 ### 系统架构块图
 
 ```txt
-block-beta
+block
     columns 3
-    
-    title: 系统架构图
-    
-    space
-    web[客户端]
-    space
-    
-    space
-    app[应用服务]
-    space
-    
-    cache[缓存]
-    db[数据库]
-    queue[消息队列]
-    
+    web["客户端"]
+    app["应用服务"]
+    cache["缓存"]
+
+    db[("数据库")]
+    queue["消息队列"]
+
     web --> app
     app --> cache
     app --> db
@@ -820,23 +812,15 @@ block-beta
 **渲染效果：**
 
 ```mermaid
-block-beta
+block
     columns 3
-    
-    title: 系统架构图
-    
-    space
-    web[客户端]
-    space
-    
-    space
-    app[应用服务]
-    space
-    
-    cache[缓存]
-    db[数据库]
-    queue[消息队列]
-    
+    web["客户端"]
+    app["应用服务"]
+    cache["缓存"]
+
+    db[("数据库")]
+    queue["消息队列"]
+
     web --> app
     app --> cache
     app --> db
@@ -886,7 +870,7 @@ C4Context
 ### 销售数据趋势图
 
 ```txt
-xychart-beta
+xychart
     title "月度销售额统计"
     x-axis [1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
     y-axis "销售额 (万元)" 0 --> 200
@@ -897,7 +881,7 @@ xychart-beta
 **渲染效果：**
 
 ```mermaid
-xychart-beta
+xychart
     title "月度销售额统计"
     x-axis [1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
     y-axis "销售额 (万元)" 0 --> 200
