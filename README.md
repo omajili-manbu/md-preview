@@ -200,6 +200,25 @@ C C G G | A A G2 | F F E E | D D C2 |
 </score-partwise>
 ```
 
+### Git Diff 可视化
+支持使用 diff2html 可视化展示 Git Diff 内容：
+
+**使用示例：**
+```diff
+diff --git a/index.html b/index.html
+index 1a2b3c4..5d6e7f8 100644
+--- a/index.html
++++ b/index.html
+@@ -10,7 +10,7 @@
+   <title>My Project</title>
+   <link rel="stylesheet" href="style.css">
+-  <script src="old-lib.js"></script>
++  <script src="new-lib.js"></script>
+ </head>
+ <body>
+   <h1>Hello World</h1>
+```
+
 ### 外部服务嵌入
 
 支持通过 iframe 嵌入多种外部服务：

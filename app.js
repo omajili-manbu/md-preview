@@ -197,6 +197,7 @@
     setTimeout(() => {
       renderApexCharts();
       renderMusicNotation();
+      renderDiff();
       renderMermaidDiagrams();
       renderPlantUMLDiagrams();
       renderEmbeddedServices();
@@ -776,6 +777,63 @@
       container.appendChild(errorDiv);
       if (pre.parentNode) {
         pre.parentNode.replaceChild(container, pre);
+      }
+    }
+  }
+  
+  function renderDiff() {
+    const allPres = Array.from(document.querySelectorAll('.markdown-body pre'));
+    
+    // 反向遍历，避免 DOM 修改影响索引
+    for (let i = allPres.length - 1; i >= 0; i--) {
+      const pre = allPres[i];
+      const codeElement = pre.querySelector('code');
+      
+      if (!codeElement) continue;
+      
+      const classList = codeElement.className;
+      if (!classList || !classList.includes('language-diff')) continue;
+      
+      try {
+        const diffCode = codeElement.textContent.trim();
+        const container = document.createElement('div');
+        container.className = 'diff-container';
+        container.style.margin = '1.5em 0';
+        
+        // 创建 diff 渲染的目标元素
+        const diffTarget = document.createElement('div');
+        diffTarget.id = 'diff-' + Date.now() + '-' + i;
+        container.appendChild(diffTarget);
+        
+        pre.parentNode.replaceChild(container, pre);
+        
+        // 使用 diff2html 渲染
+        if (typeof Diff2HtmlUI !== 'undefined') {
+          const diff2htmlUi = new Diff2HtmlUI(diffTarget, diffCode, {
+            drawFileList: true,
+            fileListToggle: true,
+            outputFormat: 'line-by-line',
+            matching: 'lines',
+            synchronisedScroll: true,
+            highlight: true
+          });
+          diff2htmlUi.draw();
+          diff2htmlUi.highlightCode();
+        } else {
+          console.error('Diff2HtmlUI library is not loaded');
+          const errorDiv = document.createElement('div');
+          errorDiv.style.color = '#ff6b6b';
+          errorDiv.style.padding = '10px';
+          errorDiv.textContent = 'Diff2HtmlUI 库未加载';
+          container.appendChild(errorDiv);
+        }
+      } catch (error) {
+        console.error('Diff rendering error:', error);
+        const errorDiv = document.createElement('div');
+        errorDiv.style.color = '#ff6b6b';
+        errorDiv.style.padding = '10px';
+        errorDiv.textContent = 'Diff 渲染错误: ' + error.message;
+        pre.parentNode.appendChild(errorDiv);
       }
     }
   }
