@@ -25,8 +25,62 @@
     }
   }
   
+  function parseFrontmatter(markdown) {
+    const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*/;
+    const match = markdown.match(frontmatterRegex);
+    
+    if (!match) {
+      return { frontmatter: {}, content: markdown };
+    }
+    
+    const frontmatterStr = match[1];
+    const content = markdown.substring(match[0].length);
+    
+    const frontmatter = {};
+    const lines = frontmatterStr.split('\n');
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex > 0) {
+        const key = trimmed.substring(0, colonIndex).trim();
+        let value = trimmed.substring(colonIndex + 1).trim();
+        
+        // 移除引号
+        if ((value.startsWith('"') && value.endsWith('"')) || 
+            (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.substring(1, value.length - 1);
+        }
+        
+        frontmatter[key] = value;
+      }
+    }
+    
+    return { frontmatter, content };
+  }
+  
   function renderMarkdown(markdown, currentPath = '') {
-    const html = marked.parse(markdown, {
+    const { frontmatter, content } = parseFrontmatter(markdown);
+    
+    // 更新文档标题
+    if (frontmatter.title) {
+      document.title = frontmatter.title + ' | ' + (CONFIG.repo || 'Markdown Preview');
+    } else {
+      // 如果没有 frontmatter title，尝试从第一个标题获取
+      const titleMatch = content.match(/^#\s+(.+)$/m);
+      if (titleMatch) {
+        document.title = titleMatch[1] + ' | ' + (CONFIG.repo || 'Markdown Preview');
+      } else {
+        document.title = CONFIG.repo || 'Markdown Preview';
+      }
+    }
+    
+    // 保存 frontmatter 到 state
+    state.currentFrontmatter = frontmatter;
+    
+    const html = marked.parse(content, {
       breaks: true,
       gfm: true
     });
@@ -172,6 +226,7 @@
     extractAndRenderIndex,
     renderIndex,
     setActiveIndexItem,
-    updateEditButton
+    updateEditButton,
+    parseFrontmatter
   };
 })();

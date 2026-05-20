@@ -5,6 +5,7 @@
     fileTreeData: [],
     currentMode: 'files',
     currentFilePath: '',
-    currentHeadings: []
+    currentHeadings: [],
+    currentFrontmatter: {}
   };
 })();
