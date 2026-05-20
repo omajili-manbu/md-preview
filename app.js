@@ -854,12 +854,58 @@
       
       if (service === 'geojson' || service === 'topojson') {
         renderGeoData(service, url, match[0]);
+      } else if (service === 'twitter' || service === 'x') {
+        renderTwitterEmbed(service, url, match[0]);
       } else {
         const iframe = createEmbedIframe(service, url);
         if (iframe) {
           markdownContent.innerHTML = markdownContent.innerHTML.replace(match[0], iframe);
         }
       }
+    }
+  }
+  
+  function renderTwitterEmbed(service, url, originalMatch) {
+    try {
+      let embedCode = '';
+      
+      // 推文嵌入
+      const tweetMatch = url.match(/twitter\.com\/\w+\/status\/(\d+)/);
+      if (tweetMatch) {
+        embedCode = `<blockquote class="twitter-tweet"><a href="${url}">Loading tweet...</a></blockquote>`;
+      }
+      // 时间线嵌入
+      else if (url.includes('twitter.com/') && (url.includes('/likes') || url.includes('/with_replies') || url.includes('/media') || url.includes('/ Follow'))) {
+        embedCode = `<a class="twitter-timeline" href="${url}">Loading Twitter timeline...</a>`;
+      }
+      // 简单时间线
+      else if (url.includes('twitter.com/')) {
+        const handle = url.match(/twitter\.com\/([^\/\?]+)/)?.[1];
+        if (handle && !url.includes('/status/')) {
+          embedCode = `<a class="twitter-timeline" href="https://twitter.com/${handle}?ref_src=twsrc%5Etfw">Tweets by @${handle}</a>`;
+        }
+      }
+      
+      if (embedCode) {
+        markdownContent.innerHTML = markdownContent.innerHTML.replace(originalMatch, embedCode);
+        
+        // 异步加载 Twitter widgets
+        if (typeof twttr !== 'undefined' && twttr.widgets) {
+          twttr.widgets.load();
+        } else {
+          // 如果 twttr 还未加载，等待加载
+          const checkTwitter = setInterval(() => {
+            if (typeof twttr !== 'undefined' && twttr.widgets) {
+              twttr.widgets.load();
+              clearInterval(checkTwitter);
+            }
+          }, 100);
+          // 最多等待 5 秒
+          setTimeout(() => clearInterval(checkTwitter), 5000);
+        }
+      }
+    } catch (error) {
+      console.error('Twitter embed error:', error);
     }
   }
   

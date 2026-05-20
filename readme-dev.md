@@ -722,6 +722,53 @@ function createEmbedIframe(service, url) {
 }
 ```
 
+### 4.2.1 Twitter/X 嵌入实现
+
+Twitter 嵌入与 iframe 不同，需要使用官方 widget.js：
+
+```javascript
+function renderTwitterEmbed(service, url, originalMatch) {
+  try {
+    let embedCode = '';
+    
+    // 推文嵌入
+    const tweetMatch = url.match(/twitter\.com\/\w+\/status\/(\d+)/);
+    if (tweetMatch) {
+      embedCode = `<blockquote class="twitter-tweet"><a href="${url}">...</a></blockquote>`;
+    }
+    // 时间线嵌入
+    else if (url.includes('twitter.com/') && !url.includes('/status/')) {
+      embedCode = `<a class="twitter-timeline" href="${url}">...</a>`;
+    }
+    
+    if (embedCode) {
+      markdownContent.innerHTML = markdownContent.innerHTML.replace(originalMatch, embedCode);
+      
+      // 异步加载 Twitter widgets
+      if (typeof twttr !== 'undefined' && twttr.widgets) {
+        twttr.widgets.load();
+      } else {
+        // 等待加载
+        const checkTwitter = setInterval(() => {
+          if (typeof twttr !== 'undefined' && twttr.widgets) {
+            twttr.widgets.load();
+            clearInterval(checkTwitter);
+          }
+        }, 100);
+      }
+    }
+  } catch (error) {
+    console.error('Twitter embed error:', error);
+  }
+}
+```
+
+**关键技术点**：
+- **Widget.js**：`https://platform.twitter.com/widgets.js`
+- **异步加载**：使用 `async` 属性不阻塞页面
+- **嵌入式 HTML**：使用 `blockquote.twitter-tweet` 和 `a.twitter-timeline`
+- **自动初始化**：通过 `twttr.widgets.load()` 触发渲染
+
 ### 4.3 自定义配置
 
 修改 `CONFIG` 对象：
@@ -831,6 +878,7 @@ const CONFIG = {
 | 乐谱渲染 | ✅ 完成 | app.js:574-773 |
 | Diff 可视化 | ✅ 完成 | app.js:775-852 |
 | 地理数据可视化 | ✅ 完成 | app.js:870-1000 |
+| Twitter/X 嵌入 | ✅ 完成 | app.js:866-910 |
 | 外部服务嵌入 | ✅ 完成 | app.js:854-925 |
 
 ### 8.2 贡献指南
@@ -859,6 +907,8 @@ const CONFIG = {
 - [Verovio](https://www.verovio.org/)
 - [OSMD](https://opensheetmusicdisplay.org/)
 - [diff2html](https://diff2html.xyz/)
+- [Twitter 嵌入文档](https://developer.twitter.com/en/docs/twitter-for-websites/embedded-tweets/overview)
+- [Twitter Widgets.js](https://platform.twitter.com/widgets.js)
 
 ### 9.2 学习资源
 

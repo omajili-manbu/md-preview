@@ -247,7 +247,8 @@ index 1a2b3c4..5d6e7f8 100644
 - Office Online
 
 **社交媒体：**
-- Twitter/X 卡片
+- Twitter/X 推文嵌入
+- Twitter/X 时间线嵌入
 - GitHub Gist
 
 **徽章/状态：**
@@ -260,6 +261,8 @@ index 1a2b3c4..5d6e7f8 100644
 @[bilibili](BV1xx411c7mZ)
 @[codepen](https://codepen.io/username/pen/example)
 @[figma](https://www.figma.com/file/example)
+@[twitter](https://twitter.com/username/status/1234567890)
+@[x](https://x.com/username/status/1234567890)
 ```
 
 ### 地理数据可视化
