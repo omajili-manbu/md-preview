@@ -596,6 +596,8 @@
         renderABCNotation(codeElement.textContent.trim(), container, pre);
       } else if (classList.includes('language-musicxml')) {
         renderMusicXML(codeElement.textContent.trim(), container, pre);
+      } else if (classList.includes('language-osmd')) {
+        renderOSMD(codeElement.textContent.trim(), container, pre);
       }
     }
   }
@@ -672,6 +674,74 @@
       errorDiv.style.color = '#ff6b6b';
       errorDiv.style.padding = '10px';
       errorDiv.textContent = 'MusicXML 乐谱渲染错误: ' + error.message;
+      container.appendChild(errorDiv);
+      pre.parentNode.replaceChild(container, pre);
+    }
+  }
+  
+  function renderOSMD(code, container, pre) {
+    if (typeof OpenSheetMusicDisplay === 'undefined') {
+      console.error('OSMD library is not loaded');
+      const errorDiv = document.createElement('div');
+      errorDiv.style.color = '#ff6b6b';
+      errorDiv.style.padding = '10px';
+      errorDiv.textContent = 'OSMD 库未加载';
+      container.appendChild(errorDiv);
+      pre.parentNode.replaceChild(container, pre);
+      return;
+    }
+    
+    try {
+      const div = document.createElement('div');
+      div.className = 'osmd-container';
+      div.style.minHeight = '300px';
+      container.appendChild(div);
+      
+      const formattedCode = code
+        .replace(/<!DOCTYPE[^>]*>/i, '')
+        .replace(/<\?xml[^>]*\?>/i, '')
+        .trim();
+      
+      const osmd = new OpenSheetMusicDisplay(div, {
+        autoResize: true,
+        backend: 'svg',
+        drawTitle: true,
+        drawComposer: true,
+        drawLyrics: true,
+        drawMeasureNumbers: true,
+        drawPartNames: true,
+        drawMeasureBars: true,
+        drawSlurs: true,
+        drawTies: true,
+        drawBeams: true,
+        drawArticulations: true,
+        drawOrnaments: true,
+        drawDynamics: true,
+        drawClefs: true,
+        drawTimeSignatures: true,
+        drawKeySignatures: true,
+        drawTuplets: true
+      });
+      
+      osmd.load(formattedCode).then(() => {
+        osmd.render();
+      }).catch(err => {
+        console.error('OSMD loading error:', err);
+        const errorDiv = document.createElement('div');
+        errorDiv.style.color = '#ff6b6b';
+        errorDiv.style.padding = '10px';
+        errorDiv.textContent = 'OSMD 加载错误: ' + err.message;
+        container.innerHTML = '';
+        container.appendChild(errorDiv);
+      });
+      
+      pre.parentNode.replaceChild(container, pre);
+    } catch (error) {
+      console.error('OSMD rendering error:', error);
+      const errorDiv = document.createElement('div');
+      errorDiv.style.color = '#ff6b6b';
+      errorDiv.style.padding = '10px';
+      errorDiv.textContent = 'OSMD 乐谱渲染错误: ' + error.message;
       container.appendChild(errorDiv);
       pre.parentNode.replaceChild(container, pre);
     }
