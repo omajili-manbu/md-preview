@@ -195,9 +195,9 @@
     interceptLinks(currentPath);
     
     setTimeout(() => {
+      renderApexCharts();
       renderMermaidDiagrams();
       renderPlantUMLDiagrams();
-      renderApexCharts();
       renderEmbeddedServices();
     }, 100);
   }
@@ -508,24 +508,27 @@
       return;
     }
     
-    const allPres = document.querySelectorAll('.markdown-body pre');
+    const allPres = Array.from(document.querySelectorAll('.markdown-body pre'));
     
-    allPres.forEach((pre, index) => {
+    for (let i = 0; i < allPres.length; i++) {
+      const pre = allPres[i];
       const codeElement = pre.querySelector('code');
-      if (!codeElement) return;
+      
+      if (!codeElement) continue;
       
       const classList = codeElement.className;
-      if (!classList || !classList.includes('language-apexcharts')) return;
+      if (!classList || !classList.includes('language-apexcharts')) continue;
       
       const chartConfigStr = codeElement.textContent.trim();
       
       try {
         const chartConfig = JSON.parse(chartConfigStr);
-        const chartId = 'apexchart-' + Date.now() + '-' + index;
+        const chartId = 'apexchart-' + Date.now() + '-' + i;
         
         const container = document.createElement('div');
         container.id = chartId;
         container.className = 'apex-chart';
+        container.style.minHeight = '400px';
         
         const mergedConfig = {
           ...chartConfig,
@@ -538,26 +541,35 @@
           theme: { mode: 'light' }
         };
         
-        pre.replaceWith(container);
+        // Replace pre element with our container
+        pre.parentNode.replaceChild(container, pre);
         
+        // Render the chart
         setTimeout(() => {
           const chartElement = document.getElementById(chartId);
           if (chartElement) {
-            const chart = new ApexCharts(chartElement, mergedConfig);
-            chart.render();
+            try {
+              const chart = new ApexCharts(chartElement, mergedConfig);
+              chart.render();
+            } catch (e) {
+              console.error('ApexCharts initialization error:', e);
+              chartElement.innerHTML = '<div style="padding: 20px; color: #ff6b6b;">图表渲染失败: ' + e.message + '</div>';
+            }
           }
-        }, 100);
+        }, 50);
       } catch (error) {
-        console.error('ApexCharts rendering error:', error);
+        console.error('ApexCharts parsing error:', error);
         const errorDiv = document.createElement('div');
         errorDiv.style.color = '#ff6b6b';
         errorDiv.style.padding = '10px';
         errorDiv.style.border = '1px solid #ff6b6b';
         errorDiv.style.borderRadius = '4px';
-        errorDiv.textContent = 'ApexCharts 渲染错误: ' + error.message;
-        pre.replaceWith(errorDiv);
+        errorDiv.textContent = 'ApexCharts 错误: ' + error.message;
+        if (pre.parentNode) {
+          pre.parentNode.replaceChild(errorDiv, pre);
+        }
       }
-    });
+    }
   }
   
   function renderEmbeddedServices() {
