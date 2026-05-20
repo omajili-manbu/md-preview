@@ -8,8 +8,7 @@
 
 ### 垂直流程图 (Top to Bottom)
 
-```markdown
-```mermaid
+```txt
 flowchart TD
     A[开始] --> B{条件判断}
     B -->|是| C[执行操作 A]
@@ -17,7 +16,7 @@ flowchart TD
     C --> E[结束]
     D --> E
 ```
-```
+
 
 **渲染效果：**
 
