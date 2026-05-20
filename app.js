@@ -20,37 +20,44 @@
   let currentMode = 'files';
   let currentFilePath = '';
   let currentHeadings = [];
+  let mermaidInitialized = false;
   
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: 'base',
-    themeVariables: {
-      primaryColor: '#d4a5c9',
-      primaryTextColor: '#333333',
-      primaryBorderColor: '#d4a5c9',
-      lineColor: '#888888',
-      secondaryColor: '#f2c4ce',
-      tertiaryColor: '#f8f8f8',
-      background: '#ffffff',
-      mainBkg: '#ffffff',
-      nodeBorder: '#d4a5c9',
-      clusterBkg: '#f8f8f8',
-      titleColor: '#333333',
-      edgeLabelBackground: '#ffffff'
-    },
-    flowchart: {
-      useMaxWidth: true,
-      htmlLabels: true,
-      curve: 'basis'
-    },
-    sequence: {
-      useMaxWidth: true,
-      diagramMarginX: 20,
-      diagramMarginY: 20
+  function initMermaid() {
+    if (typeof mermaid !== 'undefined' && !mermaidInitialized) {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        themeVariables: {
+          primaryColor: '#d4a5c9',
+          primaryTextColor: '#333333',
+          primaryBorderColor: '#d4a5c9',
+          lineColor: '#888888',
+          secondaryColor: '#f2c4ce',
+          tertiaryColor: '#f8f8f8',
+          background: '#ffffff',
+          mainBkg: '#ffffff',
+          nodeBorder: '#d4a5c9',
+          clusterBkg: '#f8f8f8',
+          titleColor: '#333333',
+          edgeLabelBackground: '#ffffff'
+        },
+        flowchart: {
+          useMaxWidth: true,
+          htmlLabels: true,
+          curve: 'basis'
+        },
+        sequence: {
+          useMaxWidth: true,
+          diagramMarginX: 20,
+          diagramMarginY: 20
+        }
+      });
+      mermaidInitialized = true;
     }
-  });
+  }
   
   function init() {
+    initMermaid();
     loadFileTree();
     setupEventListeners();
     setupScrollProgress();
@@ -222,19 +229,32 @@
     });
     
     interceptLinks(currentPath);
-    renderMermaidDiagrams();
+    
+    setTimeout(() => {
+      renderMermaidDiagrams();
+    }, 100);
   }
   
   async function renderMermaidDiagrams() {
-    const mermaidBlocks = document.querySelectorAll('.language-mermaid');
+    if (typeof mermaid === 'undefined') {
+      console.error('Mermaid library is not loaded');
+      return;
+    }
+    
+    if (!mermaidInitialized) {
+      initMermaid();
+    }
+    
+    const mermaidBlocks = document.querySelectorAll('.markdown-body pre code.language-mermaid');
     
     for (let i = 0; i < mermaidBlocks.length; i++) {
-      const block = mermaidBlocks[i];
-      const codeElement = block.querySelector('code');
-      if (!codeElement) continue;
+      const codeElement = mermaidBlocks[i];
+      const preElement = codeElement.closest('pre');
       
-      const mermaidCode = codeElement.textContent;
-      const id = 'mermaid-' + i;
+      if (!preElement) continue;
+      
+      const mermaidCode = codeElement.textContent.trim();
+      const id = 'mermaid-diagram-' + Date.now() + '-' + i;
       
       try {
         const { svg } = await mermaid.render(id, mermaidCode);
@@ -242,14 +262,11 @@
         container.className = 'mermaid-diagram';
         container.innerHTML = svg;
         
-        const preElement = block.closest('pre');
-        if (preElement) {
-          preElement.replaceWith(container);
-        }
+        preElement.replaceWith(container);
       } catch (error) {
         console.error('Mermaid rendering error:', error);
-        block.closest('pre').style.borderColor = '#ff6b6b';
-        block.closest('pre').title = 'Mermaid 渲染错误: ' + error.message;
+        preElement.style.borderColor = '#ff6b6b';
+        preElement.title = 'Mermaid 渲染错误: ' + error.message;
       }
     }
   }
