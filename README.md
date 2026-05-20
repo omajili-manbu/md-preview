@@ -122,6 +122,79 @@ Animal <|-- Dog
 @[topojson]({"type":"Topology","objects":{"data":{"type":"GeometryCollection","geometries":[{"type":"Point","coordinates":[116.4074,39.9042]}]}},"arcs":[]})
 ```
 
+### 浏览器原生 HTML 元素与 Web API
+
+支持丰富的浏览器原生功能，零 JS、零后端即可使用！
+
+#### 语义与排版元素
+- `<dialog>` - 原生模态对话框
+- `<details>` + `<summary>` - 折叠面板
+- `<search>` - 语义化搜索区域
+- `<ruby>` + `<rt>` + `<rp>` - 中文/日文注音
+- `<bdi>`/`<bdo>` - 双向文本处理
+- `<wbr>` - 可选换行点
+- `<mark>` - 文本高亮
+- `<kbd>` - 键盘按键
+- `<samp>` - 程序输出
+- `<var>` - 变量
+- `<dfn>` - 定义术语
+- `<abbr>` - 缩写说明
+- `<time>` - 机器可读时间
+- `<data>` - 关联数据
+- `<ins>`/`<del>` - 增删标记
+- `<sub>`/`<sup>` - 下标/上标
+- `<small>` - 小号文字
+- `<cite>` - 作品引用
+- `<q>` - 行内引用
+- `<blockquote>` - 块级引用
+- `<address>` - 联系信息
+- `<figure>` + `<figcaption>` - 图文组合
+- `<hr>` - 主题转换
+- `<template>` - HTML 模板
+- `<slot>` - Web Components 插槽
+
+#### 多媒体与嵌入
+- `<picture>` + `<source>` - 响应式图片
+- `<audio>` + `<track>` - 音频+字幕
+- `<video>` + `<track>` - 视频+字幕
+- `<iframe srcdoc>` - 内联 HTML
+- `<iframe sandbox>` - 沙盒化嵌入
+- `<object>` - PDF/SVG 嵌入
+- `<embed>` - 快捷嵌入
+- `<map>` + `<area>` - 图片热区
+- `<canvas>` - 2D/WebGL 画布
+- `<svg>` - 内联矢量图
+- `<math>` - MathML 数学公式
+
+#### 表单与交互控件
+- `<meter>` - 仪表盘/度量
+- `<progress>` - 进度条
+- `<datalist>` - 自动补全
+- `<output>` - 计算结果
+- `<fieldset>` + `<legend>` - 内容分组
+
+#### 全局属性增强
+- `contenteditable` - 可编辑区域
+- `draggable` - 可拖拽
+- `translate="no"` - 禁止翻译
+- `spellcheck` - 拼写检查
+- `hidden="until-found"` - 隐藏但可搜索
+- `popover` - 原生弹出层
+- `inert` - 不可交互
+- `loading="lazy"` - 懒加载
+- `decoding="async"` - 异步解码
+- `fetchpriority` - 加载优先级
+- `referrerpolicy` - 引用策略
+
+#### 浏览器原生 Web API
+- WebGL / WebGL 2.0 - 3D 图形
+- WebGPU - 下一代图形 API
+- Canvas 2D API - 位图绘制
+- SVG + SMIL - 原生 SVG 动画
+- Web Animations API - JS 控制动画
+- View Transitions API - 视图过渡
+- CSS Houdini - 自定义 CSS 绘制
+
 ## 快速开始
 
 ### 在 GitHub Pages 上使用：

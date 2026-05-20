@@ -608,3 +608,239 @@ body {
 .markdown-body h3 {
   animation-delay: 0.15s;
 }
+
+/* 原生 HTML 元素样式 */
+.markdown-body kbd {
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-bottom-width: 2px;
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  font-size: 0.875em;
+  color: var(--color-text);
+}
+
+.markdown-body mark {
+  background: var(--color-accent-pink);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+.markdown-body samp {
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  color: var(--color-accent-purple-deep);
+}
+
+.markdown-body var {
+  font-style: italic;
+  color: var(--color-accent-purple);
+}
+
+.markdown-body dfn {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--color-accent-purple-deep);
+}
+
+.markdown-body abbr {
+  border-bottom: 1px dotted var(--color-text-muted);
+  cursor: help;
+}
+
+.markdown-body time {
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-body ins {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent-purple);
+  text-underline-offset: 2px;
+}
+
+.markdown-body del {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-text-muted);
+}
+
+.markdown-body sub,
+.markdown-body sup {
+  font-size: 0.75em;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.markdown-body sub {
+  bottom: -0.25em;
+}
+
+.markdown-body sup {
+  top: -0.5em;
+}
+
+.markdown-body small {
+  font-size: 0.875em;
+  color: var(--color-text-muted);
+}
+
+.markdown-body cite {
+  font-style: italic;
+  color: var(--color-accent-purple-deep);
+}
+
+.markdown-body q::before {
+  content: '「';
+}
+
+.markdown-body q::after {
+  content: '」';
+}
+
+.markdown-body address {
+  font-style: normal;
+  padding: 1em;
+  background: rgba(212, 165, 201, 0.08);
+  border-radius: 8px;
+}
+
+.markdown-body figure {
+  margin: 1.5em 0;
+  text-align: center;
+}
+
+.markdown-body figcaption {
+  font-size: 0.875em;
+  color: var(--color-text-muted);
+  margin-top: 0.5em;
+}
+
+/* dialog 样式 */
+.markdown-body dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5em;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  max-width: 90vw;
+  width: 400px;
+  z-index: 1000;
+}
+
+.markdown-body dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* details/summary 样式 */
+.markdown-body details {
+  background: rgba(212, 165, 201, 0.08);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75em 1em;
+  margin: 1em 0;
+}
+
+.markdown-body summary {
+  cursor: pointer;
+  font-weight: 500;
+  list-style: none;
+}
+
+.markdown-body summary::-webkit-details-marker {
+  display: none;
+}
+
+.markdown-body summary::before {
+  content: '▶';
+  display: inline-block;
+  margin-right: 0.5em;
+  transition: transform 0.2s ease;
+  font-size: 0.75em;
+  color: var(--color-accent-purple);
+}
+
+.markdown-body details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+/* meter/progress 样式 */
+.markdown-body meter {
+  width: 100%;
+  height: 24px;
+  background: var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.markdown-body progress {
+  width: 100%;
+  height: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-border);
+}
+
+.markdown-body progress::-webkit-progress-bar {
+  background: var(--color-border);
+  border-radius: 12px;
+}
+
+.markdown-body progress::-webkit-progress-value {
+  background: linear-gradient(90deg, var(--color-accent-purple), var(--color-accent-pink));
+  border-radius: 12px;
+}
+
+.markdown-body progress::-moz-progress-bar {
+  background: linear-gradient(90deg, var(--color-accent-purple), var(--color-accent-pink));
+  border-radius: 12px;
+}
+
+/* fieldset/legend 样式 */
+.markdown-body fieldset {
+  border: 2px solid var(--color-accent-purple);
+  border-radius: 8px;
+  padding: 1.25em;
+  margin: 1.5em 0;
+}
+
+.markdown-body legend {
+  padding: 0 0.75em;
+  color: var(--color-accent-purple-deep);
+  font-weight: 500;
+}
+
+/* Ruby 注音样式 */
+.markdown-body ruby {
+  display: inline-flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.markdown-body rt {
+  font-size: 0.6em;
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.markdown-body rp {
+  display: none;
+}
+
+/* 画布和 SVG 容器 */
+.markdown-body canvas,
+.markdown-body svg {
+  max-width: 100%;
+  display: block;
+}
+
+/* 地理地图容器 */
+.markdown-body .geo-map {
+  margin: 1.5em 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
