@@ -8,13 +8,16 @@
 
 ### 基础折线图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "line", "height": 350},
   "series": [{"name": "销量", "data": [30, 40, 35, 50, 49, 60, 70]}],
   "xaxis": {"categories": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -28,7 +31,8 @@
 
 ### 多系列折线图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "line", "height": 350},
   "series": [
@@ -38,6 +42,8 @@
   "xaxis": {"categories": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -56,13 +62,16 @@
 
 ### 基础面积图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "area", "height": 350},
   "series": [{"name": "访问量", "data": [31, 40, 28, 51, 42, 109, 100]}],
   "xaxis": {"categories": ["一月", "二月", "三月", "四月", "五月", "六月", "七月"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -76,7 +85,8 @@
 
 ### 多系列面积图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "area", "height": 350},
   "series": [
@@ -86,6 +96,8 @@
   "xaxis": {"categories": ["一月", "二月", "三月", "四月", "五月", "六月", "七月"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -104,13 +116,16 @@
 
 ### 基础柱状图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "bar", "height": 350},
   "series": [{"name": "销售额", "data": [30, 40, 35, 50, 49, 60, 70]}],
   "xaxis": {"categories": ["一月", "二月", "三月", "四月", "五月", "六月", "七月"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -124,7 +139,8 @@
 
 ### 分组柱状图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "bar", "height": 350},
   "series": [
@@ -134,6 +150,8 @@
   "xaxis": {"categories": ["一季度", "二季度", "三季度", "四季度"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -152,13 +170,16 @@
 
 ### 基础条形图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "bar", "height": 350, "horizontal": true},
   "series": [{"name": "销售额", "data": [30, 40, 35, 50, 49, 60, 70]}],
   "xaxis": {"categories": ["北京", "上海", "广州", "深圳", "杭州", "成都", "武汉"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -174,13 +195,16 @@
 
 ### 基础饼图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "pie", "height": 350},
   "series": [44, 55, 13, 43, 22],
   "labels": ["产品A", "产品B", "产品C", "产品D", "产品E"]
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -194,13 +218,16 @@
 
 ### 环形图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "donut", "height": 350},
   "series": [44, 55, 13, 43, 22],
   "labels": ["直接访问", "搜索引擎", "推荐网站", "广告", "其他"]
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -214,7 +241,8 @@
 
 ## 6. 散点图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "scatter", "height": 350},
   "series": [
@@ -223,6 +251,8 @@
   ]
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -238,7 +268,8 @@
 
 ## 7. 气泡图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "bubble", "height": 350},
   "series": [
@@ -247,6 +278,8 @@
   ]
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -262,7 +295,8 @@
 
 ## 8. 雷达图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "radar", "height": 350},
   "series": [
@@ -272,6 +306,8 @@
   "xaxis": {"categories": ["性能", "价格", "外观", "续航", "服务"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -288,13 +324,16 @@
 
 ## 9. 极坐标图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "polarArea", "height": 350},
   "series": [42, 55, 67, 83, 45],
   "labels": ["一月", "二月", "三月", "四月", "五月"]
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -308,7 +347,8 @@
 
 ## 10. 范围区域图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "rangeArea", "height": 350},
   "series": [
@@ -316,6 +356,8 @@
   ]
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -330,12 +372,15 @@
 
 ## 11. 烛台图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "candlestick", "height": 350},
   "series": [{"name": "股价", "data": [{"x": "周一", "y": [100, 120, 90, 115]}, {"x": "周二", "y": [115, 130, 105, 125]}, {"x": "周三", "y": [125, 140, 115, 135]}, {"x": "周四", "y": [135, 150, 125, 145]}, {"x": "周五", "y": [145, 160, 140, 155]}]}]
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
@@ -348,7 +393,8 @@
 
 ## 12. 瀑布图
 
-```apexcharts
+**源码：**
+```txt
 {
   "chart": {"type": "bar", "height": 350, "stacked": false},
   "series": [
@@ -358,6 +404,8 @@
   "xaxis": {"categories": ["周一", "周二", "周三", "周四", "周五"]}
 }
 ```
+
+**渲染效果：**
 
 ```apexcharts
 {
