@@ -11,7 +11,7 @@
     category: 'Announcements',
     categoryId: 'DIC_kwDOShdDkc4C9g0r',
     mapping: 'term',
-    strict: '0',
+    strict: '1',
     reactionsEnabled: '1',
     emitMetadata: '0',
     inputPosition: 'bottom',

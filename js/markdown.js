@@ -337,6 +337,10 @@
     
     dom.giscusContainer.innerHTML = '';
     
+    if (window.giscus) {
+      window.giscus.destroy?.();
+    }
+    
     const script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
     script.setAttribute('data-repo', giscusConfig.repo);
