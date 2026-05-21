@@ -10,7 +10,7 @@
     repoId: 'R_kgDOShdDkQ',
     category: 'Announcements',
     categoryId: 'DIC_kwDOShdDkc4C9g0r',
-    mapping: 'pathname',
+    mapping: 'term',
     strict: '0',
     reactionsEnabled: '1',
     emitMetadata: '0',
