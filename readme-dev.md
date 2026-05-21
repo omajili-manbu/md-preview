@@ -51,7 +51,7 @@ node scripts/build-file-tree.js
 | **HTML5** | 页面结构，语义化标签 |
 | **CSS3** | 样式系统，响应式设计，CSS 变量 |
 | **Vanilla JavaScript** | 核心功能，无框架依赖 |
-| **Node.js (仅构建)** | 文件树预构建 |
+| **Node.js (仅构建)** | 文件树和搜索索引预构建 |
 | **GitHub Actions** | 自动 CI/CD |
 | **Marked.js** | Markdown 解析 |
 | **Mermaid.js** | 流程图、时序图等图表渲染 |
@@ -79,6 +79,8 @@ md-preview/
 │   ├── ui.js          # UI 工具函数
 │   ├── file-tree.js   # 文件树加载和渲染
 │   ├── markdown.js    # Markdown 渲染和处理
+│   ├── search.js      # 全文搜索功能
+│   ├── router.js      # Hash 路由管理
 │   └── renderers/     # 扩展功能渲染器
 │       ├── mermaid.js
 │       ├── plantuml.js
@@ -88,12 +90,15 @@ md-preview/
 │       ├── geo.js
 │       └── embedded.js
 ├── scripts/
-│   └── build-file-tree.js  # 文件树预构建脚本
+│   ├── build-file-tree.js   # 文件树预构建脚本
+│   └── build-search-index.js  # 搜索索引预构建脚本
 ├── data/
 │   └── file-tree.json      # 预构建的文件树（由 Action 生成）
+├── search-index.json       # 预构建的搜索索引（由 Action 生成）
 └── .github/
     └── workflows/
-        └── build-and-deploy.yml  # GitHub Action 配置
+        ├── build-and-deploy.yml       # GitHub Action 配置
+        └── build-search-index.yml    # 搜索索引自动构建
 ```
 
 ### 1.3 架构特点
@@ -116,7 +121,7 @@ md-preview/
 模块依赖关系：
 ┌─────────────────────────────────────────────────────────┐
 │                     app.js (入口)                       │
-│  初始化：fileTree.loadFileTree() + ui.setupEventListeners() │
+│  初始化：fileTree.loadFileTree() + ui.setupEventListeners() + search.init() │
 └────────────────────┬────────────────────────────────────┘
                      │
          ┌───────────┴───────────┐
@@ -133,8 +138,9 @@ md-preview/
          ┌──────────────────┐
          │   markdown.js    │
          │  - Markdown 渲染 │
-         │  - 链接拦截      │
-         │  - 目录生成      │
+         │  - Frontmatter   │
+         │  - 面包屑导航    │
+         │  - 编辑按钮      │
          └────────┬─────────┘
                   │
          ┌────────┴────────┐
@@ -149,6 +155,16 @@ md-preview/
    ▼          ▼    ▼              ▼
 mermaid   plantuml  state.js    config.js
 (其他渲染器...)
+                      │
+                      │    ┌──────────────┐
+                      │    │  search.js    │
+                      │    │  - 搜索功能   │
+                      │    └──────┬───────┘
+                      │           │
+                      │    ┌──────┴───────┐
+                      │    │  router.js   │
+                      │    │  - 路由管理  │
+                      │    └──────────────┘
 ```
 
 ### 2.2 核心模块详解
@@ -484,6 +500,87 @@ const errorDiv = document.createElement('div');
 errorDiv.style.color = '#ff6b6b';
 errorDiv.textContent = '错误信息';
 ```
+
+### 2.6 搜索模块 (`js/search.js`)
+
+**功能**：全文搜索所有文档内容
+
+**实现方式**：
+- 预构建 `search-index.json`（通过 GitHub Action 自动生成）
+- 原生 JavaScript 字符串匹配，支持中英文搜索
+- 支持标题、路径、预览内容的加权匹配
+- 防抖搜索优化性能
+
+**搜索算法**：
+```javascript
+function simpleSearch(query) {
+  const results = [];
+  const queryLower = query.toLowerCase();
+  
+  documents.forEach((doc, index) => {
+    let score = 0;
+    if (titleLower.includes(queryLower)) score += 10;  // 标题权重最高
+    if (previewLower.includes(queryLower)) score += 5;  // 预览内容
+    if (pathLower.includes(queryLower)) score += 2;     // 路径匹配
+    
+    if (score > 0) results.push({ index, score });
+  });
+  
+  return results.sort((a, b) => b.score - a.score);  // 按分数排序
+}
+```
+
+**搜索索引结构**：
+```json
+{
+  "path": "docs/guide.md",
+  "title": "用户指南",
+  "preview": "这是文档的预览内容..."
+}
+```
+
+### 2.7 路由模块 (`js/router.js`)
+
+**功能**：Hash 路由管理，每个文档有独特 URL
+
+**实现方式**：
+- 监听 `hashchange` 事件
+- URL 格式：`#/path/to/document.md`
+- 自动加载对应文档并更新浏览器地址栏
+- 支持分享和书签
+
+**路由处理**：
+```javascript
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash;
+  if (hash.startsWith('#/')) {
+    const path = hash.substring(2);
+    loadMarkdownFile(path);
+  }
+});
+```
+
+### 2.8 Markdown 模块增强 (`js/markdown.js`)
+
+**新增功能**：
+1. **YAML Frontmatter 解析**：
+   ```javascript
+   function parseFrontmatter(markdown) {
+     // 解析 --- 包裹的 YAML 内容
+   }
+   ```
+
+2. **面包屑导航生成**：
+   ```javascript
+   function updateBreadcrumbs(path) {
+     // 解析路径，生成可点击的面包屑
+   }
+   ```
+
+3. **悬浮 FAB 编辑按钮**：
+   - 右下角圆形按钮
+   - 跳转到 GitHub 编辑页面
+   - 紫色渐变背景，悬停放大效果
 
 ---
 
@@ -958,6 +1055,13 @@ window.MarkdownPreview.CONFIG = {
 - [ ] 侧边栏展开/折叠
 - [ ] 代码复制功能
 - [ ] 进度条更新
+- [ ] 全文搜索功能正常
+- [ ] 搜索结果显示和点击跳转
+- [ ] Hash 路由正常工作
+- [ ] 面包屑导航显示
+- [ ] 编辑按钮正常跳转
+- [ ] 悬浮 FAB 显示和交互
+- [ ] Frontmatter 解析
 
 ### 6.2 边界情况测试
 
@@ -1016,6 +1120,12 @@ window.MarkdownPreview.CONFIG = {
 | 地理数据可视化 | ✅ 完成 | js/renderers/geo.js |
 | Twitter/X 嵌入 | ✅ 完成 | js/renderers/embedded.js |
 | 外部服务嵌入 | ✅ 完成 | js/renderers/embedded.js |
+| **全文搜索** | ✅ 完成 | js/search.js |
+| **Hash 路由** | ✅ 完成 | js/router.js |
+| **面包屑导航** | ✅ 完成 | js/markdown.js |
+| **编辑按钮** | ✅ 完成 | js/markdown.js + styles.css |
+| **Frontmatter** | ✅ 完成 | js/markdown.js |
+| **悬浮 FAB** | ✅ 完成 | styles.css + index.html |
 
 ### 8.2 贡献指南
 
@@ -1054,5 +1164,5 @@ window.MarkdownPreview.CONFIG = {
 
 ---
 
-**最后更新**：2026-05-20
-**文档版本**：1.0.0
+**最后更新**：2026-05-21
+**文档版本**：1.1.0
