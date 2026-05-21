@@ -3,18 +3,22 @@
   window.MarkdownPreview.search = {};
   
   let searchIndex = null;
+  let documents = [];
   let debounceTimer = null;
   
   async function loadSearchIndex() {
     try {
+      console.log('Loading search index...');
       const response = await fetch('search-index.json');
       if (!response.ok) {
-        console.warn('Search index not found, using fallback');
+        console.warn('Search index not found, status:', response.status);
         return [];
       }
-      return await response.json();
+      const data = await response.json();
+      console.log('Search index loaded:', data.length, 'documents');
+      return data;
     } catch (e) {
-      console.warn('Failed to load search index:', e);
+      console.error('Failed to load search index:', e);
       return [];
     }
   }
@@ -22,23 +26,29 @@
   function initSearchIndex(indexData) {
     if (searchIndex) return;
     
-    searchIndex = new FlexSearch.Document({
+    if (!window.FlexSearch) {
+      console.error('FlexSearch not loaded!');
+      return;
+    }
+    
+    console.log('Initializing search index...');
+    
+    documents = indexData;
+    
+    searchIndex = new window.FlexSearch.Index({
       tokenize: 'forward',
-      cache: 100,
+      cache: true,
       document: {
         id: 'path',
-        index: ['title', 'preview'],
-        store: ['title', 'path', 'preview']
+        index: ['title', 'preview']
       }
     });
     
-    for (const item of indexData) {
-      searchIndex.add({
-        path: item.path,
-        title: item.title,
-        preview: item.preview
-      });
+    for (const item of documents) {
+      searchIndex.add(item);
     }
+    
+    console.log('Search index initialized with', documents.length, 'documents');
   }
   
   async function buildIndex() {
@@ -54,10 +64,14 @@
       return;
     }
     
+    console.log('Searching for:', query);
+    
     const results = searchIndex.search(query, {
       limit: 20,
       enrich: true
     });
+    
+    console.log('Search results raw:', results);
     
     displaySearchResults(results);
   }
@@ -68,7 +82,7 @@
     container.innerHTML = '';
     container.classList.add('active');
     
-    if (!results || results.length === 0 || !results[0]?.result?.length) {
+    if (!results || results.length === 0) {
       container.innerHTML = '<div class="search-no-results">没有找到相关文档</div>';
       return;
     }
@@ -76,13 +90,22 @@
     const seen = new Set();
     const merged = [];
     
-    for (const resultGroup of results) {
-      for (const result of resultGroup.result) {
-        if (!seen.has(result.path)) {
-          seen.add(result.path);
-          merged.push(result);
-        }
+    for (const result of results) {
+      const path = typeof result === 'string' ? result : (result.path || result.id);
+      if (!path || seen.has(path)) continue;
+      
+      seen.add(path);
+      const doc = documents.find(d => d.path === path);
+      if (doc) {
+        merged.push(doc);
       }
+    }
+    
+    console.log('Merged results:', merged.length);
+    
+    if (merged.length === 0) {
+      container.innerHTML = '<div class="search-no-results">没有找到相关文档</div>';
+      return;
     }
     
     merged.slice(0, 15).forEach(result => {
@@ -118,7 +141,12 @@
   
   async function setupSearchEvents() {
     const { dom } = window.MarkdownPreview;
-    if (!dom.searchInput) return;
+    if (!dom.searchInput) {
+      console.error('searchInput not found!');
+      return;
+    }
+    
+    console.log('Setting up search events...');
     
     dom.searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
