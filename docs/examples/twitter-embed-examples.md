@@ -9,32 +9,30 @@
 ### 嵌入单条推文
 
 **语法格式：**
-```markdown
-@[twitter](https://twitter.com/username/status/1234567890)
-```
+
+@[twitter]\(https://twitter.com/username/status/1234567890\)
 
 **示例：**
-```markdown
-@[twitter](https://twitter.com/elonmusk/status/1234567890)
-```
+
+@[twitter]\(https://twitter.com/elonmusk/status/1234567890\)
 
 **渲染效果：**
 
+```markdown
 @[twitter](https://twitter.com/elonmusk/status/1726876868777328640)
+```
 
 ---
 
 ### 使用 X 替代 Twitter
 
 **语法格式：**
-```markdown
-@[x](https://x.com/username/status/1234567890)
-```
+
+@[x]\(https://x.com/username/status/1234567890\)
 
 **示例：**
-```markdown
-@[x](https://x.com/OpenAI/status/1234567890)
-```
+
+@[x]\(https://x.com/OpenAI/status/1234567890\)
 
 ---
 
@@ -43,14 +41,12 @@
 ### 嵌入用户时间线
 
 **语法格式：**
-```markdown
-@[twitter](https://twitter.com/username)
-```
+
+@[twitter]\(https://twitter.com/username\)
 
 **示例：**
-```markdown
-@[twitter](https://twitter.com/OpenAI)
-```
+
+@[twitter]\(https://twitter.com/OpenAI\)
 
 **说明：**
 - 显示该用户最近的推文
@@ -62,28 +58,24 @@
 ### 嵌入用户喜欢的内容
 
 **语法格式：**
-```markdown
-@[twitter](https://twitter.com/username/with_replies)
-```
+
+@[twitter]\(https://twitter.com/username/with_replies\)
 
 **示例：**
-```markdown
-@[twitter](https://twitter.com/username/likes)
-```
+
+@[twitter]\(https://twitter.com/username/likes\)
 
 ---
 
 ### 嵌入用户媒体
 
 **语法格式：**
-```markdown
-@[twitter](https://twitter.com/username/media)
-```
+
+@[twitter]\(https://twitter.com/username/media\)
 
 **示例：**
-```markdown
-@[twitter](https://twitter.com/nasa/media)
-```
+
+@[twitter]\(https://twitter.com/nasa/media\)
 
 ---
 
@@ -92,14 +84,12 @@
 ### 嵌入列表
 
 **语法格式：**
-```markdown
-@[twitter](https://twitter.com/username/lists/list-name)
-```
+
+@[twitter]\(https://twitter.com/username/lists/list-name\)
 
 **示例：**
-```markdown
-@[twitter](https://twitter.com/username/lists/tech-news)
-```
+
+@[twitter]\(https://twitter.com/username/lists/tech-news\)
 
 ---
 
@@ -110,9 +100,8 @@
 线程是一系列相关的推文，可以完整嵌入：
 
 **语法格式：**
-```markdown
-@[twitter](https://twitter.com/username/status/线程第一条ID)
-```
+
+@[twitter]\(https://twitter.com/username/status/线程第一条ID\)
 
 **说明：**
 - 点击嵌入的推文可以查看完整线程
@@ -126,9 +115,8 @@
 引用推文会自动显示原始推文和引用内容：
 
 **语法格式：**
-```markdown
-@[twitter](https://twitter.com/username/status/引用推文ID)
-```
+
+@[twitter]\(https://twitter.com/username/status/引用推文ID\)
 
 ---
 
@@ -240,30 +228,26 @@
 ### 技术博客
 
 在博客文章中嵌入相关讨论：
-```markdown
-@[twitter](https://twitter.com/username/status/1234567890)
-```
+
+@[twitter]\(https://twitter.com/username/status/1234567890\)
 
 ### 产品发布
 
 展示产品发布相关推文：
-```markdown
-@[twitter](https://twitter.com/company/status/发布推文ID)
-```
+
+@[twitter]\(https://twitter.com/company/status/发布推文ID\)
 
 ### 新闻报道
 
 引用重要新闻人物的推文：
-```markdown
-@[twitter](https://twitter.com/official_user/status/新闻推文ID)
-```
+
+@[twitter]\(https://twitter.com/official_user/status/新闻推文ID\)
 
 ### 社区文档
 
 在文档中添加社区讨论链接：
-```markdown
-@[twitter](https://twitter.com/community_handle)
-```
+
+@[twitter]\(https://twitter.com/community_handle\)
 
 ---
 
