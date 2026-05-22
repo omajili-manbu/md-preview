@@ -781,3 +781,28 @@
     left: 10px;
   }
 }
+
+.katex-block {
+  margin: 1.5em 0;
+  padding: 1em;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.katex-block .katex {
+  font-size: 1.1em;
+}
+
+.katex {
+  color: var(--color-text);
+}
+
+.markdown-body .katex-display {
+  margin: 1.5em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown-body .katex-display > .katex {
+  text-align: center;
+}

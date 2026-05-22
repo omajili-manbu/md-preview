@@ -15,11 +15,37 @@
       renderMathInElement(markdownBody, {
         delimiters: [
           {left: '$$', right: '$$', display: true},
-          {left: '$', right: '$', display: false}
+          {left: '$', right: '$', display: false},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        ignoredTags: [
+          'script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option'
         ],
         throwOnError: false,
+        trust: true,
+        strict: false,
         macros: {
-          "\\f": "#1f(#2)"
+          '\\f': '#1f(#2)',
+          '\\bm': '\\boldsymbol{#1}',
+          '\\dif': '\\mathrm{d}',
+          '\\pdif': '\\partial'
+        }
+      });
+      
+      document.querySelectorAll('.katex-block').forEach(block => {
+        const latex = block.textContent;
+        if (latex && !block.querySelector('.katex')) {
+          try {
+            katex.render(latex, block, {
+              displayMode: true,
+              throwOnError: false,
+              trust: true,
+              strict: false
+            });
+          } catch (e) {
+            console.error('KaTeX block rendering error:', e);
+          }
         }
       });
     } catch (error) {

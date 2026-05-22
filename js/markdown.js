@@ -140,6 +140,34 @@
     return result;
   }
   
+  function protectLaTeXBlocks(markdownText) {
+    const latexBlocks = [];
+    let index = 0;
+    
+    const processed = markdownText.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
+      const placeholder = `LATEXBLOCK_PLACEHOLDER_${index}_`;
+      latexBlocks.push(match);
+      index++;
+      return placeholder;
+    });
+    
+    return { processed, latexBlocks };
+  }
+  
+  function restoreLaTeXBlocks(html, latexBlocks) {
+    let restored = html;
+    latexBlocks.forEach((block, index) => {
+      const placeholder = `LATEXBLOCK_PLACEHOLDER_${index}_`;
+      const innerContent = block.slice(2, -2).trim();
+      const wrappedBlock = `<div class="katex-block">${innerContent}</div>`;
+      restored = restored.replace(
+        new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+        wrappedBlock
+      );
+    });
+    return restored;
+  }
+  
   function processImages(container) {
     const images = container.querySelectorAll('img');
     
@@ -244,11 +272,13 @@
     
     state.currentFrontmatter = frontmatter;
     
-    const processedContent = processGitHubAlerts(content);
+    const { processed: alertProcessed, latexBlocks } = protectLaTeXBlocks(content);
+    const processedContent = processGitHubAlerts(alertProcessed);
     let html = marked.parse(processedContent, {
       breaks: true,
       gfm: true
     });
+    html = restoreLaTeXBlocks(html, latexBlocks);
     
     const plainText = content.replace(/[#*`\[\]()_{}]/g, '').replace(/\n+/g, ' ').trim();
     const readingTime = calculateReadingTime(plainText);
