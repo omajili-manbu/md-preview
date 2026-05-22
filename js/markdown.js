@@ -286,6 +286,7 @@
     }, 100);
     
     loadGiscus(currentPath);
+    initDocFeedback(currentPath);
   }
   
   function interceptLinks(currentPath) {
@@ -532,6 +533,119 @@
     dom.giscusContainer.appendChild(script);
   }
   
+  // Document Feedback System
+  function initDocFeedback(path) {
+    if (!dom.docFeedback || !path) {
+      if (dom.docFeedback) dom.docFeedback.style.display = 'none';
+      return;
+    }
+    
+    dom.docFeedback.style.display = 'block';
+    
+    const feedbackUp = document.getElementById('feedbackUp');
+    const feedbackDown = document.getElementById('feedbackDown');
+    const feedbackStats = document.getElementById('feedbackStats');
+    
+    if (!feedbackUp || !feedbackDown || !feedbackStats) return;
+    
+    // Reset buttons state
+    feedbackUp.classList.remove('active');
+    feedbackDown.classList.remove('active');
+    
+    // Get stored vote for this document
+    const storageKey = `doc-feedback-${path}`;
+    const storedVote = localStorage.getItem(storageKey);
+    
+    if (storedVote === 'up') {
+      feedbackUp.classList.add('active');
+    } else if (storedVote === 'down') {
+      feedbackDown.classList.add('active');
+    }
+    
+    // Load and display stats
+    updateFeedbackStats(path, feedbackStats);
+    
+    // Remove old listeners to avoid duplicates
+    const newFeedbackUp = feedbackUp.cloneNode(true);
+    const newFeedbackDown = feedbackDown.cloneNode(true);
+    feedbackUp.parentNode.replaceChild(newFeedbackUp, feedbackUp);
+    feedbackDown.parentNode.replaceChild(newFeedbackDown, feedbackDown);
+    
+    // Add click handlers
+    newFeedbackUp.addEventListener('click', () => handleFeedbackVote(path, 'up', newFeedbackUp, newFeedbackDown, feedbackStats));
+    newFeedbackDown.addEventListener('click', () => handleFeedbackVote(path, 'down', newFeedbackUp, newFeedbackDown, feedbackStats));
+  }
+  
+  function handleFeedbackVote(path, voteType, upBtn, downBtn, statsEl) {
+    const storageKey = `doc-feedback-${path}`;
+    const storedVote = localStorage.getItem(storageKey);
+    
+    // Get current stats
+    const statsKey = `doc-feedback-stats-${path}`;
+    let stats = JSON.parse(localStorage.getItem(statsKey) || '{"up": 0, "down": 0}');
+    
+    if (storedVote === voteType) {
+      // Toggle off if clicking the same button
+      localStorage.removeItem(storageKey);
+      stats[voteType] = Math.max(0, stats[voteType] - 1);
+      upBtn.classList.remove('active');
+      downBtn.classList.remove('active');
+    } else {
+      // Remove previous vote if exists
+      if (storedVote) {
+        stats[storedVote] = Math.max(0, stats[storedVote] - 1);
+      }
+      
+      // Add new vote
+      localStorage.setItem(storageKey, voteType);
+      stats[voteType]++;
+      
+      upBtn.classList.remove('active');
+      downBtn.classList.remove('active');
+      
+      if (voteType === 'up') {
+        upBtn.classList.add('active');
+      } else {
+        downBtn.classList.add('active');
+      }
+    }
+    
+    // Save stats
+    localStorage.setItem(statsKey, JSON.stringify(stats));
+    
+    // Update display
+    updateFeedbackStats(path, statsEl);
+  }
+  
+  function updateFeedbackStats(path, statsEl) {
+    const statsKey = `doc-feedback-stats-${path}`;
+    const stats = JSON.parse(localStorage.getItem(statsKey) || '{"up": 0, "down": 0}');
+    
+    const total = stats.up + stats.down;
+    
+    if (total === 0) {
+      statsEl.innerHTML = '';
+      statsEl.classList.remove('has-votes');
+      return;
+    }
+    
+    statsEl.classList.add('has-votes');
+    
+    const upPercent = total > 0 ? Math.round((stats.up / total) * 100) : 0;
+    const downPercent = total > 0 ? Math.round((stats.down / total) * 100) : 0;
+    
+    let statsHtml = '';
+    if (stats.up > 0) {
+      statsHtml += `<span style="color: #00c851;">${stats.up} 人觉得有帮助</span>`;
+    }
+    if (stats.down > 0) {
+      if (statsHtml) statsHtml += '，';
+      statsHtml += `<span style="color: #ff4444;">${stats.down} 人觉得没帮助</span>`;
+    }
+    
+    statsEl.innerHTML = statsHtml;
+  }
+  
   window.MarkdownPreview.markdown = {
     loadMarkdownFile,
     renderMarkdown,
@@ -545,6 +659,7 @@
     updateBreadcrumbs,
     setupHeadingNavigation,
     loadGiscus,
-    calculateReadingTime
+    calculateReadingTime,
+    initDocFeedback
   };
 })();

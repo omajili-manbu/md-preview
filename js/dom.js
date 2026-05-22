@@ -20,6 +20,7 @@
     editPageBtn: document.getElementById('editPageBtn'),
     commentsSection: document.getElementById('commentsSection'),
     giscusContainer: document.getElementById('giscusContainer'),
+    docFeedback: document.getElementById('docFeedback'),
     floatingMenu: document.getElementById('floatingMenu'),
     menuTrigger: document.getElementById('menuTrigger'),
     menuItems: document.querySelector('.menu-items'),

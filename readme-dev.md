@@ -62,26 +62,35 @@ node scripts/build-file-tree.js
 | **Verovio** | MusicXML 乐谱渲染 |
 | **OSMD** | OpenSheetMusicDisplay 乐谱渲染 |
 | **diff2html** | Git Diff 可视化 |
+| **Giscus** | 基于 GitHub Discussions 的评论系统 |
 
 ### 1.2 核心文件结构
 
 ```
 md-preview/
-├── index.html          # 主页面结构，库依赖声明
+├── index.html          # 主页面结构，库依赖声明，Open Graph meta 标签
 ├── app.js             # 入口文件，初始化应用
-├── styles.css         # 完整样式系统
+├── styles.css         # 完整样式系统（已弃用，使用 css/ 目录下的模块化 CSS
+├── css/              # 模块化样式目录
+│   ├── base.css     # 基础样式
+│   ├── components.css # 组件样式
+│   ├── floating.css # 悬浮球和浮动元素样式
+│   ├── layout.css  # 布局样式
+│   ├── markdown.css # Markdown 渲染样式
+│   └── responsive.css # 响应式样式
 ├── README.md          # 用户文档
 ├── readme-dev.md     # 本文档（开发者文档）
-├── js/                # 核心模块目录
-│   ├── config.js      # 配置文件
-│   ├── state.js       # 状态管理
-│   ├── dom.js         # DOM 元素引用
-│   ├── ui.js          # UI 工具函数
-│   ├── file-tree.js   # 文件树加载和渲染
-│   ├── markdown.js    # Markdown 渲染和处理
-│   ├── search.js      # 全文搜索功能
-│   ├── router.js      # Hash 路由管理
-│   └── renderers/     # 扩展功能渲染器
+├── js/              # 核心模块目录
+│   ├── config.js     # 配置文件
+│   ├── state.js     # 状态管理
+│   ├── dom.js       # DOM 元素引用
+│   ├── ui.js        # UI 工具函数
+│   ├── file-tree.js # 文件树加载和渲染
+│   ├── markdown.js  # Markdown 渲染和处理（含图片处理、阅读时间、Alerts）
+│   ├── search.js    # 全文搜索功能
+│   ├── router.js    # Hash 路由管理
+│   ├── settings.js  # 用户设置管理
+│   └── renderers/  # 扩展功能渲染器
 │       ├── mermaid.js
 │       ├── plantuml.js
 │       ├── apexcharts.js
@@ -645,13 +654,123 @@ function loadGiscus(path) {
 - 响应式设计，移动端自动适配
 - 默认为隐藏，加载文档后显示
 
+**关键改进**：修复了评论区跨文档共享的问题，每次切换文档时完全清空容器并重新初始化，确保每个文档有独立的评论区。
+
+### 2.10 阅读时间估算
+
+**功能**：自动计算并显示文档的预计阅读时间。
+
+**实现逻辑**：
+```javascript
+function calculateReadingTime(content) {
+  const textContent = content.replace(/<[^>]*>/g, '').trim();
+  const chineseChars = (textContent.match(/[\u4e00-\u9fa5]/g) || []).length;
+  const englishWords = textContent.split(/\s+/).filter(word => word.length > 0).length;
+  
+  const chineseTime = Math.ceil(chineseChars / 400); // 中文约 400 字/分钟
+  const englishTime = Math.ceil(englishWords / 200); // 英文约 200 词/分钟
+  
+  return Math.max(chineseTime, englishTime) || 1;
+}
+```
+
+**展示位置**：文档标题下方，显示为"预计阅读 x 分钟"。
+
+### 2.11 GitHub 风格 Alerts
+
+**功能**：支持 GitHub 的警告提示语法，自动渲染为美观的提示框。
+
+**支持的类型**：
+- `[!NOTE]` - 提示信息
+- `[!TIP]` - 技巧提示
+- `[!IMPORTANT]` - 重要提示
+- `[!WARNING]` - 警告
+- `[!CAUTION]` - 小心警告
+
+**实现方式**：在 Markdown 渲染前，使用正则表达式匹配并替换为自定义 HTML 结构。
+
+**样式配置**：在 `css/markdown.css` 中为每种类型定义了不同的颜色和图标。
+
+### 2.12 图片增强功能
+
+#### 2.12.1 图片懒加载
+
+**功能**：自动为所有图片添加 `loading="lazy"` 属性，提升页面加载性能。
+
+#### 2.12.2 画廊模式
+
+**功能**：连续两张或更多图片自动组合成画廊布局，支持网格排列。
+
+**实现逻辑**：遍历所有图片，识别连续的图片序列，将其包裹在 `.image-gallery` 容器中。
+
+#### 2.12.3 图片错误降级
+
+**功能**：图片加载失败时，显示文件名作为占位符，避免显示难看的裂图。
+
+**实现**：为每个图片添加 `onerror` 事件处理，加载失败时替换为 `.image-placeholder` 元素。
+
+### 2.13 Open Graph 和 Twitter Card
+
+**功能**：为网站添加社交分享元标签，让分享到社交平台时显示更美观的预览。
+
+**实现位置**：`index.html` 的 `<head>` 标签内。
+
+**meta 标签配置**：
+- Open Graph 标签：`og:type`, `og:site_name`, `og:title`, `og:description`, `og:url`
+- Twitter Card 标签：`twitter:card`, `twitter:title`, `twitter:description`, `twitter:creator`
+
+**效果**：分享到微信、Twitter、钉钉等平台时，会显示标题、描述和预览图。
+
+### 2.14 文档评分反馈系统
+
+**功能**：在每篇文档底部添加评分反馈功能，用户可以评价文档是否有帮助。
+
+**实现位置**：
+- DOM 结构：`index.html`
+- 样式：`css/markdown.css`
+- 逻辑：`js/markdown.js`
+- DOM 引用：`js/dom.js`
+
+**核心功能**：
+
+1. **投票处理**：
+   - 用户可以点击"有帮助"或"没帮助"按钮进行投票
+   - 支持切换投票和取消投票
+   - 使用 LocalStorage 持久化投票状态
+
+2. **统计展示**：
+   - 显示已有多少人选择了赞/踩
+   - 绿色显示"有帮助"人数，红色显示"没帮助"人数
+
+3. **LocalStorage 存储结构**：
+   - `doc-feedback-${path}`：记录当前用户对某文档的投票（"up" 或 "down"）
+   - `doc-feedback-stats-${path}`：记录某文档的总投票数 `{"up": N, "down": M}`
+
+**关键函数**：
+- `initDocFeedback(path)`：初始化评分组件，恢复用户之前的投票状态
+- `handleFeedbackVote(path, voteType, ...)`：处理投票逻辑
+- `updateFeedbackStats(path, statsEl)`：更新并显示投票统计
+
 ---
 
-## 3. styles.css 样式系统分析
+## 3. 样式系统分析
 
-### 3.1 设计系统
+### 3.1 CSS 模块化架构
 
-#### 3.1.1 CSS 变量（Design Tokens）
+项目已从单一的 `styles.css` 拆分为多个模块化 CSS 文件，便于维护：
+
+| 文件 | 用途 |
+|------|------|
+| `base.css` | 基础样式（重置、全局样式） |
+| `components.css` | 组件样式（按钮、卡片等） |
+| `floating.css` | 悬浮元素样式（FAB、弹出层等） |
+| `layout.css` | 布局样式（侧边栏、主内容区等） |
+| `markdown.css` | Markdown 渲染样式（包括 Alerts、图片画廊等） |
+| `responsive.css` | 响应式样式（媒体查询） |
+
+### 3.2 设计系统
+
+#### 3.2.1 CSS 变量（Design Tokens）
 
 ```css
 :root {
@@ -677,7 +796,7 @@ function loadGiscus(path) {
 }
 ```
 
-#### 3.1.2 色彩系统
+#### 3.2.2 色彩系统
 
 **主色调**：浅紫 + 浅粉
 - 柔和不刺眼
@@ -689,16 +808,16 @@ function loadGiscus(path) {
 - 卡片：`#ffffff`（纯白，突出内容）
 - 边框：`#f0f0f0`（极淡，区分层级）
 
-#### 3.1.3 字体系统
+#### 3.2.3 字体系统
 
 | 用途 | 字体 | 特点 |
 |------|------|------|
 | 标题 | Cormorant Garamond | 衬线体，优雅，适合标题 |
 | 正文 | IBM Plex Sans | 无衬线，清晰，适合阅读 |
 
-### 3.2 布局系统
+### 3.3 布局系统
 
-#### 3.2.1 整体布局
+#### 3.3.1 整体布局
 
 ```
 ┌──────────────────────────────────┐
@@ -717,7 +836,7 @@ function loadGiscus(path) {
 └──────────────────────────────────┘
 ```
 
-#### 3.2.2 响应式断点
+#### 3.3.2 响应式断点
 
 ```css
 /* 平板和手机 */
@@ -750,9 +869,9 @@ function loadGiscus(path) {
 }
 ```
 
-### 3.3 组件系统
+### 3.4 组件系统
 
-#### 3.3.1 侧边栏组件
+#### 3.4.1 侧边栏组件
 
 ```css
 .sidebar {
@@ -774,7 +893,7 @@ function loadGiscus(path) {
 - **打开**：translateX(0)
 - **关闭**：translateX(-100%)
 
-#### 3.3.2 文件树组件
+#### 3.4.2 文件树组件
 
 ```css
 .folder-item {
@@ -805,7 +924,7 @@ function loadGiscus(path) {
 - 点击文件：高亮并加载
 - 展开动画：icon 旋转 90°
 
-#### 3.3.3 Markdown 内容样式
+#### 3.4.3 Markdown 内容样式
 
 ```css
 .markdown-body {
@@ -834,9 +953,9 @@ function loadGiscus(path) {
 }
 ```
 
-### 3.4 特效系统
+### 3.5 特效系统
 
-#### 3.4.1 发光进度条
+#### 3.5.1 发光进度条
 
 ```css
 .progress-bar {
@@ -855,7 +974,7 @@ function loadGiscus(path) {
 
 **效果**：白色荧光条，仿佛有光晕
 
-#### 3.4.2 滚动条样式
+#### 3.5.2 滚动条样式
 
 ```css
 ::-webkit-scrollbar {
@@ -873,9 +992,9 @@ function loadGiscus(path) {
 }
 ```
 
-### 3.5 图表容器样式
+### 3.6 图表容器样式
 
-#### 3.5.1 Mermaid 图表
+#### 3.6.1 Mermaid 图表
 
 ```css
 .mermaid-diagram {
@@ -889,7 +1008,7 @@ function loadGiscus(path) {
 }
 ```
 
-#### 3.5.2 ApexCharts
+#### 3.6.2 ApexCharts
 
 ```css
 .apex-chart {
@@ -901,7 +1020,7 @@ function loadGiscus(path) {
 }
 ```
 
-#### 3.5.3 地理地图
+#### 3.6.3 地理地图
 
 ```css
 .geo-map {
@@ -912,7 +1031,7 @@ function loadGiscus(path) {
 }
 ```
 
-#### 3.5.4 乐谱容器
+#### 3.6.4 乐谱容器
 
 ```css
 .music-notation {
@@ -1186,10 +1305,19 @@ window.MarkdownPreview.CONFIG = {
 | **全文搜索** | ✅ 完成 | js/search.js |
 | **Hash 路由** | ✅ 完成 | js/router.js |
 | **面包屑导航** | ✅ 完成 | js/markdown.js |
-| **编辑按钮** | ✅ 完成 | js/markdown.js + styles.css |
+| **编辑按钮** | ✅ 完成 | js/markdown.js |
 | **Frontmatter** | ✅ 完成 | js/markdown.js |
-| **悬浮 FAB** | ✅ 完成 | styles.css + index.html |
-| **Giscus 评论** | ✅ 完成 | js/markdown.js + config.js + styles.css |
+| **悬浮 FAB** | ✅ 完成 | css/floating.css + index.html |
+| **Giscus 评论** | ✅ 完成 | js/markdown.js + config.js |
+| **阅读时间估算** | ✅ 完成 | js/markdown.js |
+| **GitHub 风格 Alerts** | ✅ 完成 | js/markdown.js + css/markdown.css |
+| **图片懒加载** | ✅ 完成 | js/markdown.js |
+| **图片画廊模式** | ✅ 完成 | js/markdown.js + css/markdown.css |
+| **图片错误降级** | ✅ 完成 | js/markdown.js + css/markdown.css |
+| **Open Graph / Twitter Card** | ✅ 完成 | index.html |
+| **评论区跨文档隔离** | ✅ 完成 | js/markdown.js |
+| **CSS 模块化** | ✅ 完成 | css/ 目录 |
+| **文档评分反馈** | ✅ 完成 | js/markdown.js + css/markdown.css + index.html + js/dom.js |
 
 ### 8.2 贡献指南
 
@@ -1228,5 +1356,5 @@ window.MarkdownPreview.CONFIG = {
 
 ---
 
-**最后更新**：2026-05-21
-**文档版本**：1.1.0
+**最后更新**：2026-05-22
+**文档版本**：1.2.0
