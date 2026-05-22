@@ -154,3 +154,12 @@
 .giscus {
   min-height: 200px;
 }
+
+.reading-time {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 8px 0 24px 0;
+  font-weight: 400;
+  font-style: italic;
+}
+

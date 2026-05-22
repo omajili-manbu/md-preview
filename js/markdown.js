@@ -67,6 +67,18 @@
     return { frontmatter, content };
   }
   
+  function calculateReadingTime(text) {
+    const englishWords = text.match(/[a-zA-Z]+/g) || [];
+    const englishCount = englishWords.reduce((sum, word) => sum + word.length, 0);
+    const chineseChars = text.match(/[\u4e00-\u9fa5]/g) || [];
+    const chineseCount = chineseChars.length;
+    
+    const englishMinutes = englishCount / 200;
+    const chineseMinutes = chineseCount / 400;
+    
+    return Math.ceil(englishMinutes + chineseMinutes);
+  }
+  
   function renderMarkdown(markdown, currentPath = '') {
     const { frontmatter, content } = parseFrontmatter(markdown);
     
@@ -87,7 +99,21 @@
       breaks: true,
       gfm: true
     });
-    dom.markdownContent.innerHTML = html;
+    
+    const plainText = content.replace(/[#*`\[\]()_{}]/g, '').replace(/\n+/g, ' ').trim();
+    const readingTime = calculateReadingTime(plainText);
+    const readingTimeHtml = `<div class="reading-time">预计阅读 ${readingTime} 分钟</div>`;
+    
+    const headingMatch = html.match(/<h1[^>]*>/);
+    let finalHtml;
+    if (headingMatch) {
+      const insertIndex = headingMatch.index + headingMatch[0].length;
+      finalHtml = html.slice(0, insertIndex) + readingTimeHtml + html.slice(insertIndex);
+    } else {
+      finalHtml = readingTimeHtml + html;
+    }
+    
+    dom.markdownContent.innerHTML = finalHtml;
     
     document.querySelectorAll('.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6').forEach(heading => {
       const text = heading.textContent;
@@ -396,6 +422,7 @@
     parseFrontmatter,
     updateBreadcrumbs,
     setupHeadingNavigation,
-    loadGiscus
+    loadGiscus,
+    calculateReadingTime
   };
 })();
