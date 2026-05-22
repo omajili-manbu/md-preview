@@ -11,7 +11,7 @@
 **源码：**
 
 
-$@[youtube](dQw4w9WgXcQ)$   
+@[youtube]＼(dQw4w9WgXcQ＼)
 
 
 **渲染效果：**
