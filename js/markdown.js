@@ -135,6 +135,95 @@
     return result;
   }
   
+  function processImages(container) {
+    const images = container.querySelectorAll('img');
+    
+    images.forEach(img => {
+      img.setAttribute('loading', 'lazy');
+      
+      const src = img.getAttribute('src') || '';
+      const filename = src.split('/').pop() || 'image';
+      const alt = img.getAttribute('alt') || filename;
+      
+      img.onerror = function() {
+        this.onerror = null;
+        this.style.display = 'none';
+        
+        const placeholder = document.createElement('div');
+        placeholder.className = 'image-placeholder';
+        placeholder.innerHTML = `
+          <div class="placeholder-icon">🖼️</div>
+          <div class="placeholder-text">${alt}</div>
+          <div class="placeholder-filename">${filename}</div>
+        `;
+        
+        this.parentNode.insertBefore(placeholder, this);
+      };
+    });
+    
+    const galleryMode = container.querySelectorAll('img');
+    if (galleryMode.length >= 2) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = container.innerHTML;
+      
+      const allElements = Array.from(tempDiv.childNodes);
+      const galleryGroups = [];
+      let currentGroup = [];
+      
+      allElements.forEach(node => {
+        if (node.nodeName === 'P') {
+          const imgs = node.querySelectorAll('img');
+          const textContent = node.textContent.trim();
+          
+          if (imgs.length > 0 && textContent === '') {
+            imgs.forEach(img => currentGroup.push(img.cloneNode(true)));
+            if (node.nextSibling && node.nextSibling.nodeName === 'P') {
+              const nextImgs = node.nextSibling.querySelectorAll('img');
+              const nextText = node.nextSibling.textContent.trim();
+              if (nextImgs.length > 0 && nextText === '') {
+                return;
+              }
+            }
+          } else if (currentGroup.length > 0) {
+            galleryGroups.push([...currentGroup]);
+            currentGroup = [];
+          }
+        }
+        
+        if (currentGroup.length > 0 && node.nodeName !== 'P') {
+          galleryGroups.push([...currentGroup]);
+          currentGroup = [];
+        }
+      });
+      
+      if (currentGroup.length > 0) {
+        galleryGroups.push(currentGroup);
+      }
+      
+      galleryGroups.forEach(group => {
+        if (group.length >= 2) {
+          const galleryDiv = document.createElement('div');
+          galleryDiv.className = 'image-gallery';
+          
+          const firstImg = group[0];
+          if (firstImg.parentNode) {
+            firstImg.parentNode.insertBefore(galleryDiv, firstImg);
+            group.forEach(img => {
+              if (img.parentNode && img.parentNode !== galleryDiv) {
+                galleryDiv.appendChild(img.cloneNode(true));
+                if (img.parentNode) {
+                  img.parentNode.removeChild(img);
+                }
+              }
+            });
+          }
+        }
+      });
+      
+      container.innerHTML = tempDiv.innerHTML;
+    }
+  }
+  
   function renderMarkdown(markdown, currentPath = '') {
     const { frontmatter, content } = parseFrontmatter(markdown);
     
@@ -185,6 +274,8 @@
     });
     
     interceptLinks(currentPath);
+    
+    processImages(dom.markdownContent);
     
     setTimeout(() => {
       window.MarkdownPreview.renderers.apexcharts.render();
