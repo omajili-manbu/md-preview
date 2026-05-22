@@ -79,6 +79,62 @@
     return Math.ceil(englishMinutes + chineseMinutes);
   }
   
+  function processGitHubAlerts(markdownText) {
+    const alertTypes = {
+      'NOTE': { icon: 'ℹ️', class: 'alert-note', title: 'Note' },
+      'IMPORTANT': { icon: '💡', class: 'alert-important', title: 'Important' },
+      'WARNING': { icon: '⚠️', class: 'alert-warning', title: 'Warning' },
+      'TIP': { icon: '💡', class: 'alert-tip', title: 'Tip' },
+      'CAUTION': { icon: '⚠️', class: 'alert-caution', title: 'Caution' }
+    };
+    
+    let processed = markdownText;
+    let result = '';
+    const lines = markdownText.split('\n');
+    let i = 0;
+    
+    while (i < lines.length) {
+      const line = lines[i];
+      const alertMatch = line.match(/^> \[!([A-Z]+)\](.*)$/);
+      
+      if (alertMatch) {
+        const alertType = alertTypes[alertMatch[1]];
+        if (alertType) {
+          const alertContentLines = [];
+          i++;
+          
+          while (i < lines.length && (lines[i].startsWith('> ') || lines[i].trim() === '')) {
+            if (lines[i].trim() === '') {
+              alertContentLines.push('');
+            } else {
+              alertContentLines.push(lines[i].substring(2));
+            }
+            i++;
+          }
+          
+          const alertContent = alertContentLines.join('\n').trim();
+          const parsedContent = marked.parse(alertContent, { breaks: true, gfm: true });
+          
+          result += `<div class="alert ${alertType.class}">
+            <div class="alert-header">
+              <span class="alert-icon">${alertType.icon}</span>
+              <span class="alert-title">${alertType.title}</span>
+            </div>
+            <div class="alert-content">${parsedContent}</div>
+          </div>\n`;
+        } else {
+          result += line + '\n';
+          i++;
+        }
+      } else {
+        result += line + '\n';
+        i++;
+      }
+    }
+    
+    return result;
+  }
+  
   function renderMarkdown(markdown, currentPath = '') {
     const { frontmatter, content } = parseFrontmatter(markdown);
     
@@ -95,7 +151,8 @@
     
     state.currentFrontmatter = frontmatter;
     
-    const html = marked.parse(content, {
+    const processedContent = processGitHubAlerts(content);
+    let html = marked.parse(processedContent, {
       breaks: true,
       gfm: true
     });
