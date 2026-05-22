@@ -30,49 +30,69 @@ $$
 
 **欧拉公式：**
 
-$$e^{i\pi} + 1 = 0$$
+$$
+e^{i\pi} + 1 = 0
+$$
 
 **二次方程求根公式：**
 
-$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
 
 ### 2.2 微积分
 
 **定积分：**
 
-$$\int_{a}^{b} f(x) dx = F(b) - F(a)$$
+$$
+\int_{a}^{b} f(x) dx = F(b) - F(a)
+$$
 
 **不定积分：**
 
-$$\int x^n dx = \frac{x^{n+1}}{n+1} + C$$
+$$
+\int x^n dx = \frac{x^{n+1}}{n+1} + C
+$$
 
 **导数：**
 
-$$\frac{d}{dx} f(x) = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}$$
+$$
+\frac{d}{dx} f(x) = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}
+$$
 
 **偏导数：**
 
-$$\frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} = 0$$
+$$
+\frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} = 0
+$$
 
 ### 2.3 求和与乘积
 
 **求和公式：**
 
-$$\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}$$
+$$
+\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}
+$$
 
 **乘积公式：**
 
-$$\prod_{k=1}^{n} k = n!$$
+$$
+\prod_{k=1}^{n} k = n!
+$$
 
 ### 2.4 极限
 
 **基本极限：**
 
-$$\lim_{x \to 0} \frac{\sin x}{x} = 1$$
+$$
+\lim_{x \to 0} \frac{\sin x}{x} = 1
+$$
 
 **重要极限：**
 
-$$\lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n = e$$
+$$
+\lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n = e
+$$
 
 ---
 
@@ -178,7 +198,10 @@ $$
 
 ### 5.1 小写希腊字母
 
-$\alpha, \beta, \gamma, \delta, \epsilon, \zeta, \eta, \theta, \iota, \kappa, \lambda, \mu, \nu, \xi, \pi, \rho, \sigma, \tau, \upsilon, \phi, \chi, \psi, \omega$
+$\alpha, \beta, \gamma, \delta, \epsilon, \zeta $
+$\eta, \theta, \iota, \kappa, \lambda, \mu, \nu $
+$\xi, \pi, \rho, \sigma, \tau, \upsilon, \phi, \chi $
+$\psi, \omega$
 
 ### 5.2 大写希腊字母
 
@@ -192,27 +215,39 @@ $\Gamma, \Delta, \Theta, \Lambda, \Xi, \Pi, \Sigma, \Phi, \Psi, \Omega$
 
 三角函数：
 
-$$\sin^2 x + \cos^2 x = 1$$
+$$
+\sin^2 x + \cos^2 x = 1
+$$
 
-$$\tan x = \frac{\sin x}{\cos x}$$
+$$
+\tan x = \frac{\sin x}{\cos x}
+$$
 
 对数函数：
 
-$$\log_a b = \frac{\ln b}{\ln a}$$
+$$
+\log_a b = \frac{\ln b}{\ln a}
+$$
 
 指数函数：
 
-$$e^x = \sum_{n=0}^{\infty} \frac{x^n}{n!}$$
+$$
+e^x = \sum_{n=0}^{\infty} \frac{x^n}{n!}
+$$
 
 ### 6.2 运算符
 
 模运算：
 
-$$a \equiv b \pmod{n}$$
+$$
+a \equiv b \pmod{n}
+$$
 
 极限运算：
 
-$$\limsup_{n \to \infty} a_n \geq \liminf_{n \to \infty} a_n$$
+$$
+\limsup_{n \to \infty} a_n \geq \liminf_{n \to \infty} a_n
+$$
 
 ---
 
@@ -220,21 +255,29 @@ $$\limsup_{n \to \infty} a_n \geq \liminf_{n \to \infty} a_n$$
 
 ### 7.1 概率
 
-$$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
+$$
+P(A|B) = \frac{P(B|A)P(A)}{P(B)}
+$$
 
 ### 7.2 期望与方差
 
 期望：
 
-$$E[X] = \sum_{i=1}^{n} x_i p_i$$
+$$
+E[X] = \sum_{i=1}^{n} x_i p_i
+$$
 
 方差：
 
-$$Var(X) = E[X^2] - (E[X])^2$$
+$$
+Var(X) = E[X^2] - (E[X])^2
+$$
 
 ### 7.3 正态分布
 
-$$f(x) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
+$$
+f(x) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}
+$$
 
 ---
 
@@ -244,11 +287,11 @@ $$f(x) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
 
 牛顿第二定律：
 
-$$F = ma$$
+$F = ma$
 
 万有引力定律：
 
-$$F = G \frac{m_1 m_2}{r^2}$$
+$F = G \frac{m_1 m_2}{r^2}$
 
 ### 8.2 电磁学
 
@@ -267,7 +310,9 @@ $$
 
 薛定谔方程：
 
-$$i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r}, t) = \hat{H} \Psi(\mathbf{r}, t)$$
+$$
+i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r}, t) = \hat{H} \Psi(\mathbf{r}, t)
+$$
 
 ---
 
@@ -275,15 +320,21 @@ $$i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r}, t) = \hat{H} \Psi(\mathbf{
 
 ### 9.1 化学方程式
 
-$$2H_2 + O_2 \rightarrow 2H_2O$$
+$$
+2H_2 + O_2 \rightarrow 2H_2O
+$$
 
-$$NaCl \rightarrow Na^+ + Cl^-$$
+$$
+NaCl \rightarrow Na^+ + Cl^-
+$$
 
 ### 9.2 有机化学
 
 苯的结构：
 
-$$\text{C}_6\text{H}_6$$
+$$
+\text{C}_6\text{H}_6
+$$
 
 ---
 
@@ -291,21 +342,29 @@ $$\text{C}_6\text{H}_6$$
 
 ### 10.1 傅里叶变换
 
-$$\hat{f}(\xi) = \int_{-\infty}^{\infty} f(x) e^{-2\pi i x \xi} dx$$
+$$
+\hat{f}(\xi) = \int_{-\infty}^{\infty} f(x) e^{-2\pi i x \xi} dx
+$$
 
 ### 10.2 拉普拉斯变换
 
-$$\mathcal{L}\{f(t)\}(s) = \int_{0}^{\infty} f(t) e^{-st} dt$$
+$$
+\mathcal{L}\{f(t)\}(s) = \int_{0}^{\infty} f(t) e^{-st} dt
+$$
 
 ### 10.3 张量分析
 
 爱因斯坦求和约定：
 
-$$g_{\mu\nu} dx^\mu dx^\nu$$
+$$
+g_{\mu\nu} dx^\mu dx^\nu
+$$
 
 ### 10.4 微分几何
 
-$$ds^2 = g_{ij} dx^i dx^j$$
+$$
+ds^2 = g_{ij} dx^i dx^j
+$$
 
 ---
 
