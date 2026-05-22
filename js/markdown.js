@@ -536,11 +536,11 @@
   // Document Feedback System
   function initDocFeedback(path) {
     if (!dom.docFeedback || !path) {
-      if (dom.docFeedback) dom.docFeedback.style.display = 'none';
+      if (dom.docFeedback) dom.docFeedback.classList.add('hidden');
       return;
     }
     
-    dom.docFeedback.style.display = 'block';
+    dom.docFeedback.classList.remove('hidden');
     
     const feedbackUp = document.getElementById('feedbackUp');
     const feedbackDown = document.getElementById('feedbackDown');

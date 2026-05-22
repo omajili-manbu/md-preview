@@ -692,6 +692,10 @@
 }
 
 /* Document Feedback Section */
+.hidden {
+  display: none !important;
+}
+
 .doc-feedback {
   max-width: 720px;
   margin: 0 auto;
