@@ -10,9 +10,9 @@
 
 **源码：**
 
-```txt
+```bash
 @[youtube](dQw4w9WgXcQ)
-```markdown
+```
 
 **渲染效果：**
 
