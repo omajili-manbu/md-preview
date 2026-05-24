@@ -463,6 +463,23 @@
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--color-border);
+  position: relative;
+  z-index: 1;
+}
+
+/* 修复 Leaflet 地图元素 z-index 过高问题 */
+.markdown-body .geo-map .leaflet-pane,
+.markdown-body .geo-map .leaflet-tile,
+.markdown-body .geo-map .leaflet-tile-container,
+.markdown-body .geo-map .leaflet-marker-icon,
+.markdown-body .geo-map .leaflet-marker-shadow,
+.markdown-body .geo-map .leaflet-marker-draggable {
+  z-index: 1;
+}
+
+/* Leaflet 地图容器本身的 z-index */
+.markdown-body .geo-map .leaflet-container {
+  z-index: 1;
 }
 
 .markdown-body .apex-chart {
