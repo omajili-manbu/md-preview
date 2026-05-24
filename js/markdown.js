@@ -356,10 +356,18 @@
   }
   
   async function renderWithPlugins() {
+    console.log('[Plugins] renderWithPlugins called!');
     const plugins = window.MarkdownPreview.plugins;
-    if (!plugins || typeof plugins.find !== 'function') return;
+    if (!plugins || typeof plugins.find !== 'function') {
+      console.log('[Plugins] Plugins system not available! plugins:', !!plugins, 'find:', plugins && typeof plugins.find);
+      return;
+    }
+    
+    console.log('[Plugins] Plugin registry:', plugins._registry ? Array.from(plugins._registry.keys()) : 'NO REGISTRY');
+    console.log('[Plugins] All plugins:', plugins.getAll ? plugins.getAll() : 'NO getAll');
     
     const allPres = document.querySelectorAll('.markdown-body pre');
+    console.log('[Plugins] Found pre elements:', allPres.length);
     
     for (const pre of allPres) {
       const codeElement = pre.querySelector('code');
@@ -370,8 +378,11 @@
       const language = languageMatch ? languageMatch[1] : '';
       const code = codeElement.textContent.trim();
       
+      console.log('[Plugins] Checking code block, classList:', classList, 'language:', language);
+      
       const plugin = plugins.find(code, language);
       if (plugin) {
+        console.log('[Plugins] Found plugin for language:', language, 'plugin:', plugin.name);
         try {
           const container = document.createElement('div');
           container.className = `plugin-rendered plugin-${plugin.name}`;

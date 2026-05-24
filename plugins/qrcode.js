@@ -2,15 +2,19 @@
 // Uses external APIs with fallback to local simple QR-like visualization
 
 (function() {
+  console.log('[QRCode] Plugin script loading...');
+  
   const plugin = {
     name: 'qrcode',
     description: 'QR Code generator',
     
     test: function(code, language) {
+      console.log('[QRCode] test called, language:', language, 'code:', code.substring(0, 30));
       return language === 'qrcode';
     },
     
     render: function(code, container) {
+      console.log('[QRCode] render called!');
       container.innerHTML = '';
       container.className = 'qrcode-container';
       container.style.margin = '1.5em 0';
@@ -89,16 +93,22 @@
   };
 
   // Register the plugin
+  console.log('[QRCode] Registering plugin...');
   window.MarkdownPreview = window.MarkdownPreview || {};
   window.MarkdownPreview.plugins = window.MarkdownPreview.plugins || {};
   
   if (window.MarkdownPreview.plugins.register) {
+    console.log('[QRCode] Register function available, registering now');
     window.MarkdownPreview.plugins.register(plugin);
+    console.log('[QRCode] Plugin registered!');
   } else {
+    console.log('[QRCode] Register function NOT available, waiting...');
     // If register function isn't available yet, wait for it
     const checkRegister = setInterval(() => {
       if (window.MarkdownPreview.plugins && window.MarkdownPreview.plugins.register) {
+        console.log('[QRCode] Register function became available, registering now');
         window.MarkdownPreview.plugins.register(plugin);
+        console.log('[QRCode] Plugin registered!');
         clearInterval(checkRegister);
       }
     }, 100);

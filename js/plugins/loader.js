@@ -1,9 +1,12 @@
 (function() {
+  console.log('[PluginLoader] Loading...');
   window.MarkdownPreview = window.MarkdownPreview || {};
   
   const pluginRegistry = new Map();
+  console.log('[PluginLoader] Plugin system initialized');
   
   function registerPlugin(plugin) {
+    console.log('[PluginLoader] registerPlugin called, plugin:', plugin);
     if (!plugin.name) {
       console.error('Plugin must have a name property');
       return false;
@@ -20,7 +23,8 @@
     }
     
     pluginRegistry.set(plugin.name, plugin);
-    console.log(`Plugin registered: ${plugin.name}`);
+    console.log(`[PluginLoader] Plugin registered: ${plugin.name}`);
+    console.log('[PluginLoader] Current registry:', Array.from(pluginRegistry.keys()));
     return true;
   }
   
