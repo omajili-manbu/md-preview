@@ -314,8 +314,6 @@
     
     processImages(dom.markdownContent);
     
-    renderDocNavigation(currentPath);
-    
     setTimeout(async () => {
       await renderWithPlugins();
       window.MarkdownPreview.renderers.apexcharts.render();
@@ -335,6 +333,9 @@
 
     const { prev, next } = window.MarkdownPreview.fileTree.getAdjacentFiles(currentPath);
     if (!prev && !next) return;
+
+    const existingNav = dom.markdownContent.querySelector('.doc-navigation');
+    if (existingNav) existingNav.remove();
 
     const navHtml = `
       <div class="doc-navigation">
