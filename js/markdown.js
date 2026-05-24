@@ -314,15 +314,41 @@
     
     processImages(dom.markdownContent);
     
-    setTimeout(async () => {
-      await renderWithPlugins();
-      window.MarkdownPreview.renderers.apexcharts.render();
-      window.MarkdownPreview.renderers.diff.render();
-      window.MarkdownPreview.renderers.mermaid.render();
-      window.MarkdownPreview.renderers.plantuml.render();
-      window.MarkdownPreview.renderers.embedded.render();
-      window.MarkdownPreview.renderers.katex.render();
-    }, 100);
+    // 使用 requestAnimationFrame 确保 DOM 完全渲染后再开始处理
+    requestAnimationFrame(() => {
+      setTimeout(async () => {
+        console.log('[Render] Starting plugin and renderer processing...');
+        
+        // 先执行插件系统
+        await renderWithPlugins();
+        console.log('[Render] Plugin processing complete');
+        
+        // 然后并行执行各个渲染器
+        const rendererPromises = [];
+        
+        if (window.MarkdownPreview.renderers.apexcharts) {
+          rendererPromises.push(window.MarkdownPreview.renderers.apexcharts.render());
+        }
+        if (window.MarkdownPreview.renderers.diff) {
+          rendererPromises.push(window.MarkdownPreview.renderers.diff.render());
+        }
+        if (window.MarkdownPreview.renderers.mermaid) {
+          rendererPromises.push(window.MarkdownPreview.renderers.mermaid.render());
+        }
+        if (window.MarkdownPreview.renderers.plantuml) {
+          rendererPromises.push(window.MarkdownPreview.renderers.plantuml.render());
+        }
+        if (window.MarkdownPreview.renderers.embedded) {
+          rendererPromises.push(window.MarkdownPreview.renderers.embedded.render());
+        }
+        if (window.MarkdownPreview.renderers.katex) {
+          rendererPromises.push(window.MarkdownPreview.renderers.katex.render());
+        }
+        
+        await Promise.allSettled(rendererPromises);
+        console.log('[Render] All renderers complete');
+      }, 100);
+    });
     
     renderDocNavigation(currentPath);
   }
@@ -355,6 +381,18 @@
     });
   }
   
+  // 内置渲染器处理的语言列表 - 插件系统不应该处理这些语言
+  const BUILTIN_LANGUAGES = [
+    'mermaid',
+    'katex',
+    'latex',
+    'geo',
+    'apexcharts',
+    'chart',
+    'embedded',
+    'plantuml'
+  ];
+
   async function renderWithPlugins() {
     console.log('[Plugins] renderWithPlugins called!');
     const plugins = window.MarkdownPreview.plugins;
@@ -379,6 +417,12 @@
       const languageMatch = classList ? classList.match(/language-(\S+)/) : null;
       const language = languageMatch ? languageMatch[1] : '';
       const code = codeElement.textContent.trim();
+      
+      // 跳过内置渲染器处理的语言
+      if (BUILTIN_LANGUAGES.includes(language)) {
+        console.log('[Plugins] Skipping builtin language:', language);
+        continue;
+      }
       
       console.log('[Plugins] Checking code block, classList:', classList, 'language:', language);
       

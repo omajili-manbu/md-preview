@@ -92,27 +92,23 @@
     }
   };
 
-  // Register the plugin
+  // Register the plugin - wait for plugins system to be ready
   console.log('[QRCode] Registering plugin...');
   window.MarkdownPreview = window.MarkdownPreview || {};
   window.MarkdownPreview.plugins = window.MarkdownPreview.plugins || {};
   
-  if (window.MarkdownPreview.plugins.register) {
-    console.log('[QRCode] Register function available, registering now');
-    window.MarkdownPreview.plugins.register(plugin);
-    console.log('[QRCode] Plugin registered!');
-  } else {
-    console.log('[QRCode] Register function NOT available, waiting...');
-    // If register function isn't available yet, wait for it
-    const checkRegister = setInterval(() => {
-      if (window.MarkdownPreview.plugins && window.MarkdownPreview.plugins.register) {
-        console.log('[QRCode] Register function became available, registering now');
-        window.MarkdownPreview.plugins.register(plugin);
-        console.log('[QRCode] Plugin registered!');
-        clearInterval(checkRegister);
-      }
-    }, 100);
+  function tryRegister() {
+    if (window.MarkdownPreview.plugins && typeof window.MarkdownPreview.plugins.register === 'function') {
+      console.log('[QRCode] Register function available, registering now');
+      window.MarkdownPreview.plugins.register(plugin);
+      console.log('[QRCode] Plugin registered!');
+    } else {
+      console.log('[QRCode] Register function NOT available, waiting...');
+      setTimeout(tryRegister, 10);
+    }
   }
+  
+  tryRegister();
 })();
 
 function drawFallbackQR(container, data, size) {
