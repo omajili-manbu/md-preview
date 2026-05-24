@@ -326,34 +326,26 @@
       window.MarkdownPreview.renderers.katex.render();
     }, 100);
     
-    renderDocNavigation(currentPath);
     loadGiscus(currentPath);
+    renderDocNavigation(currentPath);
   }
   
   function renderDocNavigation(currentPath) {
     if (!currentPath || !state.fileTreeData) return;
 
     const { prev, next } = window.MarkdownPreview.fileTree.getAdjacentFiles(currentPath);
-    
-    let oldNav = document.querySelector('.doc-navigation-side');
-    if (oldNav) oldNav.remove();
+    if (!prev && !next) return;
 
     const navHtml = `
-      <div class="doc-navigation-side">
-        ${prev ? `<a href="#/${prev.path}" data-path="${prev.path}" class="nav-link-side nav-prev-side" title="${prev.name}">
-          <span class="nav-arrow">←</span>
-          <span class="nav-label">${prev.name}</span>
-        </a>` : ''}
-        ${next ? `<a href="#/${next.path}" data-path="${next.path}" class="nav-link-side nav-next-side" title="${next.name}">
-          <span class="nav-label">${next.name}</span>
-          <span class="nav-arrow">→</span>
-        </a>` : ''}
+      <div class="doc-navigation">
+        ${prev ? `<a href="#/${prev.path}" data-path="${prev.path}" class="nav-link">← ${prev.name}</a>` : ''}
+        ${next ? `<a href="#/${next.path}" data-path="${next.path}" class="nav-link">${next.name} →</a>` : ''}
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', navHtml);
+    dom.markdownContent.insertAdjacentHTML('beforeend', navHtml);
 
-    document.querySelectorAll('.doc-navigation-side .nav-link-side').forEach(link => {
+    dom.markdownContent.querySelectorAll('.doc-navigation .nav-link').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const path = link.dataset.path;

@@ -197,20 +197,17 @@
     };
 
     const originalNav = element.querySelector('.doc-navigation');
-    const sideNav = document.querySelector('.doc-navigation-side');
     const originalHeader = document.querySelector('.page-header');
     const floatingMenu = document.getElementById('floatingMenuBtn');
     const settingsPanel = document.getElementById('settingsPanel');
     
     if (originalNav) originalNav.style.display = 'none';
-    if (sideNav) sideNav.style.display = 'none';
     if (originalHeader) originalHeader.style.display = 'none';
     if (floatingMenu) floatingMenu.style.display = 'none';
     if (settingsPanel) settingsPanel.style.display = 'none';
 
     html2pdf().set(opt).from(element).save().then(() => {
       if (originalNav) originalNav.style.display = '';
-      if (sideNav) sideNav.style.display = '';
       if (originalHeader) originalHeader.style.display = '';
       if (floatingMenu) floatingMenu.style.display = '';
       if (settingsPanel) settingsPanel.style.display = '';
