@@ -1,7 +1,3 @@
-// qrcode.js - Minimal QR Code generator based on qrcode.js by davidshimjs
-// Licensed under the MIT license.
-
-(function() {
 //---------------------------------------------------------------------
 // QRCode for JavaScript
 //
@@ -182,7 +178,7 @@ QRCodeModel.prototype={
 				for(var c=0;c<2;c++){
 					if(this.modules[row][col-c]==null){
 						var dark=false;
-						if(byteIndex<data.length){dark=(((data[byteIndex]>>>bitIndex)&1)==1);}
+						if(byteIndex<data.length){dark=((data[byteIndex]>>>bitIndex)&1)==1;}
 						var mask=QRUtil.getMask(maskPattern,row,col-c);
 						if(mask){dark=!dark;}
 						this.modules[row][col-c]=dark;
@@ -264,26 +260,26 @@ var QRUtil={
 	getLengthInBits:function(mode,type){
 		if(1<=type&&type<10){
 			switch(mode){
-				case QRMode.MODE_NUMBER:return 10;
-				case QRMode.MODE_ALPHA_NUM:return 9;
-				case QRMode.MODE_8BIT_BYTE:return 8;
-				case QRMode.MODE_KANJI:return 8;
+				case QRMode.MODE_NUMBER:return10;
+				case QRMode.MODE_ALPHA_NUM:return9;
+				case QRMode.MODE_8BIT_BYTE:return8;
+				case QRMode.MODE_KANJI:return8;
 				default:throw new Error("mode:"+mode);
 			}
 		}else if(type<27){
 			switch(mode){
-				case QRMode.MODE_NUMBER:return 12;
-				case QRMode.MODE_ALPHA_NUM:return 11;
-				case QRMode.MODE_8BIT_BYTE:return 16;
-				case QRMode.MODE_KANJI:return 10;
+				case QRMode.MODE_NUMBER:return12;
+				case QRMode.MODE_ALPHA_NUM:return11;
+				case QRMode.MODE_8BIT_BYTE:return16;
+				case QRMode.MODE_KANJI:return10;
 				default:throw new Error("mode:"+mode);
 			}
 		}else if(type<41){
 			switch(mode){
-				case QRMode.MODE_NUMBER:return 14;
-				case QRMode.MODE_ALPHA_NUM:return 13;
-				case QRMode.MODE_8BIT_BYTE:return 16;
-				case QRMode.MODE_KANJI:return 12;
+				case QRMode.MODE_NUMBER:return14;
+				case QRMode.MODE_ALPHA_NUM:return13;
+				case QRMode.MODE_8BIT_BYTE:return16;
+				case QRMode.MODE_KANJI:return12;
 				default:throw new Error("mode:"+mode);
 			}
 		}else{throw new Error("type:"+type);}
@@ -513,5 +509,3 @@ export default {
 		container.appendChild(textDiv);
 	}
 };
-
-})();
