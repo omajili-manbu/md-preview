@@ -72,10 +72,11 @@
   }
   
   async function autoLoadPlugins() {
+    console.log('[Plugins] Starting auto-load');
     try {
       const response = await fetch('plugins/');
       if (!response.ok) {
-        console.warn('Plugins directory not accessible');
+        console.warn('[Plugins] Directory fetch failed:', response.status);
         return;
       }
       
@@ -84,23 +85,27 @@
       const doc = parser.parseFromString(html, 'text/html');
       const links = doc.querySelectorAll('a[href$=".js"]');
       
+      console.log('[Plugins] Found plugin files:', links.length);
+      
       const loadPromises = [];
       links.forEach(link => {
         const href = link.getAttribute('href');
         if (href) {
+          console.log('[Plugins] Loading:', href);
           loadPromises.push(loadPlugin('plugins/' + href));
         }
       });
       
       if (loadPromises.length > 0) {
         await Promise.allSettled(loadPromises);
-        console.log(`Loaded ${pluginRegistry.size} plugins from plugins/ directory`);
+        console.log(`[Plugins] Loaded ${pluginRegistry.size} plugins from plugins/ directory`);
+        console.log('[Plugins] Available plugins:', Array.from(pluginRegistry.keys()));
       }
     } catch (error) {
-      console.warn('Auto plugin loading skipped:', error.message);
+      console.warn('[Plugins] Auto plugin loading skipped:', error.message);
     }
   }
-  
+
   window.MarkdownPreview.plugins = {
     register: registerPlugin,
     unregister: unregisterPlugin,

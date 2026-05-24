@@ -3,12 +3,14 @@
   window.MarkdownPreview.renderers = window.MarkdownPreview.renderers || {};
   
   async function render() {
+    console.log('[Mermaid] Starting render');
     if (typeof mermaid === 'undefined') {
-      console.error('Mermaid library is not loaded');
+      console.error('[Mermaid] Library is not loaded');
       return;
     }
     
     const allPres = document.querySelectorAll('.markdown-body pre');
+    console.log('[Mermaid] Found pre elements:', allPres.length);
     
     for (let i = 0; i < allPres.length; i++) {
       const pre = allPres[i];
@@ -19,17 +21,21 @@
       const classList = codeElement.className;
       if (!classList || !classList.includes('language-mermaid')) continue;
       
+      console.log('[Mermaid] Found mermaid block at index', i);
+      
       const mermaidCode = codeElement.textContent.trim();
       const id = 'mermaid-' + Date.now() + '-' + i;
       
       try {
+        console.log('[Mermaid] Rendering diagram:', id);
         const { svg } = await mermaid.render(id, mermaidCode);
         const container = document.createElement('div');
         container.className = 'mermaid-diagram';
         container.innerHTML = svg;
         pre.replaceWith(container);
+        console.log('[Mermaid] Successfully rendered:', id);
       } catch (error) {
-        console.error('Mermaid rendering error:', error);
+        console.error('[Mermaid] Rendering error:', error);
         const errorDiv = document.createElement('div');
         errorDiv.style.color = '#ff6b6b';
         errorDiv.style.padding = '10px';
