@@ -319,7 +319,6 @@
     setTimeout(async () => {
       await renderWithPlugins();
       window.MarkdownPreview.renderers.apexcharts.render();
-      window.MarkdownPreview.renderers.musicNotation.render();
       window.MarkdownPreview.renderers.diff.render();
       window.MarkdownPreview.renderers.mermaid.render();
       window.MarkdownPreview.renderers.plantuml.render();
