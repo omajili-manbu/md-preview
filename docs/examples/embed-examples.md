@@ -16,7 +16,9 @@
 
 **渲染效果：**
 
+```embed
 @[youtube](dQw4w9WgXcQ)
+```
 
 ---
 
@@ -30,7 +32,9 @@
 
 **渲染效果：**
 
+```embed
 @[bilibili](BV1xx411c7mZ)
+```
 
 ---
 
@@ -44,7 +48,9 @@
 
 **渲染效果：**
 
+```embed
 @[vimeo](148751763)
+```
 
 ---
 
@@ -60,7 +66,9 @@
 
 **渲染效果：**
 
+```embed
 @[figma](https://www.figma.com/file/vkIFRuwbWHpFqGlRQF9U4t)
+```
 
 ---
 
@@ -76,7 +84,9 @@
 
 **渲染效果：**
 
+```embed
 @[codepen](https://codepen.io/alexdevero/pen/Lvwzjp)
+```
 
 ---
 
@@ -90,7 +100,9 @@
 
 **渲染效果：**
 
+```embed
 @[jsfiddle](https://jsfiddle.net/wb8khn5m/)
+```
 
 ---
 
@@ -104,7 +116,9 @@
 
 **渲染效果：**
 
+```embed
 @[stackblitz](https://stackblitz.com/edit/react)
+```
 
 ---
 
@@ -118,7 +132,9 @@
 
 **渲染效果：**
 
+```embed
 @[replit](https://replit.com/@replit/React)
+```
 
 ---
 
@@ -134,7 +150,9 @@
 
 **渲染效果：**
 
+```embed
 @[googlemaps](https://www.google.com/maps/embed/v1/place?q=Beijing,China&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8)
+```
 
 ---
 
@@ -148,7 +166,9 @@
 
 **渲染效果：**
 
+```embed
 @[openstreetmap](https://www.openstreetmap.org/export/embed.html?bbox=116.3693,39.9042,116.3793,39.9142&layer=mapnik)
+```
 
 ---
 
@@ -164,7 +184,9 @@
 
 **渲染效果：**
 
+```embed
 @[googledocs](https://docs.google.com/document/d/e/2PACX-1vR9q9B6F7xJjX2sK8lQ7mN4D3wY5fH2gK9hM8jG0fF8aR7dT6cY5bX4aW3sQ2dZ1fV0eU9rT8yG7fH6gF5dS4aD3sQ2dZ1fV0eU9rT8yG7fH6gF5dS4aD3/preview)
+```
 
 ---
 
@@ -180,7 +202,9 @@
 
 **渲染效果：**
 
+```embed
 @[gist](https://gist.github.com/octocat/6f9c25ad5b98408c8143)
+```
 
 ---
 

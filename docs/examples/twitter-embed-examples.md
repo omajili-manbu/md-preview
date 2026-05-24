@@ -16,7 +16,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/elonmusk/status/1726876868777328640)
+```
 
 ---
 
@@ -30,7 +32,9 @@
 
 **渲染效果：**
 
+```x
 @[x](https://x.com/OpenAI/status/1234567890)
+```
 
 ---
 
@@ -46,7 +50,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/OpenAI)
+```
 
 **说明：**
 - 显示该用户最近的推文
@@ -65,7 +71,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/username/likes)
+```
 
 ---
 
@@ -79,7 +87,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/nasa/media)
+```
 
 ---
 
@@ -95,7 +105,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/username/lists/tech-news)
+```
 
 ---
 
@@ -113,7 +125,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/username/status/线程第一条ID)
+```
 
 **说明：**
 - 点击嵌入的推文可以查看完整线程
@@ -134,7 +148,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/username/status/引用推文ID)
+```
 
 ---
 
@@ -255,7 +271,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/username/status/1234567890)
+```
 
 ### 产品发布
 
@@ -269,7 +287,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/company/status/发布推文ID)
+```
 
 ### 新闻报道
 
@@ -283,7 +303,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/official_user/status/新闻推文ID)
+```
 
 ### 社区文档
 
@@ -297,7 +319,9 @@
 
 **渲染效果：**
 
+```twitter
 @[twitter](https://twitter.com/community_handle)
+```
 
 ---
 

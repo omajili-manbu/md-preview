@@ -6,18 +6,23 @@
   
   function render() {
     const content = dom.markdownContent.innerHTML;
+    let processedContent = content;
     
-    // 保护代码块中的内容，避免被替换
-    const codeBlocks = [];
-    let processedContent = content.replace(/<pre[^>]*>[\s\S]*?<\/pre>/gi, (match) => {
-      const placeholder = `__CODEBLOCK_${codeBlocks.length}__`;
-      codeBlocks.push(match);
-      return placeholder;
+    // 支持的嵌入语言类型
+    const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x'];
+    
+    // 处理代码块中的 @[...] 语法（仅当语言类型匹配时）
+    const preTags = processedContent.match(/<pre[^>]*>[\s\S]*?<\/pre>/gi) || [];
+    const prePlaceholders = [];
+    
+    preTags.forEach((pre, idx) => {
+      const placeholder = `__PRE_PLACEHOLDER_${idx}__`;
+      prePlaceholders.push({ placeholder, content: pre });
+      processedContent = processedContent.replace(pre, placeholder);
     });
     
-    // 在受保护的内容上搜索 embed 模式
+    // 在非代码块区域渲染 @[...]
     const embedRegex = /@\[(\w+)\]\(([^)]+)\)/g;
-    
     let match;
     while ((match = embedRegex.exec(processedContent)) !== null) {
       const service = match[1].toLowerCase();
@@ -35,9 +40,48 @@
       }
     }
     
-    // 恢复代码块内容
-    codeBlocks.forEach((block, index) => {
-      processedContent = processedContent.replace(`__CODEBLOCK_${index}__`, block);
+    // 恢复代码块，并根据语言类型处理
+    prePlaceholders.forEach(({ placeholder, content }) => {
+      let shouldRender = false;
+      let detectedLanguage = '';
+      
+      for (const lang of embedLanguages) {
+        if (content.includes(`language-${lang}`)) {
+          shouldRender = true;
+          detectedLanguage = lang;
+          break;
+        }
+      }
+      
+      if (shouldRender) {
+        let newContent = content;
+        const innerEmbedRegex = /@\[(\w+)\]\(([^)]+)\)/g;
+        let innerMatch;
+        while ((innerMatch = innerEmbedRegex.exec(newContent)) !== null) {
+          const service = innerMatch[1].toLowerCase();
+          const url = innerMatch[2];
+          
+          if (service === 'geojson' || service === 'topojson') {
+            const mapId = 'map-' + Date.now();
+            const container = `<div id="${mapId}" class="geo-map" style="height:400px;border-radius:8px;overflow:hidden"></div>`;
+            newContent = newContent.replace(innerMatch[0], container);
+            
+            setTimeout(() => {
+              window.MarkdownPreview.renderers.geo.renderGeoData(service, url, innerMatch[0]);
+            }, 10);
+          } else if (service === 'twitter' || service === 'x') {
+            renderTwitterEmbed(service, url, innerMatch[0]);
+          } else {
+            const iframe = createEmbedIframe(service, url);
+            if (iframe) {
+              newContent = newContent.replace(innerMatch[0], iframe);
+            }
+          }
+        }
+        processedContent = processedContent.replace(placeholder, newContent);
+      } else {
+        processedContent = processedContent.replace(placeholder, content);
+      }
     });
     
     // 更新 DOM
