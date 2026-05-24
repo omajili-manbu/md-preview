@@ -8,29 +8,29 @@
 
 ### 嵌入单条推文
 
-**渲染效果：**
-
-@[twitter](https://twitter.com/elonmusk/status/1726876868777328640)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/elonmusk/status/1726876868777328640)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/elonmusk/status/1726876868777328640)
 
 ---
 
 ### 使用 X 替代 Twitter
 
-**渲染效果：**
-
-@[x](https://x.com/OpenAI/status/1234567890)
-
 **源码：**
 
 ```markdown
 @[x](https://x.com/OpenAI/status/1234567890)
 ```
+
+**渲染效果：**
+
+@[x](https://x.com/OpenAI/status/1234567890)
 
 ---
 
@@ -38,15 +38,15 @@
 
 ### 嵌入用户时间线
 
-**渲染效果：**
-
-@[twitter](https://twitter.com/OpenAI)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/OpenAI)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/OpenAI)
 
 **说明：**
 - 显示该用户最近的推文
@@ -57,29 +57,29 @@
 
 ### 嵌入用户喜欢的内容
 
-**渲染效果：**
-
-@[twitter](https://twitter.com/username/likes)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/username/likes)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/username/likes)
 
 ---
 
 ### 嵌入用户媒体
 
-**渲染效果：**
-
-@[twitter](https://twitter.com/nasa/media)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/nasa/media)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/nasa/media)
 
 ---
 
@@ -87,15 +87,15 @@
 
 ### 嵌入列表
 
-**渲染效果：**
-
-@[twitter](https://twitter.com/username/lists/tech-news)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/username/lists/tech-news)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/username/lists/tech-news)
 
 ---
 
@@ -105,15 +105,15 @@
 
 线程是一系列相关的推文，可以完整嵌入：
 
-**渲染效果：**
-
-@[twitter](https://twitter.com/username/status/线程第一条ID)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/username/status/线程第一条ID)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/username/status/线程第一条ID)
 
 **说明：**
 - 点击嵌入的推文可以查看完整线程
@@ -126,15 +126,15 @@
 
 引用推文会自动显示原始推文和引用内容：
 
-**渲染效果：**
-
-@[twitter](https://twitter.com/username/status/引用推文ID)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/username/status/引用推文ID)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/username/status/引用推文ID)
 
 ---
 
@@ -247,49 +247,57 @@
 
 在博客文章中嵌入相关讨论：
 
-@[twitter](https://twitter.com/username/status/1234567890)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/username/status/1234567890)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/username/status/1234567890)
 
 ### 产品发布
 
 展示产品发布相关推文：
 
-@[twitter](https://twitter.com/company/status/发布推文ID)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/company/status/发布推文ID)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/company/status/发布推文ID)
 
 ### 新闻报道
 
 引用重要新闻人物的推文：
 
-@[twitter](https://twitter.com/official_user/status/新闻推文ID)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/official_user/status/新闻推文ID)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/official_user/status/新闻推文ID)
 
 ### 社区文档
 
 在文档中添加社区讨论链接：
 
-@[twitter](https://twitter.com/community_handle)
-
 **源码：**
 
 ```markdown
 @[twitter](https://twitter.com/community_handle)
 ```
+
+**渲染效果：**
+
+@[twitter](https://twitter.com/community_handle)
 
 ---
 
