@@ -173,11 +173,15 @@
 }
 
 .nav-link {
+  display: block;
+  flex: 1;
+  padding: 16px 0;
   color: var(--color-text-muted);
   text-decoration: none;
   font-size: 14px;
   font-weight: 400;
   transition: var(--transition-fast);
+  cursor: pointer;
 }
 
 .nav-link:hover {
@@ -186,20 +190,28 @@
 
 .nav-prev {
   text-align: left;
+  padding-right: 20px;
 }
 
 .nav-next {
   text-align: right;
+  padding-left: 20px;
 }
 
 @media (max-width: 640px) {
   .doc-navigation {
     flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
+    gap: 8px;
+    align-items: stretch;
   }
   
+  .nav-link {
+    padding: 12px 0;
+  }
+  
+  .nav-prev,
   .nav-next {
+    padding: 0;
     text-align: left;
   }
 }

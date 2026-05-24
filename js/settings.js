@@ -182,70 +182,36 @@
   }
   
   function downloadPDF(fileName) {
-    const markdownContent = document.getElementById('markdownContent');
-    if (!markdownContent) {
+    const element = document.getElementById('markdownContent');
+    if (!element) {
       alert('无法获取文档内容');
       return;
     }
-    
-    const originalTitle = document.title;
-    document.title = fileName;
-    
-    const printStyle = document.createElement('style');
-    printStyle.id = 'print-style-temp';
-    printStyle.textContent = `
-      @media print {
-        body * {
-          visibility: hidden;
-        }
-        #markdownContent,
-        #markdownContent * {
-          visibility: visible;
-        }
-        #markdownContent {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          padding: 20px;
-        }
-        .page-header,
-        .doc-navigation,
-        #commentsSection,
-        #floatingMenuBtn,
-        #settingsPanel {
-          display: none !important;
-        }
-        .markdown-body h1, h2, h3, h4, h5, h6 {
-          margin-top: 1.5em;
-          margin-bottom: 0.5em;
-          page-break-after: avoid;
-        }
-        pre, img, .geo-map, table {
-          page-break-inside: avoid;
-        }
-        .geo-map {
-          height: 300px !important;
-        }
-        @page {
-          margin: 2cm;
-        }
-      }
-    `;
-    document.head.appendChild(printStyle);
-    
-    const onAfterPrint = () => {
-      document.title = originalTitle;
-      const style = document.getElementById('print-style-temp');
-      if (style) style.remove();
-      window.removeEventListener('afterprint', onAfterPrint);
+
+    const opt = {
+      margin: 1,
+      filename: `${fileName}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
+
+    const originalNav = element.querySelector('.doc-navigation');
+    const originalHeader = document.querySelector('.page-header');
+    const floatingMenu = document.getElementById('floatingMenuBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
     
-    window.addEventListener('afterprint', onAfterPrint);
-    
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    if (originalNav) originalNav.style.display = 'none';
+    if (originalHeader) originalHeader.style.display = 'none';
+    if (floatingMenu) floatingMenu.style.display = 'none';
+    if (settingsPanel) settingsPanel.style.display = 'none';
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      if (originalNav) originalNav.style.display = '';
+      if (originalHeader) originalHeader.style.display = '';
+      if (floatingMenu) floatingMenu.style.display = '';
+      if (settingsPanel) settingsPanel.style.display = '';
+    });
   }
   
   function initDownloadButtons() {
