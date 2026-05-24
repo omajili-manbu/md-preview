@@ -593,8 +593,6 @@
     const settings = window.MarkdownPreview.settings ? window.MarkdownPreview.settings.load() : { showComments: true };
     
     console.log('[Giscus] Loading comments for path:', path);
-    console.log('[Giscus] Config:', giscusConfig);
-    console.log('[Giscus] Settings:', settings);
     
     if (!giscusConfig || !giscusConfig.enabled || !giscusConfig.repo || !path || path.trim() === '' || !settings.showComments) {
       console.log('[Giscus] Conditions not met, hiding comments');
@@ -606,84 +604,66 @@
       return;
     }
     
-    let commentsSection = document.querySelector('.comments-section');
-    if (!commentsSection) {
-      console.log('[Giscus] Creating new comments section');
-      commentsSection = document.createElement('div');
-      commentsSection.className = 'comments-section comments-section-visible';
-      const giscusContainer = document.createElement('div');
-      giscusContainer.className = 'giscus';
-      giscusContainer.id = 'giscus-container';
-      commentsSection.appendChild(giscusContainer);
-      dom.markdownContent.appendChild(commentsSection);
-    } else {
-      console.log('[Giscus] Found existing comments section, making visible');
-      commentsSection.classList.add('comments-section-visible');
+    // 移除旧的评论区，重新创建，确保干净的加载状态
+    const existingComments = document.querySelector('.comments-section');
+    if (existingComments) {
+      existingComments.remove();
     }
     
-    // 强制设置样式
+    // 移除旧的 giscus script
+    const oldScripts = document.querySelectorAll('script[src="https://giscus.app/client.js"]');
+    oldScripts.forEach(script => script.remove());
+    
+    // 创建新的评论区容器
+    const commentsSection = document.createElement('div');
+    commentsSection.className = 'comments-section comments-section-visible';
     commentsSection.style.display = 'block';
     commentsSection.style.visibility = 'visible';
     commentsSection.style.opacity = '1';
     
-    const giscusContainer = document.getElementById('giscus-container');
-    const isGiscusLoaded = giscusContainer && giscusContainer.querySelector('iframe');
+    const giscusContainer = document.createElement('div');
+    giscusContainer.className = 'giscus';
+    commentsSection.appendChild(giscusContainer);
+    dom.markdownContent.appendChild(commentsSection);
     
-    if (!isGiscusLoaded) {
-      console.log('[Giscus] Loading giscus script');
-      const oldScripts = document.querySelectorAll('script[src="https://giscus.app/client.js"]');
-      oldScripts.forEach(script => script.remove());
-      
-      const script = document.createElement('script');
-      script.src = 'https://giscus.app/client.js';
-      script.setAttribute('data-repo', giscusConfig.repo);
-      script.setAttribute('data-repo-id', giscusConfig.repoId);
-      script.setAttribute('data-category', giscusConfig.category);
-      script.setAttribute('data-category-id', giscusConfig.categoryId);
-      script.setAttribute('data-mapping', 'term');
-      script.setAttribute('data-term', path);
-      script.setAttribute('data-strict', giscusConfig.strict);
-      script.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled);
-      script.setAttribute('data-emit-metadata', giscusConfig.emitMetadata);
-      script.setAttribute('data-input-position', giscusConfig.inputPosition);
-      script.setAttribute('data-theme', giscusConfig.theme);
-      script.setAttribute('data-lang', giscusConfig.lang);
-      script.setAttribute('data-loading', giscusConfig.loading);
-      script.crossOrigin = 'anonymous';
-      script.async = true;
-      
-      if (window.location.hash && !window.sessionStorage.getItem('giscus_original_url')) {
-        window.sessionStorage.setItem('giscus_original_url', window.location.href);
-      }
-      
-      giscusContainer.appendChild(script);
-    } else {
-      console.log('[Giscus] Giscus already loaded, updating term');
-      const iframe = giscusContainer.querySelector('iframe');
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          type: 'set-term',
-          term: path
-        }, 'https://giscus.app');
-      }
+    // 保存当前 URL，以便 giscus 重定向后能恢复
+    if (window.location.href && !window.sessionStorage.getItem('giscus_original_url')) {
+      window.sessionStorage.setItem('giscus_original_url', window.location.href);
     }
     
-    // 多次检查确保可见
-    const ensureVisibility = () => {
+    // 加载 giscus script，使用文档路径作为唯一 identifier
+    const script = document.createElement('script');
+    script.src = 'https://giscus.app/client.js';
+    script.setAttribute('data-repo', giscusConfig.repo);
+    script.setAttribute('data-repo-id', giscusConfig.repoId);
+    script.setAttribute('data-category', giscusConfig.category);
+    script.setAttribute('data-category-id', giscusConfig.categoryId);
+    script.setAttribute('data-mapping', 'specific');
+    script.setAttribute('data-term', path);
+    script.setAttribute('data-strict', '0');
+    script.setAttribute('data-reactions-enabled', '1');
+    script.setAttribute('data-emit-metadata', '0');
+    script.setAttribute('data-input-position', 'bottom');
+    script.setAttribute('data-theme', giscusConfig.theme);
+    script.setAttribute('data-lang', 'zh-CN');
+    script.setAttribute('data-loading', 'lazy');
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+    
+    console.log('[Giscus] Creating script with path:', path);
+    giscusContainer.appendChild(script);
+    
+    // 延迟确保可见
+    setTimeout(() => {
       const comments = document.querySelector('.comments-section');
       if (comments) {
-        console.log('[Giscus] Ensuring visibility');
         comments.classList.add('comments-section-visible');
         comments.style.display = 'block';
         comments.style.visibility = 'visible';
         comments.style.opacity = '1';
+        console.log('[Giscus] Comments section made visible');
       }
-    };
-    
-    ensureVisibility();
-    setTimeout(ensureVisibility, 200);
-    setTimeout(ensureVisibility, 500);
-    setTimeout(ensureVisibility, 1000);
+    }, 300);
   }
   
   window.MarkdownPreview.markdown = {
