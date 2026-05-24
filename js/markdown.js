@@ -255,41 +255,6 @@
     container.innerHTML = tempDiv.innerHTML;
   }
   
-  function protectCodeBlocksAndEmbeds(markdownText) {
-    const codeBlocks = [];
-    const embedBlocks = [];
-    let index = 0;
-    
-    let processed = markdownText.replace(/```[\s\S]*?```/g, (match) => {
-      const placeholder = `<!--CODE_BLOCK_${index}-->`;
-      codeBlocks.push(match);
-      index++;
-      return placeholder;
-    });
-    
-    index = 0;
-    processed = processed.replace(/@\[(\w+)\]\([\s\S]*?\)/g, (match) => {
-      const placeholder = `<!--EMBED_BLOCK_${index}-->`;
-      embedBlocks.push(match);
-      index++;
-      return placeholder;
-    });
-    
-    return { processed, codeBlocks, embedBlocks };
-  }
-  
-  function restoreCodeBlocksAndEmbeds(html, codeBlocks, embedBlocks) {
-    codeBlocks.forEach((block, idx) => {
-      html = html.replace(`<!--CODE_BLOCK_${idx}-->`, block);
-    });
-    
-    embedBlocks.forEach((embed, idx) => {
-      html = html.replace(`<!--EMBED_BLOCK_${idx}-->`, embed);
-    });
-    
-    return html;
-  }
-
   function renderMarkdown(markdown, currentPath = '') {
     const { frontmatter, content } = parseFrontmatter(markdown);
     
@@ -306,15 +271,12 @@
     
     state.currentFrontmatter = frontmatter;
     
-    const { processed: protectedContent, codeBlocks, embedBlocks } = protectCodeBlocksAndEmbeds(content);
-    const { processed: alertProcessed, latexBlocks } = protectLaTeXBlocks(protectedContent);
+    const { processed: alertProcessed, latexBlocks } = protectLaTeXBlocks(content);
     const processedContent = processGitHubAlerts(alertProcessed);
     let html = marked.parse(processedContent, {
       breaks: true,
       gfm: true
     });
-    
-    html = restoreCodeBlocksAndEmbeds(html, codeBlocks, embedBlocks);
     
     html = html.replace(/LATEXPROTECT_(\d+)_/g, (match, idx) => {
       const latex = latexBlocks[parseInt(idx)];

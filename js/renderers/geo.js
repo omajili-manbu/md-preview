@@ -4,7 +4,7 @@
   
   const { dom } = window.MarkdownPreview;
   
-  function renderGeoData(type, dataStr, originalMatch) {
+  function renderGeoData(type, dataStr, originalMatch, mapId) {
     if (typeof L === 'undefined') {
       console.error('Leaflet library is not loaded');
       return;
@@ -12,33 +12,27 @@
     
     try {
       const geoData = JSON.parse(dataStr);
-      const mapId = 'map-' + Date.now();
-      const container = document.createElement('div');
-      container.id = mapId;
-      container.className = 'geo-map';
-      container.style.height = '400px';
-      container.style.borderRadius = '8px';
-      container.style.overflow = 'hidden';
-      
-      const targetContent = originalMatch.includes('__CODEBLOCK_') 
-        ? dom.markdownContent.innerHTML 
-        : dom.markdownContent.innerHTML;
-      
-      const matchIndex = targetContent.indexOf(originalMatch);
-      if (matchIndex === -1) {
-        console.error('Geo match not found in DOM');
-        return;
-      }
-      
-      const before = targetContent.substring(0, matchIndex);
-      const after = targetContent.substring(matchIndex + originalMatch.length);
-      dom.markdownContent.innerHTML = before + container.outerHTML + after;
       
       setTimeout(() => {
-        const mapContainer = document.getElementById(mapId);
+        let containerId = mapId;
+        
+        if (!containerId) {
+          containerId = 'map-' + Date.now();
+          const container = document.createElement('div');
+          container.id = containerId;
+          container.className = 'geo-map';
+          container.style.height = '400px';
+          container.style.borderRadius = '8px';
+          container.style.overflow = 'hidden';
+          
+          const content = dom.markdownContent.innerHTML;
+          dom.markdownContent.innerHTML = content.replace(originalMatch, container.outerHTML);
+        }
+        
+        const mapContainer = document.getElementById(containerId);
         if (!mapContainer) return;
         
-        const map = L.map(mapId).setView([35.8617, 104.1954], 5);
+        const map = L.map(containerId).setView([35.8617, 104.1954], 5);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors'

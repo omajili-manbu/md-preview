@@ -8,10 +8,7 @@
     const content = dom.markdownContent.innerHTML;
     let processedContent = content;
     
-    // 支持的嵌入语言类型
     const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x'];
-    
-    // 处理代码块中的 @[...] 语法（仅当语言类型匹配时）
     const preTags = processedContent.match(/<pre[^>]*>[\s\S]*?<\/pre>/gi) || [];
     const prePlaceholders = [];
     
@@ -21,70 +18,67 @@
       processedContent = processedContent.replace(pre, placeholder);
     });
     
-    // 在非代码块区域渲染 @[...]
-    const embedRegex = /@\[(\w+)\]\(([^)]+)\)/g;
-    let match;
-    while ((match = embedRegex.exec(processedContent)) !== null) {
-      const service = match[1].toLowerCase();
-      const url = match[2];
-      
-      if (service === 'geojson' || service === 'topojson') {
-        window.MarkdownPreview.renderers.geo.renderGeoData(service, url, match[0]);
-      } else if (service === 'twitter' || service === 'x') {
-        renderTwitterEmbed(service, url, match[0]);
-      } else {
-        const iframe = createEmbedIframe(service, url);
-        if (iframe) {
-          processedContent = processedContent.replace(match[0], iframe);
-        }
-      }
-    }
-    
-    // 恢复代码块，并根据语言类型处理
     prePlaceholders.forEach(({ placeholder, content }) => {
       let shouldRender = false;
-      let detectedLanguage = '';
       
       for (const lang of embedLanguages) {
         if (content.includes(`language-${lang}`)) {
           shouldRender = true;
-          detectedLanguage = lang;
           break;
         }
       }
       
       if (shouldRender) {
         let newContent = content;
-        const innerEmbedRegex = /@\[(\w+)\]\(([^)]+)\)/g;
+        
+        const innerEmbedRegex = /@\[(\w+)\]\(([\s\S]*?)\)/g;
         let innerMatch;
+        let lastIndex = 0;
+        let replacedContent = '';
+        
         while ((innerMatch = innerEmbedRegex.exec(newContent)) !== null) {
           const service = innerMatch[1].toLowerCase();
           const url = innerMatch[2];
           
+          replacedContent += newContent.substring(lastIndex, innerMatch.index);
+          
           if (service === 'geojson' || service === 'topojson') {
-            const mapId = 'map-' + Date.now();
+            const mapId = 'map-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             const container = `<div id="${mapId}" class="geo-map" style="height:400px;border-radius:8px;overflow:hidden"></div>`;
-            newContent = newContent.replace(innerMatch[0], container);
+            replacedContent += container;
             
             setTimeout(() => {
-              window.MarkdownPreview.renderers.geo.renderGeoData(service, url, innerMatch[0]);
+              window.MarkdownPreview.renderers.geo.renderGeoData(service, url, innerMatch[0], mapId);
             }, 10);
           } else if (service === 'twitter' || service === 'x') {
-            renderTwitterEmbed(service, url, innerMatch[0]);
+            const twitterCode = renderTwitterEmbed(service, url, innerMatch[0]);
+            replacedContent += twitterCode;
           } else {
             const iframe = createEmbedIframe(service, url);
             if (iframe) {
-              newContent = newContent.replace(innerMatch[0], iframe);
+              replacedContent += iframe;
+            } else {
+              replacedContent += innerMatch[0];
             }
           }
+          
+          lastIndex = innerEmbedRegex.lastIndex;
         }
-        processedContent = processedContent.replace(placeholder, newContent);
+        
+        if (lastIndex < newContent.length) {
+          replacedContent += newContent.substring(lastIndex);
+        }
+        
+        if (replacedContent) {
+          processedContent = processedContent.replace(placeholder, replacedContent);
+        } else {
+          processedContent = processedContent.replace(placeholder, content);
+        }
       } else {
         processedContent = processedContent.replace(placeholder, content);
       }
     });
     
-    // 更新 DOM
     dom.markdownContent.innerHTML = processedContent;
   }
   
@@ -92,43 +86,40 @@
     try {
       let embedCode = '';
       
-      // 推文嵌入
       const tweetMatch = url.match(/twitter\.com\/\w+\/status\/(\d+)/);
       if (tweetMatch) {
         embedCode = '<blockquote class="twitter-tweet"><a href="' + url + '">Loading tweet...</a></blockquote>';
-      }
-      // 时间线嵌入
-      else if (url.includes('twitter.com') && (url.includes('/likes') || url.includes('/with_replies') || url.includes('/media') || url.includes('/ Follow'))) {
+      } else if (url.includes('twitter.com') && (url.includes('/likes') || url.includes('/with_replies') || url.includes('/media'))) {
         embedCode = '<a class="twitter-timeline" href="' + url + '">Loading Twitter timeline...</a>';
-      }
-      // 简单时间线
-      else if (url.includes('twitter.com')) {
+      } else if (url.includes('twitter.com')) {
         const handle = url.match(/twitter\.com\/([^\/?]+)/)?.[1];
         if (handle && !url.includes('/status/')) {
           embedCode = '<a class="twitter-timeline" href="https://twitter.com/' + handle + '?ref_src=twsrc%5Etfw">Tweets by @' + handle + '</a>';
         }
+      } else if (url.includes('x.com')) {
+        embedCode = '<blockquote class="twitter-tweet"><a href="' + url + '">Loading tweet...</a></blockquote>';
       }
       
       if (embedCode) {
-        processedContent = processedContent.replace(originalMatch, embedCode);
-        
-        // 异步加载 Twitter widgets
-        if (typeof twttr !== 'undefined' && twttr.widgets) {
-          twttr.widgets.load();
-        } else {
-          // 如果 twttr 还未加载，等待加载
-          const checkTwitter = setInterval(() => {
-            if (typeof twttr !== 'undefined' && twttr.widgets) {
-              twttr.widgets.load();
-              clearInterval(checkTwitter);
-            }
-          }, 100);
-          // 最多等待 5 秒
-          setTimeout(() => clearInterval(checkTwitter), 5000);
-        }
+        setTimeout(() => {
+          if (typeof twttr !== 'undefined' && twttr.widgets) {
+            twttr.widgets.load();
+          } else {
+            const checkTwitter = setInterval(() => {
+              if (typeof twttr !== 'undefined' && twttr.widgets) {
+                twttr.widgets.load();
+                clearInterval(checkTwitter);
+              }
+            }, 100);
+            setTimeout(() => clearInterval(checkTwitter), 5000);
+          }
+        }, 50);
       }
+      
+      return embedCode || originalMatch;
     } catch (error) {
       console.error('Twitter embed error:', error);
+      return originalMatch;
     }
   }
   
