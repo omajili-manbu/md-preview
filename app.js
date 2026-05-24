@@ -18,6 +18,9 @@
     if (window.MarkdownPreview.debug && window.MarkdownPreview.debug.init) {
       window.MarkdownPreview.debug.init();
     }
+    if (window.MarkdownPreview.plugins && window.MarkdownPreview.plugins.autoLoad) {
+      await window.MarkdownPreview.plugins.autoLoad();
+    }
   }
   
   if (document.readyState === 'loading') {

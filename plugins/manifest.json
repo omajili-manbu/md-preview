@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "description": "Markdown Preview Plugin Manifest",
+  "plugins": [
+    {
+      "name": "mermaid",
+      "path": "plugins/mermaid.js",
+      "description": "Mermaid diagram rendering"
+    },
+    {
+      "name": "plantuml",
+      "path": "plugins/plantuml.js",
+      "description": "PlantUML diagram rendering"
+    },
+    {
+      "name": "apexcharts",
+      "path": "plugins/apexcharts.js",
+      "description": "ApexCharts chart rendering"
+    },
+    {
+      "name": "music-notation",
+      "path": "plugins/music-notation.js",
+      "description": "Music notation rendering"
+    },
+    {
+      "name": "diff",
+      "path": "plugins/diff.js",
+      "description": "Git diff visualization"
+    },
+    {
+      "name": "geo",
+      "path": "plugins/geo.js",
+      "description": "GeoJSON/TopoJSON visualization"
+    },
+    {
+      "name": "embedded",
+      "path": "plugins/embedded.js",
+      "description": "External service embedding"
+    },
+    {
+      "name": "katex",
+      "path": "plugins/katex.js",
+      "description": "LaTeX math formula rendering"
+    },
+    {
+      "name": "qrcode",
+      "path": "plugins/qrcode.js",
+      "description": "QR code generator"
+    }
+  ]
+}

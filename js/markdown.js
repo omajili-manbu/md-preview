@@ -314,7 +314,8 @@
     
     processImages(dom.markdownContent);
     
-    setTimeout(() => {
+    setTimeout(async () => {
+      await renderWithPlugins();
       window.MarkdownPreview.renderers.apexcharts.render();
       window.MarkdownPreview.renderers.musicNotation.render();
       window.MarkdownPreview.renderers.diff.render();
@@ -325,6 +326,35 @@
     }, 100);
     
     loadGiscus(currentPath);
+  }
+  
+  async function renderWithPlugins() {
+    const plugins = window.MarkdownPreview.plugins;
+    if (!plugins || typeof plugins.find !== 'function') return;
+    
+    const allPres = document.querySelectorAll('.markdown-body pre');
+    
+    for (const pre of allPres) {
+      const codeElement = pre.querySelector('code');
+      if (!codeElement) continue;
+      
+      const classList = codeElement.className;
+      const languageMatch = classList ? classList.match(/language-(\S+)/) : null;
+      const language = languageMatch ? languageMatch[1] : '';
+      const code = codeElement.textContent.trim();
+      
+      const plugin = plugins.find(code, language);
+      if (plugin) {
+        try {
+          const container = document.createElement('div');
+          container.className = `plugin-rendered plugin-${plugin.name}`;
+          pre.parentNode.replaceChild(container, pre);
+          plugin.render(code, container);
+        } catch (error) {
+          console.error(`Plugin ${plugin.name} render error:`, error);
+        }
+      }
+    }
   }
   
   function interceptLinks(currentPath) {
@@ -584,6 +614,7 @@
     updateBreadcrumbs,
     setupHeadingNavigation,
     loadGiscus,
-    calculateReadingTime
+    calculateReadingTime,
+    renderWithPlugins
   };
 })();
