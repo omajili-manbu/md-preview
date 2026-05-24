@@ -593,48 +593,84 @@
     const settings = window.MarkdownPreview.settings ? window.MarkdownPreview.settings.load() : { showComments: true };
     
     if (!giscusConfig || !giscusConfig.enabled || !giscusConfig.repo || !path || path.trim() === '' || !settings.showComments) {
-      // 移除已存在的评论区
+      // 隐藏评论区而非移除
       const existingComments = document.querySelector('.comments-section');
-      if (existingComments) existingComments.remove();
+      if (existingComments) {
+        existingComments.style.display = 'none';
+      }
       return;
     }
     
-    // 先移除已存在的评论区
-    const existingComments = document.querySelector('.comments-section');
-    if (existingComments) existingComments.remove();
+    // 获取或创建评论区容器
+    let commentsSection = document.querySelector('.comments-section');
+    if (!commentsSection) {
+      commentsSection = document.createElement('div');
+      commentsSection.className = 'comments-section';
+      const giscusContainer = document.createElement('div');
+      giscusContainer.className = 'giscus';
+      giscusContainer.id = 'giscus-container';
+      commentsSection.appendChild(giscusContainer);
+      dom.markdownContent.appendChild(commentsSection);
+    }
     
-    // 创建新的评论区容器
-    const commentsSection = document.createElement('div');
-    commentsSection.className = 'comments-section';
-    commentsSection.style.display = 'block'; // 显示评论区
-    const giscusContainer = document.createElement('div');
-    giscusContainer.className = 'giscus';
-    commentsSection.appendChild(giscusContainer);
-    dom.markdownContent.appendChild(commentsSection);
+    // 确保评论区可见
+    commentsSection.style.display = 'block';
     
-    // 清除之前的 script，防止重复加载
-    const oldScripts = document.querySelectorAll('script[src="https://giscus.app/client.js"]');
-    oldScripts.forEach(script => script.remove());
+    // 检查 giscus 是否已初始化
+    const giscusContainer = document.getElementById('giscus-container');
+    const isGiscusLoaded = giscusContainer && giscusContainer.querySelector('iframe');
     
-    const script = document.createElement('script');
-    script.src = 'https://giscus.app/client.js';
-    script.setAttribute('data-repo', giscusConfig.repo);
-    script.setAttribute('data-repo-id', giscusConfig.repoId);
-    script.setAttribute('data-category', giscusConfig.category);
-    script.setAttribute('data-category-id', giscusConfig.categoryId);
-    script.setAttribute('data-mapping', 'term');
-    script.setAttribute('data-term', path);
-    script.setAttribute('data-strict', giscusConfig.strict);
-    script.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled);
-    script.setAttribute('data-emit-metadata', giscusConfig.emitMetadata);
-    script.setAttribute('data-input-position', giscusConfig.inputPosition);
-    script.setAttribute('data-theme', giscusConfig.theme);
-    script.setAttribute('data-lang', giscusConfig.lang);
-    script.setAttribute('data-loading', giscusConfig.loading);
-    script.crossOrigin = 'anonymous';
-    script.async = true;
-    
-    giscusContainer.appendChild(script);
+    if (!isGiscusLoaded) {
+      // 清除之前的 script，防止重复加载
+      const oldScripts = document.querySelectorAll('script[src="https://giscus.app/client.js"]');
+      oldScripts.forEach(script => script.remove());
+      
+      const script = document.createElement('script');
+      script.src = 'https://giscus.app/client.js';
+      script.setAttribute('data-repo', giscusConfig.repo);
+      script.setAttribute('data-repo-id', giscusConfig.repoId);
+      script.setAttribute('data-category', giscusConfig.category);
+      script.setAttribute('data-category-id', giscusConfig.categoryId);
+      // 使用 term 映射，因为我们的路由是基于 hash 的
+      script.setAttribute('data-mapping', 'term');
+      script.setAttribute('data-term', path);
+      script.setAttribute('data-strict', giscusConfig.strict);
+      script.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled);
+      script.setAttribute('data-emit-metadata', giscusConfig.emitMetadata);
+      script.setAttribute('data-input-position', giscusConfig.inputPosition);
+      script.setAttribute('data-theme', giscusConfig.theme);
+      script.setAttribute('data-lang', giscusConfig.lang);
+      script.setAttribute('data-loading', giscusConfig.loading);
+      script.crossOrigin = 'anonymous';
+      script.async = true;
+      
+      // 在加载 giscus 之前确保 URL hash 正确保存
+      if (window.location.hash && !window.sessionStorage.getItem('giscus_original_hash')) {
+        window.sessionStorage.setItem('giscus_original_hash', window.location.hash);
+      }
+      
+      giscusContainer.appendChild(script);
+      
+      // 监听 giscus 加载完成事件，恢复可能丢失的 hash
+      window.addEventListener('message', function(event) {
+        if (event.origin === 'https://giscus.app' && event.data && event.data.type === 'giscus-loaded') {
+          const savedHash = window.sessionStorage.getItem('giscus_original_hash');
+          if (savedHash && savedHash !== window.location.hash) {
+            window.history.replaceState(null, '', savedHash);
+            window.sessionStorage.removeItem('giscus_original_hash');
+          }
+        }
+      });
+    } else {
+      // 如果 giscus 已加载，尝试通过 postMessage 更新 term
+      const iframe = giscusContainer.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'set-term',
+          term: path
+        }, 'https://giscus.app');
+      }
+    }
   }
   
   window.MarkdownPreview.markdown = {

@@ -5,6 +5,13 @@
   let pendingHash = null;
   
   function initRouter() {
+    // 检查是否有保存的 hash 需要恢复
+    const savedHash = window.sessionStorage.getItem('giscus_original_hash');
+    if (savedHash && !window.location.hash) {
+      window.history.replaceState(null, '', savedHash);
+      window.sessionStorage.removeItem('giscus_original_hash');
+    }
+    
     window.addEventListener('hashchange', handleHashChange);
     if (window.location.hash && window.location.hash.length > 2) {
       pendingHash = window.location.hash;
