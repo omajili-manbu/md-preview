@@ -6,10 +6,20 @@
   
   function render() {
     const content = dom.markdownContent.innerHTML;
+    
+    // 保护代码块中的内容，避免被替换
+    const codeBlocks = [];
+    let processedContent = content.replace(/<pre[^>]*>[\s\S]*?<\/pre>/gi, (match) => {
+      const placeholder = `__CODEBLOCK_${codeBlocks.length}__`;
+      codeBlocks.push(match);
+      return placeholder;
+    });
+    
+    // 在受保护的内容上搜索 embed 模式
     const embedRegex = /@\[(\w+)\]\(([^)]+)\)/g;
     
     let match;
-    while ((match = embedRegex.exec(content)) !== null) {
+    while ((match = embedRegex.exec(processedContent)) !== null) {
       const service = match[1].toLowerCase();
       const url = match[2];
       
@@ -20,10 +30,18 @@
       } else {
         const iframe = createEmbedIframe(service, url);
         if (iframe) {
-          dom.markdownContent.innerHTML = dom.markdownContent.innerHTML.replace(match[0], iframe);
+          processedContent = processedContent.replace(match[0], iframe);
         }
       }
     }
+    
+    // 恢复代码块内容
+    codeBlocks.forEach((block, index) => {
+      processedContent = processedContent.replace(`__CODEBLOCK_${index}__`, block);
+    });
+    
+    // 更新 DOM
+    dom.markdownContent.innerHTML = processedContent;
   }
   
   function renderTwitterEmbed(service, url, originalMatch) {
@@ -48,7 +66,7 @@
       }
       
       if (embedCode) {
-        dom.markdownContent.innerHTML = dom.markdownContent.innerHTML.replace(originalMatch, embedCode);
+        processedContent = processedContent.replace(originalMatch, embedCode);
         
         // 异步加载 Twitter widgets
         if (typeof twttr !== 'undefined' && twttr.widgets) {
