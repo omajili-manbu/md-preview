@@ -1,91 +1,109 @@
 // Simple QR Code Generator Plugin
 // Uses external APIs with fallback to local simple QR-like visualization
 
-export default {
-  name: 'qrcode',
-  description: 'QR Code generator',
-  
-  test: function(code, language) {
-    return language === 'qrcode';
-  },
-  
-  render: function(code, container) {
-    container.innerHTML = '';
-    container.className = 'qrcode-container';
-    container.style.margin = '1.5em 0';
-    container.style.padding = '1.5em';
-    container.style.background = 'var(--color-surface)';
-    container.style.borderRadius = '12px';
-    container.style.border = '1px solid var(--color-border)';
-    container.style.textAlign = 'center';
-
-    let data = code.trim();
-    let size = 256;
-
-    try {
-      const parsed = JSON.parse(code);
-      data = parsed.data || code;
-      size = parsed.size || 256;
-    } catch (e) {
-      // Not JSON, use as raw text
-    }
-
-    // Create container for QR image
-    const qrContainer = document.createElement('div');
-    qrContainer.style.margin = '0 auto';
-    qrContainer.style.width = size + 'px';
-    qrContainer.style.height = size + 'px';
-    qrContainer.style.display = 'inline-block';
+(function() {
+  const plugin = {
+    name: 'qrcode',
+    description: 'QR Code generator',
     
-    container.appendChild(qrContainer);
+    test: function(code, language) {
+      return language === 'qrcode';
+    },
     
-    // Try multiple QR APIs in sequence
-    let apiIndex = 0;
-    const apiEndpoints = [
-      (d, s) => `https://api.qrserver.com/v1/create-qr-code/?size=${s}x${s}&data=${encodeURIComponent(d)}`,
-      (d, s) => `https://chart.googleapis.com/chart?chs=${s}x${s}&cht=qr&chl=${encodeURIComponent(d)}`
-    ];
-    
-    function tryNextApi() {
-      if (apiIndex < apiEndpoints.length) {
-        const img = document.createElement('img');
-        img.src = apiEndpoints[apiIndex](data, size);
-        img.style.width = size + 'px';
-        img.style.height = size + 'px';
-        img.style.display = 'block';
-        
-        img.onload = function() {
-          qrContainer.innerHTML = '';
-          qrContainer.appendChild(img);
-        };
-        
-        img.onerror = function() {
-          apiIndex++;
-          tryNextApi();
-        };
-        
-        // Start with loading indicator
-        if (qrContainer.childNodes.length === 0) {
-          drawFallbackQR(qrContainer, data, size);
+    render: function(code, container) {
+      container.innerHTML = '';
+      container.className = 'qrcode-container';
+      container.style.margin = '1.5em 0';
+      container.style.padding = '1.5em';
+      container.style.background = 'var(--color-surface)';
+      container.style.borderRadius = '12px';
+      container.style.border = '1px solid var(--color-border)';
+      container.style.textAlign = 'center';
+
+      let data = code.trim();
+      let size = 256;
+
+      try {
+        const parsed = JSON.parse(code);
+        data = parsed.data || code;
+        size = parsed.size || 256;
+      } catch (e) {
+        // Not JSON, use as raw text
+      }
+
+      // Create container for QR image
+      const qrContainer = document.createElement('div');
+      qrContainer.style.margin = '0 auto';
+      qrContainer.style.width = size + 'px';
+      qrContainer.style.height = size + 'px';
+      qrContainer.style.display = 'inline-block';
+      
+      container.appendChild(qrContainer);
+      
+      // Try multiple QR APIs in sequence
+      let apiIndex = 0;
+      const apiEndpoints = [
+        (d, s) => `https://api.qrserver.com/v1/create-qr-code/?size=${s}x${s}&data=${encodeURIComponent(d)}`,
+        (d, s) => `https://chart.googleapis.com/chart?chs=${s}x${s}&cht=qr&chl=${encodeURIComponent(d)}`
+      ];
+      
+      function tryNextApi() {
+        if (apiIndex < apiEndpoints.length) {
+          const img = document.createElement('img');
+          img.src = apiEndpoints[apiIndex](data, size);
+          img.style.width = size + 'px';
+          img.style.height = size + 'px';
+          img.style.display = 'block';
+          
+          img.onload = function() {
+            qrContainer.innerHTML = '';
+            qrContainer.appendChild(img);
+          };
+          
+          img.onerror = function() {
+            apiIndex++;
+            tryNextApi();
+          };
+          
+          // Start with loading indicator
+          if (qrContainer.childNodes.length === 0) {
+            drawFallbackQR(qrContainer, data, size);
+          }
         }
       }
-    }
-    
-    // Start with fallback
-    drawFallbackQR(qrContainer, data, size);
-    
-    // Try APIs
-    tryNextApi();
+      
+      // Start with fallback
+      drawFallbackQR(qrContainer, data, size);
+      
+      // Try APIs
+      tryNextApi();
 
-    // Add content text below
-    const textDiv = document.createElement('div');
-    textDiv.style.marginTop = '1em';
-    textDiv.style.color = 'var(--color-text-secondary)';
-    textDiv.style.fontSize = '0.875em';
-    textDiv.textContent = data.length > 100 ? data.substring(0, 97) + '...' : data;
-    container.appendChild(textDiv);
+      // Add content text below
+      const textDiv = document.createElement('div');
+      textDiv.style.marginTop = '1em';
+      textDiv.style.color = 'var(--color-text-secondary)';
+      textDiv.style.fontSize = '0.875em';
+      textDiv.textContent = data.length > 100 ? data.substring(0, 97) + '...' : data;
+      container.appendChild(textDiv);
+    }
+  };
+
+  // Register the plugin
+  window.MarkdownPreview = window.MarkdownPreview || {};
+  window.MarkdownPreview.plugins = window.MarkdownPreview.plugins || {};
+  
+  if (window.MarkdownPreview.plugins.register) {
+    window.MarkdownPreview.plugins.register(plugin);
+  } else {
+    // If register function isn't available yet, wait for it
+    const checkRegister = setInterval(() => {
+      if (window.MarkdownPreview.plugins && window.MarkdownPreview.plugins.register) {
+        window.MarkdownPreview.plugins.register(plugin);
+        clearInterval(checkRegister);
+      }
+    }, 100);
   }
-};
+})();
 
 function drawFallbackQR(container, data, size) {
   const canvas = document.createElement('canvas');

@@ -19,7 +19,11 @@
       if (!codeElement) continue;
       
       const classList = codeElement.className;
-      if (!classList || !classList.includes('language-mermaid')) continue;
+      // More precise language matching using regex
+      const languageMatch = classList ? classList.match(/language-([a-zA-Z0-9\-_]+)/) : null;
+      const language = languageMatch ? languageMatch[1] : '';
+      
+      if (language !== 'mermaid') continue;
       
       console.log('[Mermaid] Found mermaid block at index', i);
       
