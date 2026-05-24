@@ -188,78 +188,64 @@
       return;
     }
     
-    const header = document.querySelector('.page-header');
-    const nav = document.querySelector('.doc-navigation');
-    const comments = document.getElementById('commentsSection');
-    
-    if (header) header.style.display = 'none';
-    if (nav) nav.style.display = 'none';
-    if (comments) comments.style.display = 'none';
-    
     const originalTitle = document.title;
     document.title = fileName;
     
-    const printContent = document.getElementById('markdownContent').innerHTML;
+    const printStyle = document.createElement('style');
+    printStyle.id = 'print-style-temp';
+    printStyle.textContent = `
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #markdownContent,
+        #markdownContent * {
+          visibility: visible;
+        }
+        #markdownContent {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          padding: 20px;
+        }
+        .page-header,
+        .doc-navigation,
+        #commentsSection,
+        #floatingMenuBtn,
+        #settingsPanel {
+          display: none !important;
+        }
+        .markdown-body h1, h2, h3, h4, h5, h6 {
+          margin-top: 1.5em;
+          margin-bottom: 0.5em;
+          page-break-after: avoid;
+        }
+        pre, img, .geo-map, table {
+          page-break-inside: avoid;
+        }
+        .geo-map {
+          height: 300px !important;
+        }
+        @page {
+          margin: 2cm;
+        }
+      }
+    `;
+    document.head.appendChild(printStyle);
     
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('请允许弹出窗口以生成 PDF');
-      if (header) header.style.display = '';
-      if (nav) nav.style.display = '';
-      if (comments) comments.style.display = '';
+    const onAfterPrint = () => {
       document.title = originalTitle;
-      return;
-    }
+      const style = document.getElementById('print-style-temp');
+      if (style) style.remove();
+      window.removeEventListener('afterprint', onAfterPrint);
+    };
     
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>${fileName}</title>
-        <link rel="stylesheet" href="styles.css">
-        <link rel="stylesheet" href="css/themes/themes.css">
-        <style>
-          body {
-            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-            line-height: 1.6;
-            color: #333;
-          }
-          h1, h2, h3 { margin-top: 1.5em; margin-bottom: 0.5em; }
-          h1 { font-size: 2em; border-bottom: 2px solid #d4a5c9; padding-bottom: 0.3em; }
-          h2 { font-size: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 0.2em; }
-          pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow-x: auto; }
-          code { background: #f6f8fa; padding: 2px 6px; border-radius: 3px; font-family: 'SF Mono', Consolas, monospace; }
-          pre code { background: none; padding: 0; }
-          blockquote { border-left: 4px solid #d4a5c9; margin: 1em 0; padding-left: 1em; color: #666; }
-          img { max-width: 100%; height: auto; }
-          table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-          th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-          th { background: #f6f8fa; }
-          @media print {
-            body { margin: 0; padding: 20px; }
-            .geo-map { height: 300px !important; page-break-inside: avoid; }
-          }
-        </style>
-      </head>
-      <body>
-        ${printContent}
-      </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
+    window.addEventListener('afterprint', onAfterPrint);
     
     setTimeout(() => {
-      printWindow.print();
-      if (header) header.style.display = '';
-      if (nav) nav.style.display = '';
-      if (comments) comments.style.display = '';
-      document.title = originalTitle;
-    }, 500);
+      window.print();
+    }, 100);
   }
   
   function initDownloadButtons() {
