@@ -86,38 +86,46 @@ function encodeQRCode(data) {
 
 function addPositionPatterns(modules, size) {
   const drawPattern = (x, y) => {
-    for (let i = -1; i <= 7; i++) {
-      for (let j = -1; j <= 7; j++) {
+    for (let i = 0; i <= 6; i++) {
+      for (let j = 0; j <= 6; j++) {
         const px = x + j;
         const py = y + i;
         if (px >= 0 && px < size && py >= 0 && py < size) {
-          const inOuter = (i >= 0 && i <= 6 && j >= 0 && j <= 6);
-          const inMiddle = (i >= 2 && i <= 4 && j >= 2 && j <= 4);
-          const inCenter = (i === 3 && j === 3);
-          
-          if (inOuter && !inMiddle) {
-            modules[py][px] = true;
-          } else if (inCenter) {
-            modules[py][px] = true;
-          }
+          modules[py][px] = true;
+        }
+      }
+    }
+    
+    for (let i = 1; i <= 5; i++) {
+      for (let j = 1; j <= 5; j++) {
+        const px = x + j;
+        const py = y + i;
+        if (px >= 0 && px < size && py >= 0 && py < size) {
+          modules[py][px] = false;
+        }
+      }
+    }
+    
+    for (let i = 2; i <= 4; i++) {
+      for (let j = 2; j <= 4; j++) {
+        const px = x + j;
+        const py = y + i;
+        if (px >= 0 && px < size && py >= 0 && py < size) {
+          modules[py][px] = true;
         }
       }
     }
   };
 
-  drawPattern(3, 3);
-  drawPattern(size - 4, 3);
-  drawPattern(3, size - 4);
+  drawPattern(0, 0);
+  drawPattern(size - 7, 0);
+  drawPattern(0, size - 7);
 }
 
 function addTimingPatterns(modules, size) {
   for (let i = 8; i < size - 8; i++) {
-    if (!modules[6][i]) {
-      modules[6][i] = i % 2 === 0;
-    }
-    if (!modules[i][6]) {
-      modules[i][6] = i % 2 === 0;
-    }
+    modules[6][i] = i % 2 === 0;
+    modules[i][6] = i % 2 === 0;
   }
 }
 
