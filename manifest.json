@@ -2,11 +2,14 @@
   "name": "Markdown Preview",
   "short_name": "MD Preview",
   "description": "一个简洁优雅的 Markdown 文档预览站点，支持多种渲染功能",
-  "start_url": ".",
-  "scope": ".",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#d4a5c9",
+  "orientation": "any",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "iris/icons/icon-192.png",
@@ -25,6 +28,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "iris/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

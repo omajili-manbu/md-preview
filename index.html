@@ -294,61 +294,117 @@
   <script src="iris/js/themes/theme-manager.js"></script>
   <script src="iris/app.js"></script>
   
-  <!-- PWA Service Worker -->
   <script>
     let deferredPrompt = null;
+    let swRegistration = null;
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+    function showInstallButton() {
+      const installBtn = document.getElementById('installPwaBtn');
+      if (installBtn) {
+        installBtn.style.display = 'flex';
+        console.log('[PWA] Install button shown');
+      }
+    }
+
+    function hideInstallButton() {
+      const installBtn = document.getElementById('installPwaBtn');
+      if (installBtn) {
+        installBtn.style.display = 'none';
+        console.log('[PWA] Install button hidden');
+      }
+    }
+
+    function checkStandaloneMode() {
+      if (window.matchMedia('(display-mode: standalone)').matches || 
+          window.navigator.standalone ||
+          document.referrer.includes('android-app://')) {
+        console.log('[PWA] App is running in standalone mode');
+        hideInstallButton();
+        return true;
+      }
+      return false;
+    }
+
+    function registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js', { scope: './' })
           .then(reg => {
+            swRegistration = reg;
             console.log('[PWA] Service Worker registered, scope:', reg.scope);
 
             reg.addEventListener('updatefound', () => {
               const newWorker = reg.installing;
               newWorker.addEventListener('statechange', () => {
+                console.log('[PWA] Worker state:', newWorker.state);
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   newWorker.postMessage({ type: 'SKIP_WAITING' });
                 }
               });
             });
+
+            if (navigator.serviceWorker.controller) {
+              console.log('[PWA] Service Worker is active');
+            }
           })
-          .catch(err => console.warn('[PWA] Service Worker registration failed:', err));
+          .catch(err => {
+            console.error('[PWA] Service Worker registration failed:', err);
+          });
+      }
+    }
+
+    function handleBeforeInstallPrompt(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('[PWA] beforeinstallprompt fired');
+      showInstallButton();
+    }
+
+    function handleInstallClick() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(choiceResult => {
+          console.log('[PWA] User choice:', choiceResult.outcome);
+          deferredPrompt = null;
+          if (choiceResult.outcome === 'accepted') {
+            hideInstallButton();
+          }
+        }).catch(err => {
+          console.error('[PWA] Install prompt error:', err);
+          deferredPrompt = null;
+        });
+      } else {
+        console.log('[PWA] No install prompt available');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      checkStandaloneMode();
+
+      window.matchMedia('(display-mode: standalone)').addEventListener('change', () => {
+        checkStandaloneMode();
       });
 
-      window.addEventListener('beforeinstallprompt', e => {
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log('[PWA] Install prompt available');
-        const installBtn = document.getElementById('installPwaBtn');
-        if (installBtn) {
-          installBtn.style.display = 'flex';
-        }
-      });
+      registerServiceWorker();
+
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
       window.addEventListener('appinstalled', () => {
         console.log('[PWA] App installed successfully');
-        const installBtn = document.getElementById('installPwaBtn');
-        if (installBtn) {
-          installBtn.style.display = 'none';
-        }
+        hideInstallButton();
         deferredPrompt = null;
       });
 
-      document.addEventListener('click', (e) => {
-        if (e.target.closest('#installPwaBtn') && deferredPrompt) {
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then(choiceResult => {
-            console.log('[PWA] User choice:', choiceResult.outcome);
-            deferredPrompt = null;
-            const installBtn = document.getElementById('installPwaBtn');
-            if (installBtn) {
-              installBtn.style.display = 'none';
-            }
-          });
+      const installBtn = document.getElementById('installPwaBtn');
+      if (installBtn) {
+        installBtn.addEventListener('click', handleInstallClick);
+      }
+
+      setTimeout(() => {
+        if (!deferredPrompt && !checkStandaloneMode()) {
+          console.log('[PWA] Checking if installable after 5 seconds');
         }
-      });
-    }
+      }, 5000);
+    });
   </script>
 </body>
 </html>

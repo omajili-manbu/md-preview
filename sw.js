@@ -1,4 +1,4 @@
-const CACHE_NAME = 'md-preview-v2.0';
+const CACHE_NAME = 'md-preview-v3.0';
 const RUNTIME_CACHE = 'md-preview-runtime';
 
 const PRECACHE_URLS = [
@@ -6,57 +6,31 @@ const PRECACHE_URLS = [
   './index.html',
   './manifest.json',
   'iris/styles.css',
-  'iris/css/themes/themes.css',
   'iris/css/base.css',
   'iris/css/components.css',
   'iris/css/floating.css',
   'iris/css/layout.css',
   'iris/css/markdown.css',
   'iris/css/responsive.css',
+  'iris/css/themes/themes.css',
   'iris/app.js',
   'iris/js/config.js',
-  'iris/js/debug.js',
   'iris/js/dom.js',
+  'iris/js/ui.js',
   'iris/js/file-tree.js',
   'iris/js/markdown.js',
   'iris/js/router.js',
   'iris/js/search.js',
   'iris/js/settings.js',
   'iris/js/state.js',
-  'iris/js/ui.js',
-  'iris/js/plugins/loader.js',
-  'iris/js/renderers/apexcharts.js',
-  'iris/js/renderers/diff.js',
-  'iris/js/renderers/embedded.js',
-  'iris/js/renderers/geo.js',
-  'iris/js/renderers/katex.js',
-  'iris/js/renderers/mermaid.js',
-  'iris/js/renderers/plantuml.js',
-  'iris/js/themes/theme-manager.js',
-  'iris/plugins/qrcode.js',
   'iris/vendor/marked.js',
   'iris/vendor/flexsearch.bundle.js',
-  'iris/vendor/mermaid.min.js',
-  'iris/vendor/pako.min.js',
-  'iris/vendor/leaflet/leaflet.js',
-  'iris/vendor/leaflet/leaflet.css',
-  'iris/vendor/apexcharts.min.js',
-  'iris/vendor/diff2html/css/diff2html.min.css',
-  'iris/vendor/diff2html/js/diff2html.min.js',
-  'iris/vendor/diff2html/js/diff2html-ui.min.js',
-  'iris/vendor/katex/katex.min.js',
-  'iris/vendor/katex/katex.min.css',
-  'iris/vendor/katex/auto-render.min.js',
-  'iris/data/file-tree.json',
-  'iris/data/search-index.json',
-  'iris/config.json',
   'iris/icons/icon-192.png',
-  'iris/icons/icon-512.png',
-  'iris/icons/icon-maskable-512.png'
+  'iris/icons/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
-  console.log('[SW] Installing...');
+  console.log('[SW] Installing v3.0...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
