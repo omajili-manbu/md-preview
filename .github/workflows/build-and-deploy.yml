@@ -28,7 +28,7 @@ jobs:
           node-version: '20'
 
       - name: Build File Tree
-        run: node scripts/build-file-tree.js
+        run: node iris/scripts/build-file-tree.js
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

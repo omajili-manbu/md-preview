@@ -21,10 +21,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="css/themes/themes.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+  <link rel="stylesheet" href="iris/styles.css">
+  <link rel="stylesheet" href="iris/css/themes/themes.css">
+  <link rel="stylesheet" href="iris/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="iris/vendor/katex/katex.min.css">
 </head>
 <body>
   <div class="progress-bar" id="progressBar"></div>
@@ -208,17 +208,17 @@
     </div>
   </div>
   
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.31/dist/flexsearch.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html@3.4.47/bundles/css/diff2html.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/diff2html@3.4.47/bundles/js/diff2html.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/diff2html@3.4.47/bundles/js/diff2html-ui.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
+  <script src="iris/vendor/marked.js"></script>
+  <script src="iris/vendor/flexsearch.bundle.js"></script>
+  <script src="iris/vendor/mermaid.min.js"></script>
+  <script src="iris/vendor/pako.min.js"></script>
+  <script src="iris/vendor/leaflet/leaflet.js"></script>
+  <script src="iris/vendor/apexcharts.min.js"></script>
+  <link rel="stylesheet" href="iris/vendor/diff2html/css/diff2html.min.css" />
+  <script src="iris/vendor/diff2html/js/diff2html.min.js"></script>
+  <script src="iris/vendor/diff2html/js/diff2html-ui.min.js"></script>
+  <script src="iris/vendor/katex/katex.min.js"></script>
+  <script src="iris/vendor/katex/auto-render.min.js"></script>
   
   <script async src="https://platform.twitter.com/widgets.js"></script>
   <script>
@@ -252,34 +252,34 @@
     });
   </script>
   <!-- App Modules -->
-  <script src="js/config.js"></script>
-  <script src="js/debug.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/dom.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/file-tree.js"></script>
-  <script src="js/markdown.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/router.js"></script>
-  <script src="js/settings.js"></script>
+  <script src="iris/js/config.js"></script>
+  <script src="iris/js/debug.js"></script>
+  <script src="iris/js/state.js"></script>
+  <script src="iris/js/dom.js"></script>
+  <script src="iris/js/ui.js"></script>
+  <script src="iris/js/file-tree.js"></script>
+  <script src="iris/js/markdown.js"></script>
+  <script src="iris/js/search.js"></script>
+  <script src="iris/js/router.js"></script>
+  <script src="iris/js/settings.js"></script>
   
   <!-- Plugin System -->
-  <script src="js/plugins/loader.js"></script>
+  <script src="iris/js/plugins/loader.js"></script>
   
   <!-- Built-in Plugins -->
-  <script src="plugins/qrcode.js"></script>
+  <script src="iris/plugins/qrcode.js"></script>
   
   <!-- Renderers -->
-  <script src="js/renderers/mermaid.js"></script>
-  <script src="js/renderers/plantuml.js"></script>
-  <script src="js/renderers/apexcharts.js"></script>
-  <script src="js/renderers/diff.js"></script>
-  <script src="js/renderers/geo.js"></script>
-  <script src="js/renderers/embedded.js"></script>
-  <script src="js/renderers/katex.js"></script>
+  <script src="iris/js/renderers/mermaid.js"></script>
+  <script src="iris/js/renderers/plantuml.js"></script>
+  <script src="iris/js/renderers/apexcharts.js"></script>
+  <script src="iris/js/renderers/diff.js"></script>
+  <script src="iris/js/renderers/geo.js"></script>
+  <script src="iris/js/renderers/embedded.js"></script>
+  <script src="iris/js/renderers/katex.js"></script>
   
   <!-- Main Entry -->
-  <script src="js/themes/theme-manager.js"></script>
-  <script src="app.js"></script>
+  <script src="iris/js/themes/theme-manager.js"></script>
+  <script src="iris/app.js"></script>
 </body>
 </html>
