@@ -203,9 +203,6 @@
   background: rgba(212, 165, 201, 0.08);
   font-weight: 500;
   white-space: nowrap;
-  position: sticky;
-  left: 0;
-  z-index: 1;
 }
 
 .markdown-body tr:nth-child(even) {
