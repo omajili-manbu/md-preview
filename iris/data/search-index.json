@@ -1,5 +1,10 @@
 [
   {
+    "path": "code-highlight-theme.md",
+    "title": "代码高亮主题开发指南",
+    "preview": "代码高亮主题开发指南 概述 Markdown Preview 使用 highlight.js 进行代码语法高亮。内置了 10 种常用主题，并支持自定义主题。 内置主题 | 主题 ID | 名称 | 类型 | |---------|------|------| | github | GitHub Light | 亮色 | | github-dark | GitHub Dark | 暗色 | | at"
+  },
+  {
     "path": "configuration.md",
     "title": "配置参考",
     "preview": "配置参考 所有配置都通过 iris/config.json 文件进行管理，无需修改 JavaScript 代码。 基础配置 | 字段 | 类型 | 默认值 | 说明 | |------|------|--------|------| | owner | string | - | GitHub 用户名或组织名 | | repo | string | - | 仓库名 | 完整配置项 以下是所有支持的配"
