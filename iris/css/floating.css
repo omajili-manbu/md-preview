@@ -242,6 +242,7 @@
 
 .switch {
   position: relative;
+  display: inline-block;
   width: 48px;
   height: 26px;
 }
