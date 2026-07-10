@@ -113,9 +113,9 @@
   function formatWordCount(count) {
     if (!count && count !== 0) return '';
     if (count >= 10000) {
-      return (count / 10000).toFixed(1).replace(/\.0$/, '') + ' 万字';
+      return (count / 10000).toFixed(1).replace(/\.0$/, '') + ' 万词';
     }
-    return count + ' 字';
+    return count + ' 词';
   }
 
   function renderFileTree(files, container = dom.fileTree, level = 0, parentHasNextSibling = []) {
@@ -123,18 +123,15 @@
       const hasNextSibling = index < files.length - 1;
       
       if (item.type === 'folder') {
+        const wrapperEl = document.createElement('div');
+        wrapperEl.className = 'folder-wrapper';
+        wrapperEl.dataset.level = level;
+        wrapperEl.dataset.hasNextSibling = hasNextSibling;
+        
         const folderEl = document.createElement('div');
         folderEl.className = 'folder-item';
-        folderEl.dataset.level = level;
         
         let connectorHtml = '';
-        for (let i = 0; i < level; i++) {
-          if (parentHasNextSibling[i]) {
-            connectorHtml += '<span class="tree-line tree-line-vertical"></span>';
-          } else {
-            connectorHtml += '<span class="tree-line tree-line-empty"></span>';
-          }
-        }
         if (level > 0) {
           connectorHtml += `<span class="tree-line tree-line-${hasNextSibling ? 'branch' : 'last'}"></span>`;
         }
@@ -158,10 +155,11 @@
           childrenEl.classList.toggle('expanded');
         });
         
-        container.appendChild(folderEl);
+        wrapperEl.appendChild(folderEl);
         const newHasNextSibling = [...parentHasNextSibling, hasNextSibling];
         renderFileTree(item.children || [], childrenEl, level + 1, newHasNextSibling);
-        container.appendChild(childrenEl);
+        wrapperEl.appendChild(childrenEl);
+        container.appendChild(wrapperEl);
         
         if (level === 0) {
           childrenEl.classList.add('expanded');
@@ -174,22 +172,9 @@
         fileEl.dataset.path = item.path;
         fileEl.dataset.level = level;
         
-        let connectorHtml = '';
-        for (let i = 0; i < level; i++) {
-          if (parentHasNextSibling[i]) {
-            connectorHtml += '<span class="tree-line tree-line-vertical"></span>';
-          } else {
-            connectorHtml += '<span class="tree-line tree-line-empty"></span>';
-          }
-        }
-        if (level > 0) {
-          connectorHtml += `<span class="tree-line tree-line-${hasNextSibling ? 'branch' : 'last'}"></span>`;
-        }
-        
         const wordCountText = item.wordCount ? `<span class="file-word-count">${formatWordCount(item.wordCount)}</span>` : '';
         
         fileEl.innerHTML = `
-          ${connectorHtml}
           <span class="file-name">${item.name.replace('.md', '')}</span>
           ${wordCountText}
         `;
