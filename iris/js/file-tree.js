@@ -5,7 +5,6 @@
   
   async function loadFileTree() {
     try {
-      // 首先尝试加载预构建的文件树
       const prebuiltUrl = 'iris/data/file-tree.json';
       let response = await fetch(prebuiltUrl);
       
@@ -24,7 +23,6 @@
         return;
       } else {
         console.log('⚠️ 预构建文件不存在，使用 GitHub API');
-        // 回退到 GitHub API
         await loadFileTreeFromGitHubAPI();
       }
     } catch (error) {
@@ -52,7 +50,7 @@
       onFilesLoaded();
     } catch (error) {
       console.error('Error loading file tree:', error);
-      dom.fileTree.innerHTML = '<div class="file-item" style="color: var(--color-text-muted);">无法加载文件列表，请检查网络或手动配置</div>';
+      dom.fileTree.innerHTML = '<div class="tree-error" style="color: var(--color-text-muted); padding: 16px;">无法加载文件列表，请检查网络或手动配置</div>';
     }
   }
   
@@ -118,97 +116,71 @@
     return count + ' 词';
   }
 
-  function renderFileTree(files, container = dom.fileTree, level = 0) {
-    if (level === 0) {
-      container.innerHTML = '';
+  function renderFileTree(files) {
+    if (!dom.fileTree) return;
+    dom.fileTree.innerHTML = '';
+    
+    const { Tree, Folder, File } = window.MarkdownPreview.FileTree || {};
+    if (!Tree || !Folder || !File) {
+      console.error('FileTree component not loaded');
+      dom.fileTree.innerHTML = '<div style="color: var(--color-text-muted); padding: 16px;">文件树组件加载失败</div>';
+      return;
     }
-
-    const listEl = document.createElement('ul');
-    listEl.className = 'tree-list';
-    listEl.dataset.level = level;
-
-    // 分离文件夹和文件
-    const folders = files.filter(f => f.type === 'folder');
-    const fileItems = files.filter(f => f.type === 'file' && f.name.endsWith('.md'));
-
-    // 渲染文件夹
-    folders.forEach((item, index) => {
-      const hasNextSibling = index < folders.length - 1;
-
-      const folderLi = document.createElement('li');
-      folderLi.className = 'tree-folder';
-      if (!hasNextSibling) folderLi.classList.add('tree-folder-last');
-
-      const headerEl = document.createElement('div');
-      headerEl.className = 'folder-header';
-
-      const wordCountText = item.wordCount ? `<span class="folder-word-count">${formatWordCount(item.wordCount)}</span>` : '';
-
-      headerEl.innerHTML = `
-        <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M9 18l6-6-6-6"/>
-        </svg>
-        <span class="folder-name">${item.name}</span>
-        ${wordCountText}
-      `;
-
-      folderLi.appendChild(headerEl);
-
-      // 递归渲染子项（文件和文件夹）到 folderLi
-      if (item.children && item.children.length > 0) {
-        renderFileTree(item.children, folderLi, level + 1);
-      }
-
-      headerEl.addEventListener('click', () => {
-        const childList = folderLi.querySelector(':scope > .tree-list');
-        if (childList) {
-          childList.classList.toggle('expanded');
+    
+    const tree = new Tree();
+    
+    function addItems(parent, items) {
+      items.forEach(item => {
+        if (item.type === 'folder') {
+          const folder = new Folder(item.name);
+          if (item.children && item.children.length > 0) {
+            addItems(folder, item.children);
+          }
+          parent.append(folder);
+        } else if (item.type === 'file' && item.name.endsWith('.md')) {
+          const file = new File([], item.name);
+          file._path = item.path;
+          file._wordCount = item.wordCount;
+          parent.append(file);
         }
-        headerEl.classList.toggle('expanded');
       });
-
-      listEl.appendChild(folderLi);
-    });
-
-    container.appendChild(listEl);
-
-    // 渲染当前层级的文件
-    if (fileItems.length > 0) {
-      const filesContainer = document.createElement('div');
-      filesContainer.className = level === 0 ? 'tree-files tree-files-root' : 'tree-files';
-
-      fileItems.forEach(file => {
-        const fileEl = document.createElement('a');
-        fileEl.className = 'tree-file';
-        fileEl.href = '#';
-        fileEl.dataset.path = file.path;
-
-        const fileWordCount = file.wordCount ? `<span class="file-word-count">${formatWordCount(file.wordCount)}</span>` : '';
-
-        fileEl.innerHTML = `
-          <span class="file-name">${file.name.replace('.md', '')}</span>
-          ${fileWordCount}
-        `;
-
-        fileEl.addEventListener('click', (e) => {
-          e.preventDefault();
-          window.MarkdownPreview.markdown.loadMarkdownFile(file.path);
-          setActiveFile(fileEl);
+    }
+    
+    addItems(tree, files);
+    
+    // Handle file clicks
+    tree.addEventListener('click', (event) => {
+      const { action, folder, target, path } = event.detail;
+      if (action === 'click' && !folder) {
+        // Find the file's path from our data
+        const filePath = target._path || findFilePath(target.name, state.fileTreeData);
+        if (filePath) {
+          window.MarkdownPreview.markdown.loadMarkdownFile(filePath);
           closeSidebarOnMobile();
-        });
-
-        filesContainer.appendChild(fileEl);
+        }
+      }
+    });
+    
+    dom.fileTree.appendChild(tree);
+    
+    // Open all folders by default after a short delay
+    requestAnimationFrame(() => {
+      tree.querySelectorAll('li.folder').forEach(folder => {
+        folder.classList.add('opened');
       });
-
-      container.appendChild(filesContainer);
+    });
+  }
+  
+  function findFilePath(fileName, files, parentPath = '') {
+    for (const item of files) {
+      if (item.type === 'file' && item.name === fileName) {
+        return item.path;
+      } else if (item.type === 'folder' && item.children) {
+        const result = findFilePath(fileName, item.children, parentPath + item.name + '/');
+        if (result) return result;
+      }
     }
-
-    // 默认展开根级
-    if (level === 0) {
-      listEl.classList.add('expanded');
-      listEl.querySelectorAll('.tree-list').forEach(ul => ul.classList.add('expanded'));
-      listEl.querySelectorAll('.folder-header').forEach(h => h.classList.add('expanded'));
-    }
+    return null;
   }
   
   function setWordCountVisibility(visible) {
@@ -217,20 +189,17 @@
     }
   }
   
-  function setActiveFile(fileEl) {
-    document.querySelectorAll('.tree-file.active').forEach(el => {
-      el.classList.remove('active');
-    });
-    fileEl.classList.add('active');
+  function setActiveFile(path) {
+    // For the custom element tree, highlight by path
+    const tree = dom.fileTree.querySelector('file-tree');
+    if (tree) {
+      const { target } = tree.query(path) || {};
+      // The component handles selection internally
+    }
   }
   
   function highlightFileInSidebar(path) {
-    const fileItems = document.querySelectorAll('.tree-file');
-    fileItems.forEach(el => {
-      if (el.dataset.path === path) {
-        setActiveFile(el);
-      }
-    });
+    setActiveFile(path);
   }
   
   function toggleSidebar() {

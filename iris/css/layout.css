@@ -93,47 +93,6 @@
   display: none;
 }
 
-.file-item {
-  padding: 7px 16px 7px 0;
-  color: var(--color-text);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 400;
-  transition: var(--transition-smooth);
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  align-items: center;
-  border-left: 2px solid transparent;
-}
-
-.file-item:hover {
-  background: rgba(212, 165, 201, 0.06);
-}
-
-.file-item.active {
-  background: rgba(242, 196, 206, 0.12);
-  color: var(--color-accent-purple-deep);
-}
-
-.file-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 25%;
-  bottom: 25%;
-  width: 2px;
-  background: var(--color-accent-pink);
-  border-radius: 0 2px 2px 0;
-}
-
-.file-name {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .index-item {
   display: block;
   padding: 8px 20px;
@@ -160,193 +119,32 @@
   font-weight: 500;
 }
 
-.folder-header {
-  display: flex;
-  align-items: center;
-  padding: 8px 16px 8px 0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: var(--transition-smooth);
-  user-select: none;
-  position: relative;
-}
-
-.folder-header:hover {
-  background: rgba(212, 165, 201, 0.06);
-}
-
-.folder-icon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-  color: var(--color-text-muted);
-}
-
-.folder-header.expanded .folder-icon {
-  transform: rotate(90deg);
-}
-
-.folder-name {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding-left: 2px;
-}
-
-.folder-word-count,
-.file-word-count {
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-  font-weight: 400;
-  flex-shrink: 0;
-  margin-left: 8px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.folder-header:hover .folder-word-count,
-.tree-file:hover .file-word-count {
-  opacity: 1;
-}
-
-.file-tree.show-word-count .folder-word-count,
-.file-tree.show-word-count .file-word-count {
-  opacity: 1;
-}
-
-/* ===== Tree List Structure ===== */
-.file-tree,
-.tree-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.tree-list {
-  display: none;
-  position: relative;
-}
-
-.tree-list.expanded {
-  display: block;
-}
-
-/* ===== Root Level ===== */
+/* ===== File Tree Component ===== */
 .file-tree {
-  position: relative;
+  --ft-padding: 4px;
+  --ft-icon-size: 14px;
+  --ft-font-size: 0.875rem;
+  padding: 8px 0;
+  overflow-y: auto;
+  flex: 1;
 }
 
-/* 根级有多个文件夹时的垂直连接线 */
-.file-tree > .tree-list:has(> .tree-folder ~ .tree-folder)::before {
-  content: '';
-  position: absolute;
-  left: 8px;
-  top: 14px;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
-}
-
-/* 根级文件夹 */
-.file-tree > .tree-list > .tree-folder {
-  position: relative;
-  padding-left: 18px;
-}
-
-/* 根级文件夹的水平连接线 */
-.file-tree > .tree-list > .tree-folder::before {
-  content: '';
-  position: absolute;
-  left: 8px;
-  top: 14px;
-  width: 10px;
-  height: 1px;
-  background: var(--color-border);
-}
-
-/* ===== Sub Level ===== */
-/* 子级文件夹 */
-.tree-list > .tree-folder {
-  position: relative;
-  border-left: 1px solid var(--color-border);
-  padding-left: 18px;
-  margin-left: 8px;
-}
-
-/* 子级最后一个文件夹 */
-.tree-list > .tree-folder-last {
-  border-left-color: transparent;
-}
-
-/* 子级文件夹的水平连接线 */
-.tree-list > .tree-folder::before {
-  content: '';
-  position: absolute;
-  top: 14px;
-  left: 0;
-  width: 18px;
-  height: 1px;
-  background: var(--color-border);
-}
-
-/* ===== Files ===== */
-.tree-files {
-  padding-left: 18px;
-  margin-left: 8px;
-}
-
-.tree-files-root {
-  padding-left: 0;
-  margin-left: 0;
-}
-
-.tree-file {
-  display: flex;
-  align-items: center;
-  padding: 7px 16px 7px 0;
+.file-tree file-tree {
+  font-family: inherit;
+  font-size: var(--ft-font-size);
   color: var(--color-text);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 400;
-  transition: var(--transition-smooth);
-  cursor: pointer;
-  border-left: 2px solid transparent;
-}
-
-.tree-file:hover {
-  background: rgba(212, 165, 201, 0.06);
-}
-
-.tree-file.active {
-  background: rgba(242, 196, 206, 0.12);
-  color: var(--color-accent-purple-deep);
-}
-
-.tree-file.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 25%;
-  bottom: 25%;
-  width: 2px;
-  background: var(--color-accent-pink);
-  border-radius: 0 2px 2px 0;
+  display: block;
+  width: 100%;
 }
 
 .sidebar,
-.file-tree,
-.tree-list {
+.file-tree {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
 .sidebar::-webkit-scrollbar,
-.file-tree::-webkit-scrollbar,
-.tree-list::-webkit-scrollbar {
+.file-tree::-webkit-scrollbar {
   display: none;
 }
 
