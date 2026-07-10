@@ -95,6 +95,11 @@
     "preview": "快速开始 部署到 GitHub Pages 1. Fork 仓库 点击右上角的 Fork 按钮，将仓库复制到你的账号下。 2. 开启 GitHub Pages 1. 进入 Fork 后的仓库 2. 点击 Settings → Pages 3. 在 Build and deployment 中，Source 选择 GitHub Actions 3. 修改配置 编辑 iris/config.json，"
   },
   {
+    "path": "plugin-development.md",
+    "title": "插件开发指南",
+    "preview": "插件开发指南 插件机制概述 Markdown Preview 的插件系统允许你扩展 Markdown 渲染能力，自定义处理特定的代码块。插件放入 iris/plugins/ 目录后，加载器会自动发现并注册。 插件接口 每个插件是一个导出对象的 JavaScript 模块，需要实现以下接口： API 说明 | 方法 | 参数 | 返回值 | 说明 | |------|------|--------|"
+  },
+  {
     "path": "theme-customization.md",
     "title": "主题定制",
     "preview": "主题定制 内置主题 | ID | 名称 | 说明 | |----|------|------| | default | 默认 | 浅紫浅粉渐变风格 | | github-light | GitHub Light | GitHub 明亮风格 | | github-dark | GitHub Dark | GitHub 深色风格 | | notion | Notion | Notion 暖灰风格 | "
