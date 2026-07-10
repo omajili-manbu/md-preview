@@ -160,21 +160,20 @@
   font-weight: 500;
 }
 
-.folder-item {
+.folder-header {
+  display: flex;
+  align-items: center;
   padding: 8px 16px 8px 0;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-text);
   cursor: pointer;
-  display: flex;
-  align-items: center;
   transition: var(--transition-smooth);
   user-select: none;
   position: relative;
-  border-left: 2px solid transparent;
 }
 
-.folder-item:hover {
+.folder-header:hover {
   background: rgba(212, 165, 201, 0.06);
 }
 
@@ -186,7 +185,7 @@
   color: var(--color-text-muted);
 }
 
-.folder-item.expanded .folder-icon {
+.folder-header.expanded .folder-icon {
   transform: rotate(90deg);
 }
 
@@ -209,8 +208,8 @@
   transition: opacity 0.2s ease;
 }
 
-.folder-item:hover .folder-word-count,
-.file-item:hover .file-word-count {
+.folder-header:hover .folder-word-count,
+.tree-file:hover .file-word-count {
   opacity: 1;
 }
 
@@ -219,82 +218,135 @@
   opacity: 1;
 }
 
+/* ===== Tree List Structure ===== */
+.file-tree,
+.tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-list {
+  display: none;
+  position: relative;
+}
+
+.tree-list.expanded {
+  display: block;
+}
+
+/* ===== Root Level ===== */
 .file-tree {
   position: relative;
 }
 
-.folder-wrapper {
-  position: relative;
+/* 根级有多个文件夹时的垂直连接线 */
+.file-tree > .tree-list:has(> .tree-folder ~ .tree-folder)::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 14px;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
 }
 
-.folder-children {
-  display: none;
-}
-
-.folder-children.expanded {
-  display: block;
+/* 根级文件夹 */
+.file-tree > .tree-list > .tree-folder {
   position: relative;
   padding-left: 18px;
 }
 
-.file-tree.has-tree-line::before {
+/* 根级文件夹的水平连接线 */
+.file-tree > .tree-list > .tree-folder::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 14px;
+  width: 10px;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* ===== Sub Level ===== */
+/* 子级文件夹 */
+.tree-list > .tree-folder {
+  position: relative;
+  border-left: 1px solid var(--color-border);
+  padding-left: 18px;
+  margin-left: 8px;
+}
+
+/* 子级最后一个文件夹 */
+.tree-list > .tree-folder-last {
+  border-left-color: transparent;
+}
+
+/* 子级文件夹的水平连接线 */
+.tree-list > .tree-folder::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 0;
+  width: 18px;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* ===== Files ===== */
+.tree-files {
+  padding-left: 18px;
+  margin-left: 8px;
+}
+
+.tree-files-root {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.tree-file {
+  display: flex;
+  align-items: center;
+  padding: 7px 16px 7px 0;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 400;
+  transition: var(--transition-smooth);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+
+.tree-file:hover {
+  background: rgba(212, 165, 201, 0.06);
+}
+
+.tree-file.active {
+  background: rgba(242, 196, 206, 0.12);
+  color: var(--color-accent-purple-deep);
+}
+
+.tree-file.active::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 20px;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
-}
-
-.folder-children.expanded.has-tree-line::before {
-  content: '';
-  position: absolute;
-  left: 8px;
-  top: 20px;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-border);
-}
-
-.tree-line {
-  position: relative;
-  flex-shrink: 0;
-  width: 18px;
-  height: 100%;
-}
-
-.tree-line::before,
-.tree-line::after {
-  content: '';
-  position: absolute;
-  background: var(--color-border);
-}
-
-.tree-line-branch::after {
-  left: 8px;
-  top: 50%;
-  right: 2px;
-  height: 1px;
-}
-
-.tree-line-last::after {
-  left: 8px;
-  top: 50%;
-  right: 2px;
-  height: 1px;
+  top: 25%;
+  bottom: 25%;
+  width: 2px;
+  background: var(--color-accent-pink);
+  border-radius: 0 2px 2px 0;
 }
 
 .sidebar,
 .file-tree,
-.folder-children {
+.tree-list {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
 .sidebar::-webkit-scrollbar,
 .file-tree::-webkit-scrollbar,
-.folder-children::-webkit-scrollbar {
+.tree-list::-webkit-scrollbar {
   display: none;
 }
 

@@ -119,83 +119,96 @@
   }
 
   function renderFileTree(files, container = dom.fileTree, level = 0) {
-    const folderCount = files.filter(f => f.type === 'folder').length;
-    if (folderCount > 1) {
-      container.classList.add('has-tree-line');
+    if (level === 0) {
+      container.innerHTML = '';
     }
-    
-    files.forEach((item, index) => {
-      const hasNextSibling = index < files.length - 1;
-      
-      if (item.type === 'folder') {
-        const wrapperEl = document.createElement('div');
-        wrapperEl.className = 'folder-wrapper';
-        
-        const folderEl = document.createElement('div');
-        folderEl.className = 'folder-item';
-        
-        let connectorHtml = '';
-        if (level > 0) {
-          connectorHtml += `<span class="tree-line tree-line-${hasNextSibling ? 'branch' : 'last'}"></span>`;
+
+    const listEl = document.createElement('ul');
+    listEl.className = 'tree-list';
+    listEl.dataset.level = level;
+
+    // 分离文件夹和文件
+    const folders = files.filter(f => f.type === 'folder');
+    const fileItems = files.filter(f => f.type === 'file' && f.name.endsWith('.md'));
+
+    // 渲染文件夹
+    folders.forEach((item, index) => {
+      const hasNextSibling = index < folders.length - 1;
+
+      const folderLi = document.createElement('li');
+      folderLi.className = 'tree-folder';
+      if (!hasNextSibling) folderLi.classList.add('tree-folder-last');
+
+      const headerEl = document.createElement('div');
+      headerEl.className = 'folder-header';
+
+      const wordCountText = item.wordCount ? `<span class="folder-word-count">${formatWordCount(item.wordCount)}</span>` : '';
+
+      headerEl.innerHTML = `
+        <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+        <span class="folder-name">${item.name}</span>
+        ${wordCountText}
+      `;
+
+      folderLi.appendChild(headerEl);
+
+      // 递归渲染子项（文件和文件夹）到 folderLi
+      if (item.children && item.children.length > 0) {
+        renderFileTree(item.children, folderLi, level + 1);
+      }
+
+      headerEl.addEventListener('click', () => {
+        const childList = folderLi.querySelector(':scope > .tree-list');
+        if (childList) {
+          childList.classList.toggle('expanded');
         }
-        
-        const wordCountText = item.wordCount ? `<span class="folder-word-count">${formatWordCount(item.wordCount)}</span>` : '';
-        
-        folderEl.innerHTML = `
-          ${connectorHtml}
-          <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-          <span class="folder-name">${item.name}</span>
-          ${wordCountText}
-        `;
-        
-        const childrenEl = document.createElement('div');
-        childrenEl.className = 'folder-children';
-        
-        const subFolderCount = (item.children || []).filter(c => c.type === 'folder').length;
-        if (subFolderCount > 0) {
-          childrenEl.classList.add('has-tree-line');
-        }
-        
-        folderEl.addEventListener('click', () => {
-          folderEl.classList.toggle('expanded');
-          childrenEl.classList.toggle('expanded');
-        });
-        
-        wrapperEl.appendChild(folderEl);
-        renderFileTree(item.children || [], childrenEl, level + 1);
-        wrapperEl.appendChild(childrenEl);
-        container.appendChild(wrapperEl);
-        
-        if (level === 0) {
-          childrenEl.classList.add('expanded');
-          folderEl.classList.add('expanded');
-        }
-      } else if (item.type === 'file' && item.name.endsWith('.md')) {
+        headerEl.classList.toggle('expanded');
+      });
+
+      listEl.appendChild(folderLi);
+    });
+
+    container.appendChild(listEl);
+
+    // 渲染当前层级的文件
+    if (fileItems.length > 0) {
+      const filesContainer = document.createElement('div');
+      filesContainer.className = level === 0 ? 'tree-files tree-files-root' : 'tree-files';
+
+      fileItems.forEach(file => {
         const fileEl = document.createElement('a');
-        fileEl.className = 'file-item';
+        fileEl.className = 'tree-file';
         fileEl.href = '#';
-        fileEl.dataset.path = item.path;
-        fileEl.dataset.level = level;
-        
-        const wordCountText = item.wordCount ? `<span class="file-word-count">${formatWordCount(item.wordCount)}</span>` : '';
-        
+        fileEl.dataset.path = file.path;
+
+        const fileWordCount = file.wordCount ? `<span class="file-word-count">${formatWordCount(file.wordCount)}</span>` : '';
+
         fileEl.innerHTML = `
-          <span class="file-name">${item.name.replace('.md', '')}</span>
-          ${wordCountText}
+          <span class="file-name">${file.name.replace('.md', '')}</span>
+          ${fileWordCount}
         `;
-        
+
         fileEl.addEventListener('click', (e) => {
           e.preventDefault();
-          window.MarkdownPreview.markdown.loadMarkdownFile(item.path);
+          window.MarkdownPreview.markdown.loadMarkdownFile(file.path);
           setActiveFile(fileEl);
           closeSidebarOnMobile();
         });
-        
-        container.appendChild(fileEl);
-      }
-    });
+
+        filesContainer.appendChild(fileEl);
+      });
+
+      container.appendChild(filesContainer);
+    }
+
+    // 默认展开根级
+    if (level === 0) {
+      listEl.classList.add('expanded');
+      listEl.querySelectorAll('.tree-list').forEach(ul => ul.classList.add('expanded'));
+      listEl.querySelectorAll('.folder-header').forEach(h => h.classList.add('expanded'));
+    }
   }
   
   function setWordCountVisibility(visible) {
@@ -205,14 +218,14 @@
   }
   
   function setActiveFile(fileEl) {
-    document.querySelectorAll('.file-item.active').forEach(el => {
+    document.querySelectorAll('.tree-file.active').forEach(el => {
       el.classList.remove('active');
     });
     fileEl.classList.add('active');
   }
   
   function highlightFileInSidebar(path) {
-    const fileItems = document.querySelectorAll('.file-item');
+    const fileItems = document.querySelectorAll('.tree-file');
     fileItems.forEach(el => {
       if (el.dataset.path === path) {
         setActiveFile(el);
