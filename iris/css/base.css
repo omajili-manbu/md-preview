@@ -8,6 +8,7 @@
   --color-accent-pink: #f2c4ce;
   --color-accent-purple-deep: #b88aad;
   --color-glow: rgba(255, 255, 255, 0.8);
+  --index-guide-color: rgb(from var(--color-text) r g b / .2);
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'IBM Plex Sans', -apple-system, sans-serif;
   --sidebar-width: 280px;

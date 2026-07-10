@@ -113,12 +113,12 @@
 
 .index-item:hover {
   color: var(--color-text-muted);
-  background: var(--color-hover);
+  background-color: var(--color-hover);
 }
 
 .index-item.active {
   color: var(--color-accent-purple-deep);
-  background: var(--color-hover);
+  background-color: var(--color-hover);
   border-left-color: var(--color-accent-purple);
 }
 

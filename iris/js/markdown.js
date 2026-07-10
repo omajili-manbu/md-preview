@@ -540,6 +540,19 @@
       item.style.paddingLeft = (20 + (heading.level - 1) * 16) + 'px';
       item.dataset.id = heading.id;
 
+      // 目录对齐线：与文件树栏一致的虚线竖向缩进引导线
+      if (heading.level > 1) {
+        var guideLine = 'repeating-linear-gradient(to bottom, var(--index-guide-color) 0 1px, transparent 1px 4px)';
+        var positions = [];
+        for (var k = 1; k < heading.level; k++) {
+          positions.push((20 + (k - 1) * 16) + 'px 0');
+        }
+        item.style.backgroundImage = positions.map(function () { return guideLine; }).join(', ');
+        item.style.backgroundPosition = positions.join(', ');
+        item.style.backgroundSize = '1px 4px';
+        item.style.backgroundRepeat = 'repeat-y';
+      }
+
       item.addEventListener('click', (e) => {
         e.preventDefault();
         const target = document.getElementById(heading.id);
