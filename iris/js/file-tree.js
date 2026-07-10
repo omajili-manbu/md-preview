@@ -110,16 +110,44 @@
     return root;
   }
   
-  function renderFileTree(files, container = dom.fileTree, level = 0) {
+  function formatWordCount(count) {
+    if (!count && count !== 0) return '';
+    if (count >= 10000) {
+      return (count / 10000).toFixed(1).replace(/\.0$/, '') + ' 万字';
+    }
+    return count + ' 字';
+  }
+
+  function renderFileTree(files, container = dom.fileTree, level = 0, parentHasNextSibling = []) {
     files.forEach((item, index) => {
+      const hasNextSibling = index < files.length - 1;
+      
       if (item.type === 'folder') {
         const folderEl = document.createElement('div');
         folderEl.className = 'folder-item';
+        folderEl.dataset.level = level;
+        
+        let connectorHtml = '';
+        for (let i = 0; i < level; i++) {
+          if (parentHasNextSibling[i]) {
+            connectorHtml += '<span class="tree-line tree-line-vertical"></span>';
+          } else {
+            connectorHtml += '<span class="tree-line tree-line-empty"></span>';
+          }
+        }
+        if (level > 0) {
+          connectorHtml += `<span class="tree-line tree-line-${hasNextSibling ? 'branch' : 'last'}"></span>`;
+        }
+        
+        const wordCountText = item.wordCount ? `<span class="folder-word-count">${formatWordCount(item.wordCount)}</span>` : '';
+        
         folderEl.innerHTML = `
+          ${connectorHtml}
           <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M9 18l6-6-6-6"/>
           </svg>
-          <span>${item.name}</span>
+          <span class="folder-name">${item.name}</span>
+          ${wordCountText}
         `;
         
         const childrenEl = document.createElement('div');
@@ -131,7 +159,8 @@
         });
         
         container.appendChild(folderEl);
-        renderFileTree(item.children || [], childrenEl, level + 1);
+        const newHasNextSibling = [...parentHasNextSibling, hasNextSibling];
+        renderFileTree(item.children || [], childrenEl, level + 1, newHasNextSibling);
         container.appendChild(childrenEl);
         
         if (level === 0) {
@@ -142,8 +171,28 @@
         const fileEl = document.createElement('a');
         fileEl.className = 'file-item';
         fileEl.href = '#';
-        fileEl.textContent = item.name.replace('.md', '');
         fileEl.dataset.path = item.path;
+        fileEl.dataset.level = level;
+        
+        let connectorHtml = '';
+        for (let i = 0; i < level; i++) {
+          if (parentHasNextSibling[i]) {
+            connectorHtml += '<span class="tree-line tree-line-vertical"></span>';
+          } else {
+            connectorHtml += '<span class="tree-line tree-line-empty"></span>';
+          }
+        }
+        if (level > 0) {
+          connectorHtml += `<span class="tree-line tree-line-${hasNextSibling ? 'branch' : 'last'}"></span>`;
+        }
+        
+        const wordCountText = item.wordCount ? `<span class="file-word-count">${formatWordCount(item.wordCount)}</span>` : '';
+        
+        fileEl.innerHTML = `
+          ${connectorHtml}
+          <span class="file-name">${item.name.replace('.md', '')}</span>
+          ${wordCountText}
+        `;
         
         fileEl.addEventListener('click', (e) => {
           e.preventDefault();
@@ -155,6 +204,12 @@
         container.appendChild(fileEl);
       }
     });
+  }
+  
+  function setWordCountVisibility(visible) {
+    if (dom.fileTree) {
+      dom.fileTree.classList.toggle('show-word-count', visible);
+    }
   }
   
   function setActiveFile(fileEl) {
@@ -243,6 +298,7 @@
     closeSidebarOnMobile,
     onFilesLoaded,
     getAllFilesInDFSOrder,
-    getAdjacentFiles
+    getAdjacentFiles,
+    setWordCountVisibility
   };
 })();

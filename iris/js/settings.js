@@ -5,6 +5,7 @@
 
   const defaultSettings = {
     showReadingProgress: true,
+    showWordCount: false,
     codeTheme: 'github'
   };
 
@@ -16,6 +17,7 @@
         return { 
           ...defaultSettings, 
           showReadingProgress: parsed.showReadingProgress ?? defaultSettings.showReadingProgress,
+          showWordCount: parsed.showWordCount ?? defaultSettings.showWordCount,
           codeTheme: parsed.codeTheme ?? defaultSettings.codeTheme
         };
       }
@@ -74,6 +76,7 @@
     const settingsOverlay = document.getElementById('settingsOverlay');
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
     const showReadingProgressToggle = document.getElementById('showReadingProgressToggle');
+    const showWordCountToggle = document.getElementById('showWordCountToggle');
     const codeThemeSelect = document.getElementById('codeThemeSelect');
 
     if (!settingsOverlay) {
@@ -95,6 +98,13 @@
       settings.showReadingProgress = e.target.checked;
       saveSettings(settings);
       toggleReadingProgress(settings.showReadingProgress);
+    });
+
+    showWordCountToggle?.addEventListener('change', (e) => {
+      const settings = loadSettings();
+      settings.showWordCount = e.target.checked;
+      saveSettings(settings);
+      toggleWordCount(settings.showWordCount);
     });
 
     codeThemeSelect?.addEventListener('change', (e) => {
@@ -132,6 +142,12 @@
     const readingProgress = document.getElementById('readingProgress');
     if (readingProgress) {
       readingProgress.style.display = show ? 'block' : 'none';
+    }
+  }
+  
+  function toggleWordCount(show) {
+    if (window.MarkdownPreview?.fileTree?.setWordCountVisibility) {
+      window.MarkdownPreview.fileTree.setWordCountVisibility(show);
     }
   }
   
@@ -182,12 +198,15 @@
     initSettingsPanel();
     initDownloadButtons();
     toggleReadingProgress(settings.showReadingProgress);
+    toggleWordCount(settings.showWordCount);
     applyCodeTheme(settings.codeTheme);
 
     const showReadingProgressToggle = document.getElementById('showReadingProgressToggle');
+    const showWordCountToggle = document.getElementById('showWordCountToggle');
     const codeThemeSelect = document.getElementById('codeThemeSelect');
 
     if (showReadingProgressToggle) showReadingProgressToggle.checked = settings.showReadingProgress;
+    if (showWordCountToggle) showWordCountToggle.checked = settings.showWordCount;
     if (codeThemeSelect) codeThemeSelect.value = settings.codeTheme;
   }
 

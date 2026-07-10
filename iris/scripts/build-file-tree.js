@@ -13,6 +13,27 @@ if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
+function countWords(content) {
+  const text = content
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]*`/g, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[[^\]]*\]\([^)]*\)/g, '$1')
+    .replace(/^#+\s.*$/gm, '')
+    .replace(/^[-*+]\s.*$/gm, '')
+    .replace(/^>\s.*$/gm, '')
+    .replace(/[#*_~`]/g, '')
+    .replace(/\s+/g, ' ');
+  
+  const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
+  const englishWords = text.replace(/[\u4e00-\u9fa5]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 0 && /[a-zA-Z]/.test(w))
+    .length;
+  
+  return chineseChars + englishWords;
+}
+
 function buildTreeFromDirectory(dir, basePath = '') {
   const result = [];
   const items = fs.readdirSync(dir, { withFileTypes: true });
@@ -20,7 +41,6 @@ function buildTreeFromDirectory(dir, basePath = '') {
   const folders = [];
   const files = [];
   
-  // 分开处理文件和文件夹，以便排序
   items.forEach(item => {
     const itemPath = basePath ? `${basePath}/${item.name}` : item.name;
     const fullPath = path.join(dir, item.name);
@@ -32,37 +52,42 @@ function buildTreeFromDirectory(dir, basePath = '') {
     }
   });
   
-  // 先处理文件夹
+  let totalWords = 0;
+  
   folders.sort((a, b) => a.name.localeCompare(b.name));
   folders.forEach(folder => {
-    const children = buildTreeFromDirectory(folder.fullPath, folder.path);
+    const { children, wordCount } = buildTreeFromDirectory(folder.fullPath, folder.path);
     if (children.length > 0) {
       result.push({
         name: folder.name,
         type: 'folder',
-        children
+        children,
+        wordCount
       });
+      totalWords += wordCount;
     }
   });
   
-  // 再处理文件
   files.sort((a, b) => a.name.localeCompare(b.name));
   files.forEach(file => {
+    const content = fs.readFileSync(file.fullPath, 'utf-8');
+    const wordCount = countWords(content);
     result.push({
       name: file.name,
       type: 'file',
-      path: file.path
+      path: file.path,
+      wordCount
     });
+    totalWords += wordCount;
   });
   
-  return result;
+  return { children: result, wordCount: totalWords };
 }
 
 try {
   const rootDir = path.join(__dirname, '../..');
-  const fileTreeData = buildTreeFromDirectory(rootDir);
+  const { children: fileTreeData } = buildTreeFromDirectory(rootDir);
   
-  // 输出 JSON 文件
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(fileTreeData, null, 2));
   
   console.log(`✅ 文件树构建成功！`);
