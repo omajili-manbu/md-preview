@@ -544,7 +544,7 @@
         e.preventDefault();
         const target = document.getElementById(heading.id);
         if (target) {
-          target.scrollIntoView({ behavior: 'auto', block: 'start' });
+          window.scrollTo(0, target.getBoundingClientRect().top + window.scrollY - 10);
         }
         setActiveIndexItem(item);
       });
