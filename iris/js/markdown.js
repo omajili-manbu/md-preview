@@ -544,7 +544,7 @@
         e.preventDefault();
         const target = document.getElementById(heading.id);
         if (target) {
-          window.scrollTo(0, target.getBoundingClientRect().top + window.scrollY - 10);
+          window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 10, behavior: 'instant' });
         }
         setActiveIndexItem(item);
       });
