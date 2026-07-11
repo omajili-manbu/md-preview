@@ -13,6 +13,7 @@ build/
 .uploads/
 *.tmp
 *.log
+screenshot*.png
 
 # 操作系统文件
 .DS_Store
