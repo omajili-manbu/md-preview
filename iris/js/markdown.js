@@ -673,8 +673,8 @@
       heading.style.cursor = 'pointer';
       heading.style.position = 'relative';
 
-      // 锚点分享按钮：悬浮显示，点击复制直达链接
-      if (heading.id && !heading.querySelector('.heading-anchor')) {
+      // 锚点分享按钮：仅 H1（文档主标题）显示，点击复制直达链接
+      if (heading.tagName === 'H1' && heading.id && !heading.querySelector('.heading-anchor')) {
         const anchorBtn = document.createElement('span');
         anchorBtn.className = 'heading-anchor';
         anchorBtn.title = '复制此标题的直达链接';
