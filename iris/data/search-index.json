@@ -95,6 +95,11 @@
     "preview": "Twitter/X 嵌入示例 本页面展示如何使用 Markdown 预览器嵌入 Twitter/X 推文和时间线。 --- 1. 基本用法 嵌入单条推文 源码： 渲染效果： --- 使用 X 替代 Twitter 源码： 渲染效果： --- 2. 用户时间线嵌入 嵌入用户时间线 源码： 渲染效果： 说明： - 显示该用户最近的推文 - 自动刷新显示最新内容 - 高度可自定义 --- 嵌入用户喜欢的"
   },
   {
+    "path": "docs/feat.md",
+    "title": "feat.md — 未来优化方向",
+    "preview": "feat.md — 未来优化方向 > 基于当前代码现状整理的优化路线图，按类别分组，标注优先级（P0 高 / P1 中 / P2 低）与用户决策。 > 每条均说明现状、问题与建议改动。 --- 一、搜索体验 1. 升级为 FlexSearch 全文检索 — P0 ✅ 要做 - 现状：search.js 虽引入了 flexsearch.bundle.js，但实际使用的是 simpleSearch()"
+  },
+  {
     "path": "docs/getting-started.md",
     "title": "快速开始",
     "preview": "快速开始 部署到 GitHub Pages 1. Fork 仓库 点击右上角的 Fork 按钮，将仓库复制到你的账号下。 2. 开启 GitHub Pages 1. 进入 Fork 后的仓库 2. 点击 Settings → Pages 3. 在 Build and deployment 中，Source 选择 GitHub Actions 3. 修改配置 编辑 iris/config.json，"
