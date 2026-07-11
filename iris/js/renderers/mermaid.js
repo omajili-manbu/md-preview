@@ -3,6 +3,41 @@
   window.MarkdownPreview = window.MarkdownPreview || {};
   window.MarkdownPreview.renderers = window.MarkdownPreview.renderers || {};
 
+  // 初始化 mermaid 配置（defer 保证 mermaid.min.js 已加载）
+  if (typeof mermaid !== 'undefined') {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#d4a5c9',
+        primaryTextColor: '#333333',
+        primaryBorderColor: '#d4a5c9',
+        lineColor: '#888888',
+        secondaryColor: '#f2c4ce',
+        tertiaryColor: '#f8f8f8',
+        background: '#ffffff',
+        mainBkg: '#ffffff',
+        nodeBorder: '#d4a5c9',
+        clusterBkg: '#f8f8f8',
+        titleColor: '#333333',
+        edgeLabelBackground: '#ffffff'
+      },
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      },
+      sequence: {
+        useMaxWidth: true,
+        diagramMarginX: 20,
+        diagramMarginY: 20
+      }
+    });
+    console.log('[Mermaid] Initialized');
+  } else {
+    console.warn('[Mermaid] Library not loaded, will skip init');
+  }
+
   async function render() {
     console.log('[Mermaid] render() called');
     

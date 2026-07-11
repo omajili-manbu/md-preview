@@ -1,49 +1,85 @@
-const CACHE_NAME = 'md-preview-v5.0';
+const CACHE_NAME = 'md-preview-v6.0';
 const RUNTIME_CACHE = 'md-preview-runtime';
 
+// 预缓存：首屏关键静态资源
 const PRECACHE_URLS = [
+  './',
   './index.html',
   './manifest.json',
   './iris/styles.css',
+  './iris/css/base.css',
+  './iris/css/layout.css',
+  './iris/css/markdown.css',
+  './iris/css/components.css',
+  './iris/css/floating.css',
+  './iris/css/responsive.css',
+  './iris/css/themes/themes.css',
   './iris/app.js',
-  './iris/vendor/marked.js'
+  './iris/js/config.js',
+  './iris/js/state.js',
+  './iris/js/dom.js',
+  './iris/js/ui.js',
+  './iris/js/search.js',
+  './iris/js/file-tree.js',
+  './iris/js/markdown.js',
+  './iris/js/router.js',
+  './iris/js/settings.js',
+  './iris/js/debug.js',
+  './iris/js/plugins/loader.js',
+  './iris/js/renderers/mermaid.js',
+  './iris/js/renderers/plantuml.js',
+  './iris/js/renderers/apexcharts.js',
+  './iris/js/renderers/diff.js',
+  './iris/js/renderers/geo.js',
+  './iris/js/renderers/embedded.js',
+  './iris/js/renderers/katex.js',
+  './iris/js/themes/theme-manager.js',
+  './iris/vendor/marked.js',
+  './iris/vendor/highlight.js/highlight.min.js',
+  './iris/vendor/flexsearch.bundle.js',
+  './iris/vendor/file-tree/prod.js',
+  './iris/data/file-tree.json',
+  './iris/data/search-index.json',
+  './iris/icons/favicon-32.png',
+  './iris/icons/apple-touch-icon.png',
+  './iris/vendor/highlight.js/styles/github.css'
 ];
 
 async function precache() {
   const cache = await caches.open(CACHE_NAME);
-  const results = await Promise.all(
+  let successCount = 0;
+  let failCount = 0;
+
+  await Promise.all(
     PRECACHE_URLS.map(async (url) => {
       try {
+        // 检查是否已缓存，避免重复请求
+        const cached = await cache.match(url);
+        if (cached) {
+          successCount++;
+          return;
+        }
         const response = await fetch(url);
         if (response.ok) {
           await cache.put(url, response);
-          console.log('[SW] Cached:', url);
-          return { url, success: true };
+          successCount++;
         } else {
-          console.warn('[SW] Failed to cache (status):', url, response.status);
-          return { url, success: false };
+          failCount++;
         }
       } catch (err) {
-        console.warn('[SW] Failed to cache (error):', url, err.message);
-        return { url, success: false };
+        failCount++;
       }
     })
   );
-  const failed = results.filter(r => !r.success);
-  if (failed.length > 0) {
-    console.warn('[SW] Some files failed to cache:', failed.map(f => f.url));
-  }
-  return results;
+
+  console.log('[SW] Precache done:', successCount, 'success,', failCount, 'failed');
 }
 
 self.addEventListener('install', event => {
-  console.log('[SW] Installing v5.0...');
+  console.log('[SW] Installing v6.0...');
   event.waitUntil(
     precache()
-      .then(() => {
-        console.log('[SW] Precache done, skipping wait');
-        return self.skipWaiting();
-      })
+      .then(() => self.skipWaiting())
       .catch(err => {
         console.error('[SW] Precache error:', err);
         return self.skipWaiting();
@@ -52,16 +88,30 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating...');
+  console.log('[SW] Activating v6.0...');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
         keys.filter(key => key !== CACHE_NAME && key !== RUNTIME_CACHE)
-          .map(key => caches.delete(key))
+          .map(key => {
+            console.log('[SW] Deleting old cache:', key);
+            return caches.delete(key);
+          })
       );
     }).then(() => self.clients.claim())
   );
 });
+
+// 资源类型分流策略
+function isStaticAsset(url) {
+  return /\.(css|js|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)(\?|$)/.test(url) ||
+         url.pathname.endsWith('/') ||
+         url.pathname.endsWith('index.html');
+}
+
+function isMarkdownDoc(url) {
+  return url.pathname.endsWith('.md');
+}
 
 self.addEventListener('fetch', event => {
   const { request } = event;
@@ -70,10 +120,50 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== location.origin) return;
 
+  // 静态资源：缓存优先，后台更新
+  if (isStaticAsset(url)) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        const fetchPromise = fetch(request).then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE).then(cache => cache.put(request, clone));
+          }
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // Markdown 文档：网络优先，离线降级到缓存
+  if (isMarkdownDoc(url)) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE).then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request).then(cached => {
+            return cached || new Response('离线模式下无法加载此文档', {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+            });
+          });
+        })
+    );
+    return;
+  }
+
+  // 其他请求：缓存优先
   event.respondWith(
     caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
+      return cached || fetch(request).then(response => {
         if (response.ok) {
           const clone = response.clone();
           caches.open(RUNTIME_CACHE).then(cache => cache.put(request, clone));

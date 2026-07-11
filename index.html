@@ -25,6 +25,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="preload" href="iris/styles.css" as="style">
+  <link rel="preload" href="iris/vendor/marked.js" as="script">
+  <link rel="preload" href="iris/js/config.js" as="script">
+  <link rel="preload" href="iris/data/file-tree.json" as="fetch" crossorigin>
   <link rel="stylesheet" href="iris/styles.css">
   <link rel="stylesheet" href="iris/css/themes/themes.css">
   <link rel="stylesheet" href="iris/vendor/leaflet/leaflet.css">
@@ -263,6 +267,13 @@
   </div>
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- 更新提示 Toast -->
+  <div class="update-toast" id="updateToast">
+    <span class="update-toast-text">有新版本可用</span>
+    <button class="update-toast-btn" id="updateRefreshBtn">刷新</button>
+    <button class="update-toast-close" id="updateDismissBtn" aria-label="关闭">&times;</button>
+  </div>
   
   <!-- Debug Panel (shown when ?debug=1) -->
   <div class="debug-panel hidden" id="debugPanel">
@@ -290,81 +301,52 @@
     </div>
   </div>
   
-  <script src="iris/vendor/marked.js"></script>
-  <script src="iris/vendor/highlight.js/highlight.min.js"></script>
-  <script src="iris/vendor/flexsearch.bundle.js"></script>
-  <script src="iris/vendor/mermaid.min.js"></script>
-  <script src="iris/vendor/pako.min.js"></script>
-  <script src="iris/vendor/leaflet/leaflet.js"></script>
-  <script src="iris/vendor/apexcharts.min.js"></script>
+  <script defer src="iris/vendor/marked.js"></script>
+  <script defer src="iris/vendor/highlight.js/highlight.min.js"></script>
+  <script defer src="iris/vendor/flexsearch.bundle.js"></script>
+  <script defer src="iris/vendor/mermaid.min.js"></script>
+  <script defer src="iris/vendor/pako.min.js"></script>
+  <script defer src="iris/vendor/leaflet/leaflet.js"></script>
+  <script defer src="iris/vendor/apexcharts.min.js"></script>
   <link rel="stylesheet" href="iris/vendor/diff2html/css/diff2html.min.css" />
-  <script src="iris/vendor/diff2html/js/diff2html.min.js"></script>
-  <script src="iris/vendor/diff2html/js/diff2html-ui.min.js"></script>
-  <script src="iris/vendor/katex/katex.min.js"></script>
-  <script src="iris/vendor/katex/auto-render.min.js"></script>
-  
+  <script defer src="iris/vendor/diff2html/js/diff2html.min.js"></script>
+  <script defer src="iris/vendor/diff2html/js/diff2html-ui.min.js"></script>
+  <script defer src="iris/vendor/katex/katex.min.js"></script>
+  <script defer src="iris/vendor/katex/auto-render.min.js"></script>
+
   <script async src="https://platform.twitter.com/widgets.js"></script>
-  <script>
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'base',
-      themeVariables: {
-        primaryColor: '#d4a5c9',
-        primaryTextColor: '#333333',
-        primaryBorderColor: '#d4a5c9',
-        lineColor: '#888888',
-        secondaryColor: '#f2c4ce',
-        tertiaryColor: '#f8f8f8',
-        background: '#ffffff',
-        mainBkg: '#ffffff',
-        nodeBorder: '#d4a5c9',
-        clusterBkg: '#f8f8f8',
-        titleColor: '#333333',
-        edgeLabelBackground: '#ffffff'
-      },
-      flowchart: {
-        useMaxWidth: true,
-        htmlLabels: true,
-        curve: 'basis'
-      },
-      sequence: {
-        useMaxWidth: true,
-        diagramMarginX: 20,
-        diagramMarginY: 20
-      }
-    });
-  </script>
+
   <!-- App Modules -->
-  <script src="iris/js/config.js"></script>
-  <script src="iris/js/debug.js"></script>
-  <script src="iris/js/state.js"></script>
-  <script src="iris/js/dom.js"></script>
-  <script src="iris/js/ui.js"></script>
-  <script src="iris/js/search.js"></script>
-  <script src="iris/vendor/file-tree/prod.js"></script>
-  <script src="iris/js/file-tree.js"></script>
-  <script src="iris/js/markdown.js"></script>
-  <script src="iris/js/router.js"></script>
-  <script src="iris/js/settings.js"></script>
-  
+  <script defer src="iris/js/config.js"></script>
+  <script defer src="iris/js/debug.js"></script>
+  <script defer src="iris/js/state.js"></script>
+  <script defer src="iris/js/dom.js"></script>
+  <script defer src="iris/js/ui.js"></script>
+  <script defer src="iris/js/search.js"></script>
+  <script defer src="iris/vendor/file-tree/prod.js"></script>
+  <script defer src="iris/js/file-tree.js"></script>
+  <script defer src="iris/js/markdown.js"></script>
+  <script defer src="iris/js/router.js"></script>
+  <script defer src="iris/js/settings.js"></script>
+
   <!-- Plugin System -->
-  <script src="iris/js/plugins/loader.js"></script>
-  
+  <script defer src="iris/js/plugins/loader.js"></script>
+
   <!-- Built-in Plugins -->
-  <script src="iris/plugins/qrcode.js"></script>
-  
+  <script defer src="iris/plugins/qrcode.js"></script>
+
   <!-- Renderers -->
-  <script src="iris/js/renderers/mermaid.js"></script>
-  <script src="iris/js/renderers/plantuml.js"></script>
-  <script src="iris/js/renderers/apexcharts.js"></script>
-  <script src="iris/js/renderers/diff.js"></script>
-  <script src="iris/js/renderers/geo.js"></script>
-  <script src="iris/js/renderers/embedded.js"></script>
-  <script src="iris/js/renderers/katex.js"></script>
-  
+  <script defer src="iris/js/renderers/mermaid.js"></script>
+  <script defer src="iris/js/renderers/plantuml.js"></script>
+  <script defer src="iris/js/renderers/apexcharts.js"></script>
+  <script defer src="iris/js/renderers/diff.js"></script>
+  <script defer src="iris/js/renderers/geo.js"></script>
+  <script defer src="iris/js/renderers/embedded.js"></script>
+  <script defer src="iris/js/renderers/katex.js"></script>
+
   <!-- Main Entry -->
-  <script src="iris/js/themes/theme-manager.js"></script>
-  <script src="iris/app.js"></script>
+  <script defer src="iris/js/themes/theme-manager.js"></script>
+  <script defer src="iris/app.js"></script>
   
   <script>
     let deferredPrompt = null;
@@ -421,7 +403,28 @@
           .catch(err => {
             console.error('[PWA] Service Worker registration failed:', err);
           });
+
+        // 新 SW 接管后显示更新提示
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          showUpdateToast();
+        });
       }
+    }
+
+    function showUpdateToast() {
+      // 避免首次安装时触发
+      if (!sessionStorage.getItem('sw-first-load')) {
+        sessionStorage.setItem('sw-first-load', '1');
+        return;
+      }
+      const toast = document.getElementById('updateToast');
+      if (!toast) return;
+      toast.classList.add('show');
+    }
+
+    function dismissUpdateToast() {
+      const toast = document.getElementById('updateToast');
+      if (toast) toast.classList.remove('show');
     }
 
     function handleBeforeInstallPrompt(e) {
@@ -506,6 +509,15 @@
       const installBtn = document.getElementById('installPwaBtn');
       if (installBtn) {
         installBtn.addEventListener('click', handleInstallClick);
+      }
+
+      const updateRefreshBtn = document.getElementById('updateRefreshBtn');
+      if (updateRefreshBtn) {
+        updateRefreshBtn.addEventListener('click', () => window.location.reload());
+      }
+      const updateDismissBtn = document.getElementById('updateDismissBtn');
+      if (updateDismissBtn) {
+        updateDismissBtn.addEventListener('click', dismissUpdateToast);
       }
 
       setTimeout(() => {
