@@ -61,11 +61,12 @@
 }
 
 .markdown-body .heading-anchor.copied {
-  opacity: 1;
+  opacity: 1 !important;
   color: var(--color-success);
 }
 
-.markdown-body .heading-clickable:hover .heading-anchor {
+.markdown-body .heading-clickable:hover .heading-anchor,
+.markdown-body .heading-anchor.copied {
   opacity: 1;
 }
 
