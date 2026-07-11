@@ -22,6 +22,34 @@
   box-shadow: 0 0 0 3px rgba(212, 165, 201, 0.1);
 }
 
+.search-scope {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.scope-btn {
+  padding: 3px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.scope-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent-purple);
+}
+
+.scope-btn.active {
+  background: var(--color-accent-purple);
+  color: #fff;
+  border-color: var(--color-accent-purple);
+}
+
 .search-results {
   max-height: 0;
   overflow: hidden;

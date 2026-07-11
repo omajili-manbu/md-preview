@@ -6,6 +6,7 @@
   let debounceTimer = null;
   let isIndexLoaded = false;
   let currentQuery = '';
+  let currentScope = 'all'; // 'all' = 全文, 'title' = 仅标题
   
   async function loadSearchIndex() {
     try {
@@ -39,13 +40,13 @@
     }
   }
   
-  function simpleSearch(query) {
+  function simpleSearch(query, scope) {
+    const s = scope || currentScope;
     const results = [];
     const queryLower = query.toLowerCase();
     
     documents.forEach((doc, index) => {
       const titleLower = doc.title.toLowerCase();
-      const previewLower = doc.preview ? doc.preview.toLowerCase() : '';
       const pathLower = doc.path.toLowerCase();
       
       let score = 0;
@@ -55,11 +56,21 @@
         const indexInTitle = titleLower.indexOf(queryLower);
         if (indexInTitle === 0) score += 5;
       }
-      if (previewLower.includes(queryLower)) {
-        score += 5;
-      }
-      if (pathLower.includes(queryLower)) {
-        score += 2;
+      
+      if (s === 'title') {
+        // 仅标题模式：只算标题和路径命中，不看正文
+        if (pathLower.includes(queryLower)) {
+          score += 2;
+        }
+      } else {
+        // 全文模式：标题 + 正文 + 路径
+        const previewLower = doc.preview ? doc.preview.toLowerCase() : '';
+        if (previewLower.includes(queryLower)) {
+          score += 5;
+        }
+        if (pathLower.includes(queryLower)) {
+          score += 2;
+        }
       }
       
       if (score > 0) {
@@ -89,7 +100,7 @@
     console.log('Searching for:', query);
 
     try {
-      const results = simpleSearch(query);
+      const results = simpleSearch(query, currentScope);
 
       console.log('Search results raw:', results);
       console.log('Results count:', results.length);
@@ -193,6 +204,22 @@
         performSearch(e.target.value);
       }, 300);
     });
+    
+    // 搜索范围切换
+    const scopeContainer = document.getElementById('searchScope');
+    if (scopeContainer) {
+      scopeContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.scope-btn');
+        if (!btn) return;
+        scopeContainer.querySelectorAll('.scope-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentScope = btn.dataset.scope;
+        // 切换后立即重新搜索
+        if (dom.searchInput.value.trim()) {
+          performSearch(dom.searchInput.value);
+        }
+      });
+    }
     
     document.addEventListener('click', (e) => {
       if (!dom.searchInput.contains(e.target) && !dom.searchResults.contains(e.target)) {

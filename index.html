@@ -50,6 +50,10 @@
       </div>
       <div class="search-container">
         <input type="search" id="searchInput" placeholder="搜索文档..." />
+        <div class="search-scope" id="searchScope">
+          <button class="scope-btn active" data-scope="all" title="搜索标题和正文">全文</button>
+          <button class="scope-btn" data-scope="title" title="仅搜索标题">标题</button>
+        </div>
       </div>
       <div class="search-results" id="searchResults"></div>
       <div class="file-tree" id="fileTree"></div>
@@ -169,6 +173,28 @@
                   <option value="solarized-light">Solarized Light</option>
                   <option value="solarized-dark">Solarized Dark</option>
                 </select>
+              </div>
+            </div>
+
+            <div class="setting-item setting-item-block">
+              <div>
+                <div class="setting-label">自定义主题色</div>
+                <div class="setting-description">调整主色与强调色，点击色块取色；重置恢复默认</div>
+              </div>
+              <div class="setting-control color-picker-row">
+                <label class="color-pick" title="主色 (--color-accent-purple)">
+                  <input type="color" id="customColorPurple" data-var="--color-accent-purple" value="#d4a5c9">
+                  <span class="color-pick-label">主色</span>
+                </label>
+                <label class="color-pick" title="粉色 (--color-accent-pink)">
+                  <input type="color" id="customColorPink" data-var="--color-accent-pink" value="#f2c4ce">
+                  <span class="color-pick-label">粉色</span>
+                </label>
+                <label class="color-pick" title="深色 (--color-accent-purple-deep)">
+                  <input type="color" id="customColorPurpleDeep" data-var="--color-accent-purple-deep" value="#b88aad">
+                  <span class="color-pick-label">深色</span>
+                </label>
+                <button class="color-reset-btn" id="resetColorsBtn" type="button">重置</button>
               </div>
             </div>
           </div>

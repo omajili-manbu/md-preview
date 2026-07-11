@@ -7,7 +7,15 @@
     showReadingProgress: true,
     showWordCount: false,
     truncateFileNames: true,
-    codeTheme: 'github'
+    codeTheme: 'github',
+    customColors: {}
+  };
+
+  // 主题色默认值（与 base.css :root 保持一致）
+  const defaultColors = {
+    '--color-accent-purple': '#d4a5c9',
+    '--color-accent-pink': '#f2c4ce',
+    '--color-accent-purple-deep': '#b88aad'
   };
 
   function loadSettings() {
@@ -20,7 +28,8 @@
           showReadingProgress: parsed.showReadingProgress ?? defaultSettings.showReadingProgress,
           showWordCount: parsed.showWordCount ?? defaultSettings.showWordCount,
           truncateFileNames: parsed.truncateFileNames ?? defaultSettings.truncateFileNames,
-          codeTheme: parsed.codeTheme ?? defaultSettings.codeTheme
+          codeTheme: parsed.codeTheme ?? defaultSettings.codeTheme,
+          customColors: (parsed.customColors && typeof parsed.customColors === 'object') ? parsed.customColors : {}
         };
       }
     } catch (e) {
@@ -123,6 +132,21 @@
       saveSettings(settings);
       applyCodeTheme(settings.codeTheme);
     });
+
+    // 自定义主题色取色器
+    document.querySelectorAll('input[type="color"][data-var]').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const varName = e.target.dataset.var;
+        const settings = loadSettings();
+        if (!settings.customColors) settings.customColors = {};
+        settings.customColors[varName] = e.target.value;
+        saveSettings(settings);
+        applyCustomColors(settings.customColors);
+      });
+    });
+
+    const resetColorsBtn = document.getElementById('resetColorsBtn');
+    resetColorsBtn?.addEventListener('click', resetCustomColors);
   }
 
   function applyCodeTheme(theme) {
@@ -130,6 +154,32 @@
     if (link) {
       link.href = `iris/vendor/highlight.js/styles/${theme}.css`;
     }
+  }
+
+  // 应用自定义主题色到 :root，覆盖 base.css 默认值
+  function applyCustomColors(colors) {
+    const root = document.documentElement;
+    Object.keys(defaultColors).forEach(varName => {
+      const val = colors && colors[varName];
+      if (val) {
+        root.style.setProperty(varName, val);
+      } else {
+        root.style.removeProperty(varName);
+      }
+    });
+  }
+
+  // 重置自定义主题色，恢复 base.css 默认值
+  function resetCustomColors() {
+    const settings = loadSettings();
+    settings.customColors = {};
+    saveSettings(settings);
+    applyCustomColors({});
+    // 同步取色器显示为默认色
+    Object.keys(defaultColors).forEach(varName => {
+      const input = document.querySelector(`input[type="color"][data-var="${varName}"]`);
+      if (input) input.value = defaultColors[varName];
+    });
   }
 
   function openSettingsPanel() {
@@ -217,6 +267,7 @@
     toggleWordCount(settings.showWordCount);
     toggleTruncateFileNames(settings.truncateFileNames);
     applyCodeTheme(settings.codeTheme);
+    applyCustomColors(settings.customColors || {});
 
     const showReadingProgressToggle = document.getElementById('showReadingProgressToggle');
     const showWordCountToggle = document.getElementById('showWordCountToggle');
@@ -227,6 +278,13 @@
     if (showWordCountToggle) showWordCountToggle.checked = settings.showWordCount;
     if (truncateFileNamesToggle) truncateFileNamesToggle.checked = settings.truncateFileNames !== false;
     if (codeThemeSelect) codeThemeSelect.value = settings.codeTheme;
+
+    // 取色器显示：有自定义值用自定义值，否则显示默认色
+    document.querySelectorAll('input[type="color"][data-var]').forEach(input => {
+      const varName = input.dataset.var;
+      const custom = settings.customColors && settings.customColors[varName];
+      input.value = custom || defaultColors[varName];
+    });
   }
 
   window.MarkdownPreview.settings = {
