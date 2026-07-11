@@ -712,49 +712,49 @@
     });
   }
 
-  function copyToClipboard(text, btn) {
-    let ok = execCommandCopy(text);
-    if (ok) {
-      markCopied(btn);
-      return;
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(() => {
-        markCopied(btn);
-      }).catch(() => {
-        console.warn('Clipboard API 复制失败');
+  // 通用复制函数：返回 Promise<boolean>
+  function copyToClipboard(text) {
+    // 优先 Clipboard API（安全上下文下最可靠）
+    if (window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(() => {
+        console.log('[copy] clipboard API 成功');
+        return true;
+      }).catch((err) => {
+        console.warn('[copy] clipboard API 失败，降级 execCommand:', err);
+        return legacyCopy(text);
       });
-    } else {
-      console.warn('复制失败：浏览器不支持');
     }
+    return Promise.resolve(legacyCopy(text));
   }
 
-  function execCommandCopy(text) {
+  // 降级复制：用可见的临时容器 + Selection API
+  function legacyCopy(text) {
     const ta = document.createElement('textarea');
     ta.value = text;
-    ta.setAttribute('readonly', '');
-    ta.style.position = 'absolute';
-    ta.style.left = '0';
-    ta.style.top = '0';
-    ta.style.opacity = '0';
-    ta.style.zIndex = '-9999';
+    ta.style.position = 'fixed';
+    ta.style.top = '50%';
+    ta.style.left = '50%';
+    ta.style.fontSize = '16px';
     document.body.appendChild(ta);
+
+    const previouslyFocused = document.activeElement;
     ta.focus();
     ta.select();
     ta.setSelectionRange(0, text.length);
+
     let ok = false;
     try {
       ok = document.execCommand('copy');
+      console.log('[copy] execCommand 返回:', ok);
     } catch (e) {
-      console.warn('execCommand 复制失败:', e);
+      console.warn('[copy] execCommand 异常:', e);
     }
-    document.body.removeChild(ta);
-    return ok;
-  }
 
-  function markCopied(btn) {
-    btn.classList.add('copied');
-    setTimeout(() => btn.classList.remove('copied'), 1500);
+    document.body.removeChild(ta);
+    if (previouslyFocused && previouslyFocused.focus) {
+      previouslyFocused.focus();
+    }
+    return ok;
   }
 
   // 复制标题直达链接到剪贴板
@@ -767,14 +767,7 @@
     }
     const base = window.location.origin + window.location.pathname;
     const link = `${base}#/${docPath}#${headingId}`;
-    const ok = execCommandCopy(link);
-    if (ok) {
-      flashButton(btn, true);
-    } else if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(link).then(() => flashButton(btn, true)).catch(() => flashButton(btn, false));
-    } else {
-      flashButton(btn, false);
-    }
+    copyToClipboard(link).then(ok => flashButton(btn, ok));
   }
 
   // 按钮视觉反馈：成功显示对勾，失败显示提示
@@ -826,18 +819,12 @@
         const code = pre.querySelector('code');
         if (code) {
           const text = code.textContent;
-          const ok = execCommandCopy(text);
-          if (ok) {
-            btn.classList.add('copied');
-            setTimeout(() => btn.classList.remove('copied'), 1500);
-          } else if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(() => {
+          copyToClipboard(text).then(ok => {
+            if (ok) {
               btn.classList.add('copied');
               setTimeout(() => btn.classList.remove('copied'), 1500);
-            }).catch(() => {
-              console.warn('代码块复制失败');
-            });
-          }
+            }
+          });
         }
       });
     });
