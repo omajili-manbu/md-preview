@@ -106,10 +106,16 @@
     // 打开本地 MD 文件
     const openLocalMdBtn = document.getElementById('openLocalMdBtn');
     const localMdInput = document.getElementById('localMdInput');
-    openLocalMdBtn?.addEventListener('click', () => {
-      localMdInput && localMdInput.click();
-      menuItems.classList.remove('open');
-      menuTrigger.classList.remove('active');
+    openLocalMdBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!localMdInput) return;
+      // 必须在用户手势同步上下文中触发文件选择器
+      localMdInput.click();
+      // 延迟收起菜单，避免干扰文件选择器
+      setTimeout(() => {
+        menuItems.classList.remove('open');
+        menuTrigger.classList.remove('active');
+      }, 300);
     });
     localMdInput?.addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
@@ -121,6 +127,7 @@
         state.currentFilePath = '';
         window.MarkdownPreview.markdown.renderMarkdownDirect(content, file.name);
       };
+      reader.onerror = () => alert('读取文件失败，请重试');
       reader.readAsText(file, 'utf-8');
       // 重置 input，允许重复选择同一文件
       e.target.value = '';
