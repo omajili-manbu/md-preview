@@ -39,8 +39,10 @@ function collectFiles(dir, basePath = '') {
     if (stats.isDirectory()) {
       files.push(...collectFiles(fullPath, basePath ? `${basePath}/${item}` : item));
     } else if (item.endsWith('.md')) {
+      // 存储相对于仓库根目录的完整路径（含 docs/ 前缀），
+      // 供前端直接使用，避免硬编码拼接前缀
       files.push({
-        path: basePath ? `${basePath}/${item}` : item,
+        path: 'docs/' + (basePath ? `${basePath}/${item}` : item),
         fullPath: fullPath
       });
     }

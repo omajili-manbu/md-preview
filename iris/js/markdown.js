@@ -573,6 +573,21 @@
     item.classList.add('active');
   }
 
+  // 根据标题 id 高亮对应的目录项（供路由锚点直达调用）
+  function setActiveIndexById(id) {
+    const indexItems = dom.indexTree.querySelectorAll('.index-item');
+    let matched = false;
+    indexItems.forEach(item => {
+      if (item.dataset.id === id) {
+        item.classList.add('active');
+        matched = true;
+      } else {
+        item.classList.remove('active');
+      }
+    });
+    return matched;
+  }
+
   function updateEditButton(path) {
     if (!dom.editPageBtn || !dom.pageHeader) return;
 
@@ -648,6 +663,8 @@
     oldHeadings.forEach(h => {
       h.classList.remove('heading-clickable');
       h.style.cursor = '';
+      const oldAnchor = h.querySelector('.heading-anchor');
+      if (oldAnchor) oldAnchor.remove();
     });
 
     const headings = dom.markdownContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
@@ -655,6 +672,20 @@
       heading.classList.add('heading-clickable');
       heading.style.cursor = 'pointer';
       heading.style.position = 'relative';
+
+      // 锚点分享按钮：悬浮显示，点击复制直达链接
+      if (heading.id && !heading.querySelector('.heading-anchor')) {
+        const anchorBtn = document.createElement('span');
+        anchorBtn.className = 'heading-anchor';
+        anchorBtn.title = '复制此标题的直达链接';
+        anchorBtn.setAttribute('aria-label', '复制此标题的直达链接');
+        anchorBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+        anchorBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          copyHeadingLink(heading.id, anchorBtn);
+        });
+        heading.appendChild(anchorBtn);
+      }
 
       heading.addEventListener('mouseenter', () => {
         heading.style.borderLeft = '3px solid var(--color-accent-purple)';
@@ -671,16 +702,39 @@
       heading.addEventListener('click', () => {
         const id = heading.id;
         if (id) {
-          window.location.hash = '#' + id;
-
-          const indexItems = dom.indexTree.querySelectorAll('.index-item');
-          indexItems.forEach(item => {
-            if (item.dataset.id === id) {
-              setActiveIndexItem(item);
-            }
-          });
+          // 平滑滚动到标题，不覆盖文档路由 hash
+          heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setActiveIndexById(id);
         }
       });
+    });
+  }
+
+  // 复制标题直达链接到剪贴板
+  function copyHeadingLink(headingId, btn) {
+    const { state } = window.MarkdownPreview;
+    const docPath = state.currentFilePath;
+    if (!docPath) return;
+    const base = window.location.origin + window.location.pathname;
+    const link = `${base}#/${docPath}#${headingId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      btn.classList.add('copied');
+      const original = btn.title;
+      btn.title = '已复制！';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.title = original;
+      }, 1500);
+    }).catch(() => {
+      // 降级：选中文本供用户复制
+      const ta = document.createElement('textarea');
+      ta.value = link;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 1500);
     });
   }
 
@@ -722,6 +776,7 @@
     extractAndRenderIndex,
     renderIndex,
     setActiveIndexItem,
+    setActiveIndexById,
     updateEditButton,
     parseFrontmatter,
     updateBreadcrumbs,

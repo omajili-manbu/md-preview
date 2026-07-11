@@ -82,6 +82,15 @@
   font-size: 14px;
 }
 
+/* 搜索结果关键词高亮 */
+.search-result-item mark {
+  background: var(--color-accent-pink);
+  color: var(--color-text);
+  border-radius: 2px;
+  padding: 0 1px;
+  font-weight: 600;
+}
+
 .page-header {
   display: none;
   justify-content: flex-start;

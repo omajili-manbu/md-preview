@@ -5,6 +5,7 @@
   let documents = [];
   let debounceTimer = null;
   let isIndexLoaded = false;
+  let currentQuery = '';
   
   async function loadSearchIndex() {
     try {
@@ -76,21 +77,23 @@
   
   async function performSearch(query) {
     await ensureIndexLoaded();
-    
+
     const { dom } = window.MarkdownPreview;
     if (!query.trim()) {
       hideSearchResults();
       return;
     }
-    
+
+    currentQuery = query.trim();
+
     console.log('Searching for:', query);
-    
+
     try {
       const results = simpleSearch(query);
-      
+
       console.log('Search results raw:', results);
       console.log('Results count:', results.length);
-      
+
       displaySearchResults(results);
     } catch (e) {
       console.error('Search error:', e);
@@ -133,18 +136,18 @@
       const item = document.createElement('div');
       item.className = 'search-result-item';
       item.innerHTML = `
-        <div class="search-result-title">${escapeHtml(result.title)}</div>
-        <div class="search-result-path">${escapeHtml(result.path)}</div>
-        ${result.preview ? `<div class="search-result-preview">${escapeHtml(result.preview)}</div>` : ''}
+        <div class="search-result-title">${highlightMatch(result.title, currentQuery)}</div>
+        <div class="search-result-path">${highlightMatch(result.path, currentQuery)}</div>
+        ${result.preview ? `<div class="search-result-preview">${highlightMatch(result.preview, currentQuery)}</div>` : ''}
       `;
-      
+
       item.addEventListener('click', () => {
-        markdown.loadMarkdownFile('docs/' + result.path);
-        fileTree.highlightFileInSidebar('docs/' + result.path);
+        markdown.loadMarkdownFile(result.path);
+        fileTree.highlightFileInSidebar(result.path);
         hideSearchResults();
         dom.searchInput.value = '';
       });
-      
+
       container.appendChild(item);
     });
   }
@@ -158,6 +161,23 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // 转义 HTML 后，将命中关键词片段用 <mark> 包裹（大小写不敏感）
+  function highlightMatch(text, query) {
+    if (!text) return '';
+    const escaped = escapeHtml(text);
+    if (!query) return escaped;
+    // 转义正则特殊字符
+    const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try {
+      const regex = new RegExp(safeQuery, 'gi');
+      return escaped.replace(regex, function (m) {
+        return '<mark>' + m + '</mark>';
+      });
+    } catch (e) {
+      return escaped;
+    }
   }
   
   function setupSearchEvents() {
