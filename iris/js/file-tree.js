@@ -201,7 +201,8 @@
         ':host(.truncate-names) li.file>button>.file-name,:host(.truncate-names) li.text>button>.file-name{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}',
         ':host(.truncate-names) li.folder>ul{overflow:hidden}',
         ':host(:not(.truncate-names)) li.file,:host(:not(.truncate-names)) li.text{min-width:max-content}',
-        ':host(:not(.truncate-names)) li.folder>ul{overflow-x:auto;overflow-y:hidden}'
+        ':host(:not(.truncate-names)) li.folder>ul{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none}',
+        ':host(:not(.truncate-names)) li.folder>ul::-webkit-scrollbar{display:none;height:0;width:0}'
       ].join('\n');
       shadow.appendChild(styleEl);
     }
