@@ -966,6 +966,21 @@
   window.MarkdownPreview.markdown = {
     loadMarkdownFile,
     renderMarkdown,
+    // 直接渲染内容字符串（用于本地 MD 文件，不经过 fetch 和 URL）
+    renderMarkdownDirect: function(content, fileName) {
+      // 清空 URL hash，避免刷新后仍尝试加载原路径
+      if (window.location.hash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      // 更新面包屑为文件名
+      if (fileName) {
+        const bc = document.getElementById('pageBreadcrumbs');
+        const header = document.getElementById('pageHeader');
+        if (bc) bc.textContent = fileName;
+        if (header) header.style.display = 'flex';
+      }
+      renderMarkdown(content, '');
+    },
     interceptLinks,
     simplifyPath,
     extractAndRenderIndex,

@@ -81,6 +81,51 @@
       menuTrigger.classList.remove('active');
     });
 
+    // 上一篇/下一篇：复用 file-tree.getAdjacentFiles
+    const prevDocBtn = document.getElementById('prevDocBtn');
+    const nextDocBtn = document.getElementById('nextDocBtn');
+    const navigateDoc = (direction) => {
+      const { state, fileTree, markdown } = window.MarkdownPreview;
+      if (!state.currentFilePath) {
+        alert('请先打开一个文档');
+        return;
+      }
+      const { prev, next } = fileTree.getAdjacentFiles(state.currentFilePath);
+      const target = direction === 'prev' ? prev : next;
+      if (target) {
+        markdown.loadMarkdownFile(target.path);
+      } else {
+        alert(direction === 'prev' ? '已经是第一篇了' : '已经是最后一篇了');
+      }
+      menuItems.classList.remove('open');
+      menuTrigger.classList.remove('active');
+    };
+    prevDocBtn?.addEventListener('click', () => navigateDoc('prev'));
+    nextDocBtn?.addEventListener('click', () => navigateDoc('next'));
+
+    // 打开本地 MD 文件
+    const openLocalMdBtn = document.getElementById('openLocalMdBtn');
+    const localMdInput = document.getElementById('localMdInput');
+    openLocalMdBtn?.addEventListener('click', () => {
+      localMdInput && localMdInput.click();
+      menuItems.classList.remove('open');
+      menuTrigger.classList.remove('active');
+    });
+    localMdInput?.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const content = ev.target.result;
+        // 本地文件不写进 URL，刷新后丢失
+        state.currentFilePath = '';
+        window.MarkdownPreview.markdown.renderMarkdownDirect(content, file.name);
+      };
+      reader.readAsText(file, 'utf-8');
+      // 重置 input，允许重复选择同一文件
+      e.target.value = '';
+    });
+
     openSettingsBtn?.addEventListener('click', () => {
       openSettingsPanel();
       menuItems.classList.remove('open');

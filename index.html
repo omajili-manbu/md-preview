@@ -80,6 +80,25 @@
             </svg>
             <span class="menu-item-label">回到顶部</span>
           </button>
+          <button class="menu-item-btn" id="prevDocBtn" title="上一篇">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+            <span class="menu-item-label">上一篇</span>
+          </button>
+          <button class="menu-item-btn" id="nextDocBtn" title="下一篇">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+            <span class="menu-item-label">下一篇</span>
+          </button>
+          <button class="menu-item-btn" id="openLocalMdBtn" title="打开本地 MD">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <path d="M12 11v6M9 14h6"/>
+            </svg>
+            <span class="menu-item-label">打开本地 MD</span>
+          </button>
           <button class="menu-item-btn" id="installPwaBtn" title="安装到桌面" style="display: none;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -110,6 +129,7 @@
           </svg>
         </button>
       </div>
+      <input type="file" id="localMdInput" accept=".md,.markdown,text/markdown,text/plain" style="display:none">
       
       <!-- Settings Panel -->
       <div class="settings-overlay" id="settingsOverlay">
