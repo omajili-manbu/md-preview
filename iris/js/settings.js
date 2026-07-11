@@ -6,6 +6,7 @@
   const defaultSettings = {
     showReadingProgress: true,
     showWordCount: false,
+    truncateFileNames: true,
     codeTheme: 'github'
   };
 
@@ -14,10 +15,11 @@
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return { 
-          ...defaultSettings, 
+        return {
+          ...defaultSettings,
           showReadingProgress: parsed.showReadingProgress ?? defaultSettings.showReadingProgress,
           showWordCount: parsed.showWordCount ?? defaultSettings.showWordCount,
+          truncateFileNames: parsed.truncateFileNames ?? defaultSettings.truncateFileNames,
           codeTheme: parsed.codeTheme ?? defaultSettings.codeTheme
         };
       }
@@ -77,6 +79,7 @@
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
     const showReadingProgressToggle = document.getElementById('showReadingProgressToggle');
     const showWordCountToggle = document.getElementById('showWordCountToggle');
+    const truncateFileNamesToggle = document.getElementById('truncateFileNamesToggle');
     const codeThemeSelect = document.getElementById('codeThemeSelect');
 
     if (!settingsOverlay) {
@@ -105,6 +108,13 @@
       settings.showWordCount = e.target.checked;
       saveSettings(settings);
       toggleWordCount(settings.showWordCount);
+    });
+
+    truncateFileNamesToggle?.addEventListener('change', (e) => {
+      const settings = loadSettings();
+      settings.truncateFileNames = e.target.checked;
+      saveSettings(settings);
+      toggleTruncateFileNames(settings.truncateFileNames);
     });
 
     codeThemeSelect?.addEventListener('change', (e) => {
@@ -148,6 +158,12 @@
   function toggleWordCount(show) {
     if (window.MarkdownPreview?.fileTree?.setWordCountVisibility) {
       window.MarkdownPreview.fileTree.setWordCountVisibility(show);
+    }
+  }
+
+  function toggleTruncateFileNames(truncate) {
+    if (window.MarkdownPreview?.fileTree?.setTruncateNames) {
+      window.MarkdownPreview.fileTree.setTruncateNames(truncate);
     }
   }
   
@@ -199,14 +215,17 @@
     initDownloadButtons();
     toggleReadingProgress(settings.showReadingProgress);
     toggleWordCount(settings.showWordCount);
+    toggleTruncateFileNames(settings.truncateFileNames);
     applyCodeTheme(settings.codeTheme);
 
     const showReadingProgressToggle = document.getElementById('showReadingProgressToggle');
     const showWordCountToggle = document.getElementById('showWordCountToggle');
+    const truncateFileNamesToggle = document.getElementById('truncateFileNamesToggle');
     const codeThemeSelect = document.getElementById('codeThemeSelect');
 
     if (showReadingProgressToggle) showReadingProgressToggle.checked = settings.showReadingProgress;
     if (showWordCountToggle) showWordCountToggle.checked = settings.showWordCount;
+    if (truncateFileNamesToggle) truncateFileNamesToggle.checked = settings.truncateFileNames !== false;
     if (codeThemeSelect) codeThemeSelect.value = settings.codeTheme;
   }
 

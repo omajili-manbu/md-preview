@@ -193,11 +193,15 @@
         ':host(.show-word-count) .word-count{opacity:1}',
         '.word-count{color:rgb(from currentColor r g b / .4);font-size:x-small;opacity:0;transition:opacity .2s;white-space:nowrap;margin-left:auto;padding-left:12px;flex-shrink:0}',
         'li.file,li.text{display:flex;align-items:center}',
-        'li.file>button,li.text>button{display:flex;align-items:center;flex:1;overflow:hidden}',
+        'li.file>button,li.text>button{display:flex;align-items:center;flex:1}',
         'li.file>button::after,li.text>button::after{display:none}',
-        'li.file>button>.file-name,li.text>button>.file-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}',
+        'li.file>button>.file-name,li.text>button>.file-name{white-space:nowrap}',
         'li.file.active>button,li.text.active>button{color:var(--color-accent-purple-deep);font-weight:500}',
-        ':host li.folder>ul{overflow:hidden}'
+        ':host(.truncate-names) li.file>button,:host(.truncate-names) li.text>button{overflow:hidden}',
+        ':host(.truncate-names) li.file>button>.file-name,:host(.truncate-names) li.text>button>.file-name{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}',
+        ':host(.truncate-names) li.folder>ul{overflow:hidden}',
+        ':host(:not(.truncate-names)) li.file,:host(:not(.truncate-names)) li.text{min-width:max-content}',
+        ':host(:not(.truncate-names)) li.folder>ul{overflow-x:auto;overflow-y:hidden}'
       ].join('\n');
       shadow.appendChild(styleEl);
     }
@@ -267,6 +271,7 @@
       // 应用当前词数显示设置
       var settings = window.MarkdownPreview.settings && window.MarkdownPreview.settings.load ? window.MarkdownPreview.settings.load() : {};
       setWordCountVisibility(settings.showWordCount === true);
+      setTruncateNames(settings.truncateFileNames !== false);
     });
   }
   
@@ -286,6 +291,13 @@
     var tree = dom.fileTree.querySelector('file-tree');
     if (tree) {
       tree.classList.toggle('show-word-count', visible);
+    }
+  }
+
+  function setTruncateNames(truncate) {
+    var tree = dom.fileTree.querySelector('file-tree');
+    if (tree) {
+      tree.classList.toggle('truncate-names', truncate !== false);
     }
   }
   
@@ -381,6 +393,7 @@
     onFilesLoaded,
     getAllFilesInDFSOrder,
     getAdjacentFiles,
-    setWordCountVisibility
+    setWordCountVisibility,
+    setTruncateNames
   };
 })();
