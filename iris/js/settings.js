@@ -124,7 +124,7 @@
       reader.onload = (ev) => {
         const content = ev.target.result;
         // 本地文件不写进 URL，刷新后丢失
-        state.currentFilePath = '';
+        window.MarkdownPreview.state.currentFilePath = '';
         window.MarkdownPreview.markdown.renderMarkdownDirect(content, file.name);
       };
       reader.onerror = () => alert('读取文件失败，请重试');
