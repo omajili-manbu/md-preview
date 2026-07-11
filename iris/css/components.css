@@ -259,3 +259,34 @@
   transform: scale(0.98);
 }
 
+/* 打印 / 导出 PDF 样式 */
+@media print {
+  .sidebar,
+  .floating-menu,
+  .settings-overlay,
+  .sidebar-overlay,
+  .progress-bar,
+  .reading-progress,
+  .mobile-menu-btn,
+  .edit-fab,
+  .update-toast,
+  .debug-panel {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .markdown-body {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}
+

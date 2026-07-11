@@ -266,8 +266,36 @@
   
   function initDownloadButtons() {
     const downloadMdBtn = document.getElementById('downloadMdBtn');
-    
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+
     downloadMdBtn?.addEventListener('click', () => downloadCurrentFile());
+    downloadPdfBtn?.addEventListener('click', exportPdf);
+  }
+
+  // 导出 PDF：通过浏览器打印对话框
+  function exportPdf() {
+    const { state } = window.MarkdownPreview;
+    if (!state.currentFilePath) {
+      alert('请先打开一个文档');
+      return;
+    }
+
+    // 临时展开侧边栏折叠状态并应用打印样式
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('.main-content');
+    const beforeprintHandler = () => {
+      document.body.classList.add('printing');
+    };
+    const afterprintHandler = () => {
+      document.body.classList.remove('printing');
+      window.removeEventListener('beforeprint', beforeprintHandler);
+      window.removeEventListener('afterprint', afterprintHandler);
+    };
+    window.addEventListener('beforeprint', beforeprintHandler);
+    window.addEventListener('afterprint', afterprintHandler);
+
+    // 短暂延迟确保打印样式生效
+    setTimeout(() => window.print(), 50);
   }
 
   function init() {

@@ -3,9 +3,11 @@
 (function() {
   const STORAGE_KEY = 'md-preview-theme';
   const CUSTOM_CSS_KEY = 'md-preview-custom-css';
-  
+  const CUSTOM_HLJS_KEY = 'md-preview-custom-hljs';
+
   let currentTheme = 'default';
   let customCSSLink = null;
+  let customHljsLink = null;
 
   // 初始化主题系统
   function init() {
@@ -17,6 +19,9 @@
 
     // 加载自定义 CSS
     loadCustomCSS();
+
+    // 加载自定义高亮 JS 主题
+    loadCustomHljs();
 
     // 绑定设置面板中的主题选择器
     bindSettingsPanel();
@@ -85,15 +90,58 @@
     }
   }
 
+  // 加载自定义高亮 JS 主题 CSS
+  function loadCustomHljs(url) {
+    // 移除旧的
+    if (customHljsLink) {
+      customHljsLink.remove();
+      customHljsLink = null;
+    }
+
+    if (!url) {
+      url = localStorage.getItem(CUSTOM_HLJS_KEY);
+    }
+
+    if (url) {
+      customHljsLink = document.createElement('link');
+      customHljsLink.rel = 'stylesheet';
+      customHljsLink.href = url;
+      // 插入到 hljs-theme 之后，确保覆盖内置主题
+      const hljsTheme = document.getElementById('hljs-theme');
+      if (hljsTheme && hljsTheme.parentNode) {
+        hljsTheme.parentNode.insertBefore(customHljsLink, hljsTheme.nextSibling);
+      } else {
+        document.head.appendChild(customHljsLink);
+      }
+      console.log('Custom hljs CSS loaded:', url);
+    }
+  }
+
+  // 设置自定义高亮 JS 主题
+  function setCustomHljs(url) {
+    localStorage.setItem(CUSTOM_HLJS_KEY, url);
+    loadCustomHljs(url);
+  }
+
+  // 清除自定义高亮 JS 主题
+  function clearCustomHljs() {
+    localStorage.removeItem(CUSTOM_HLJS_KEY);
+    if (customHljsLink) {
+      customHljsLink.remove();
+      customHljsLink = null;
+    }
+  }
+
   // 绑定设置面板
   function bindSettingsPanel() {
     const themeSelect = document.getElementById('themeSelect');
     const customCSSInput = document.getElementById('customCSSInput');
+    const customHljsInput = document.getElementById('customHljsInput');
 
     if (themeSelect) {
       // 设置当前值
       themeSelect.value = currentTheme;
-      
+
       // 监听变化
       themeSelect.addEventListener('change', (e) => {
         setTheme(e.target.value);
@@ -111,7 +159,7 @@
       if (savedCSS) {
         customCSSInput.value = savedCSS;
       }
-      
+
       // 回车应用
       customCSSInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -120,6 +168,26 @@
             setCustomCSS(url);
           } else {
             clearCustomCSS();
+          }
+        }
+      });
+    }
+
+    if (customHljsInput) {
+      // 设置当前值
+      const savedHljs = localStorage.getItem(CUSTOM_HLJS_KEY);
+      if (savedHljs) {
+        customHljsInput.value = savedHljs;
+      }
+
+      // 回车应用
+      customHljsInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const url = e.target.value.trim();
+          if (url) {
+            setCustomHljs(url);
+          } else {
+            clearCustomHljs();
           }
         }
       });
