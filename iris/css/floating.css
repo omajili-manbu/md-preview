@@ -212,6 +212,23 @@
   margin: 0 0 16px 0;
 }
 
+.settings-subsection {
+  margin-bottom: 20px;
+}
+
+.settings-subsection:last-child {
+  margin-bottom: 0;
+}
+
+.settings-subsection-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
 .setting-item {
   display: flex;
   justify-content: space-between;

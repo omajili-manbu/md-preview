@@ -97,6 +97,11 @@
       // 监听变化
       themeSelect.addEventListener('change', (e) => {
         setTheme(e.target.value);
+        // 互斥：选预设主题时清空自定义配色
+        const settings = window.MarkdownPreview.settings;
+        if (settings && settings.resetCustomColors) {
+          settings.resetCustomColors();
+        }
       });
     }
 

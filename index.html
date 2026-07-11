@@ -126,157 +126,175 @@
           
           <div class="settings-section">
             <h3 class="settings-section-title">外观</h3>
-            
-            <div class="setting-item">
-              <div>
-                <div class="setting-label">主题</div>
-                <div class="setting-description">选择界面主题</div>
-              </div>
-              <div class="setting-control">
-                <select id="themeSelect" class="theme-select">
-                  <option value="default">紫粉渐变</option>
-                  <option value="github-light">GitHub Light</option>
-                  <option value="github-dark">GitHub Dark</option>
-                  <option value="notion">Notion</option>
-                  <option value="arc">Arc Dark</option>
-                  <option value="dracula">Dracula</option>
-                  <option value="nord">Nord</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="setting-item">
-              <div>
-                <div class="setting-label">自定义 CSS</div>
-                <div class="setting-description">加载外部 CSS 文件</div>
-              </div>
-              <div class="setting-control">
-                <input type="text" id="customCSSInput" class="custom-css-input" placeholder="CSS 文件 URL">
-              </div>
-            </div>
-            
-            <div class="setting-item">
-              <div>
-                <div class="setting-label">代码高亮主题</div>
-                <div class="setting-description">选择代码块配色方案</div>
-              </div>
-              <div class="setting-control">
-                <select id="codeThemeSelect" class="theme-select">
-                  <option value="github">GitHub Light</option>
-                  <option value="github-dark">GitHub Dark</option>
-                  <option value="atom-one-light">Atom One Light</option>
-                  <option value="atom-one-dark">Atom One Dark</option>
-                  <option value="monokai">Monokai</option>
-                  <option value="dracula">Dracula</option>
-                  <option value="nord">Nord</option>
-                  <option value="vs2015">VS 2015</option>
-                  <option value="solarized-light">Solarized Light</option>
-                  <option value="solarized-dark">Solarized Dark</option>
-                </select>
+
+            <div class="settings-subsection">
+              <div class="settings-subsection-title">主题</div>
+              <div class="setting-item">
+                <div>
+                  <div class="setting-label">预设主题</div>
+                  <div class="setting-description">选择预设界面主题，会清空自定义配色</div>
+                </div>
+                <div class="setting-control">
+                  <select id="themeSelect" class="theme-select">
+                    <option value="default">紫粉渐变</option>
+                    <option value="github-light">GitHub Light</option>
+                    <option value="github-dark">GitHub Dark</option>
+                    <option value="notion">Notion</option>
+                    <option value="arc">Arc Dark</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="nord">Nord</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div class="setting-item setting-item-block">
-              <div>
-                <div class="setting-label">自定义强调色</div>
-                <div class="setting-description">调整主色及派生色，点击色块取色</div>
+            <div class="settings-subsection">
+              <div class="settings-subsection-title">自定义配色</div>
+              <div class="setting-item setting-item-block">
+                <div>
+                  <div class="setting-label">强调色</div>
+                  <div class="setting-description">主色及派生色，点击色块取色</div>
+                </div>
+                <div class="setting-control color-picker-row">
+                  <label class="color-pick" title="主色 (--color-accent-purple)">
+                    <input type="color" id="customColorPurple" data-var="--color-accent-purple" value="#d4a5c9">
+                    <span class="color-pick-label">主色</span>
+                  </label>
+                  <label class="color-pick" title="粉色 (--color-accent-pink)">
+                    <input type="color" id="customColorPink" data-var="--color-accent-pink" value="#f2c4ce">
+                    <span class="color-pick-label">粉色</span>
+                  </label>
+                  <label class="color-pick" title="深色 (--color-accent-purple-deep)">
+                    <input type="color" id="customColorPurpleDeep" data-var="--color-accent-purple-deep" value="#b88aad">
+                    <span class="color-pick-label">深色</span>
+                  </label>
+                </div>
               </div>
-              <div class="setting-control color-picker-row">
-                <label class="color-pick" title="主色 (--color-accent-purple)">
-                  <input type="color" id="customColorPurple" data-var="--color-accent-purple" value="#d4a5c9">
-                  <span class="color-pick-label">主色</span>
-                </label>
-                <label class="color-pick" title="粉色 (--color-accent-pink)">
-                  <input type="color" id="customColorPink" data-var="--color-accent-pink" value="#f2c4ce">
-                  <span class="color-pick-label">粉色</span>
-                </label>
-                <label class="color-pick" title="深色 (--color-accent-purple-deep)">
-                  <input type="color" id="customColorPurpleDeep" data-var="--color-accent-purple-deep" value="#b88aad">
-                  <span class="color-pick-label">深色</span>
-                </label>
+
+              <div class="setting-item setting-item-block">
+                <div>
+                  <div class="setting-label">中性色</div>
+                  <div class="setting-description">背景、表面、文字与边框色，可做出亮色或暗色主题</div>
+                </div>
+                <div class="setting-control color-picker-row">
+                  <label class="color-pick" title="背景 (--color-bg)">
+                    <input type="color" id="customColorBg" data-var="--color-bg" value="#fafafa">
+                    <span class="color-pick-label">背景</span>
+                  </label>
+                  <label class="color-pick" title="表面 (--color-surface)">
+                    <input type="color" id="customColorSurface" data-var="--color-surface" value="#ffffff">
+                    <span class="color-pick-label">表面</span>
+                  </label>
+                  <label class="color-pick" title="边框 (--color-border)">
+                    <input type="color" id="customColorBorder" data-var="--color-border" value="#f0f0f0">
+                    <span class="color-pick-label">边框</span>
+                  </label>
+                  <label class="color-pick" title="文字 (--color-text)">
+                    <input type="color" id="customColorText" data-var="--color-text" value="#2d2d2d">
+                    <span class="color-pick-label">文字</span>
+                  </label>
+                  <label class="color-pick" title="次要文字 (--color-text-muted)">
+                    <input type="color" id="customColorTextMuted" data-var="--color-text-muted" value="#999999">
+                    <span class="color-pick-label">次要</span>
+                  </label>
+                  <button class="color-reset-btn" id="resetColorsBtn" type="button">重置</button>
+                </div>
               </div>
             </div>
 
-            <div class="setting-item setting-item-block">
-              <div>
-                <div class="setting-label">自定义中性色</div>
-                <div class="setting-description">调整背景、表面、文字与边框色，可做出亮色或暗色主题</div>
+            <div class="settings-subsection">
+              <div class="settings-subsection-title">代码高亮</div>
+              <div class="setting-item">
+                <div>
+                  <div class="setting-label">代码配色方案</div>
+                  <div class="setting-description">选择代码块语法高亮主题</div>
+                </div>
+                <div class="setting-control">
+                  <select id="codeThemeSelect" class="theme-select">
+                    <option value="github">GitHub Light</option>
+                    <option value="github-dark">GitHub Dark</option>
+                    <option value="atom-one-light">Atom One Light</option>
+                    <option value="atom-one-dark">Atom One Dark</option>
+                    <option value="monokai">Monokai</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="nord">Nord</option>
+                    <option value="vs2015">VS 2015</option>
+                    <option value="solarized-light">Solarized Light</option>
+                    <option value="solarized-dark">Solarized Dark</option>
+                  </select>
+                </div>
               </div>
-              <div class="setting-control color-picker-row">
-                <label class="color-pick" title="背景 (--color-bg)">
-                  <input type="color" id="customColorBg" data-var="--color-bg" value="#fafafa">
-                  <span class="color-pick-label">背景</span>
-                </label>
-                <label class="color-pick" title="表面 (--color-surface)">
-                  <input type="color" id="customColorSurface" data-var="--color-surface" value="#ffffff">
-                  <span class="color-pick-label">表面</span>
-                </label>
-                <label class="color-pick" title="边框 (--color-border)">
-                  <input type="color" id="customColorBorder" data-var="--color-border" value="#f0f0f0">
-                  <span class="color-pick-label">边框</span>
-                </label>
-                <label class="color-pick" title="文字 (--color-text)">
-                  <input type="color" id="customColorText" data-var="--color-text" value="#2d2d2d">
-                  <span class="color-pick-label">文字</span>
-                </label>
-                <label class="color-pick" title="次要文字 (--color-text-muted)">
-                  <input type="color" id="customColorTextMuted" data-var="--color-text-muted" value="#999999">
-                  <span class="color-pick-label">次要</span>
-                </label>
-                <button class="color-reset-btn" id="resetColorsBtn" type="button">重置</button>
+            </div>
+
+            <div class="settings-subsection">
+              <div class="settings-subsection-title">高级</div>
+              <div class="setting-item">
+                <div>
+                  <div class="setting-label">自定义 CSS</div>
+                  <div class="setting-description">加载外部 CSS 文件 URL，回车应用</div>
+                </div>
+                <div class="setting-control">
+                  <input type="text" id="customCSSInput" class="custom-css-input" placeholder="CSS 文件 URL">
+                </div>
               </div>
             </div>
           </div>
-          
+
           <div class="settings-section">
             <h3 class="settings-section-title">功能</h3>
-            
-            <div class="setting-item">
-              <div>
-                <div class="setting-label">显示阅读进度</div>
-                <div class="setting-description">显示页面阅读进度</div>
+
+            <div class="settings-subsection">
+              <div class="settings-subsection-title">显示</div>
+              <div class="setting-item">
+                <div>
+                  <div class="setting-label">显示阅读进度</div>
+                  <div class="setting-description">显示页面阅读进度</div>
+                </div>
+                <div class="setting-control">
+                  <label class="switch">
+                    <input type="checkbox" id="showReadingProgressToggle" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
               </div>
-              <div class="setting-control">
-                <label class="switch">
-                  <input type="checkbox" id="showReadingProgressToggle" checked>
-                  <span class="switch-slider"></span>
-                </label>
+
+              <div class="setting-item">
+                <div>
+                  <div class="setting-label">显示词数统计</div>
+                  <div class="setting-description">在文件列表中显示每个文件的词数</div>
+                </div>
+                <div class="setting-control">
+                  <label class="switch">
+                    <input type="checkbox" id="showWordCountToggle">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
               </div>
-            </div>
-            
-            <div class="setting-item">
-              <div>
-                <div class="setting-label">显示词数统计</div>
-                <div class="setting-description">在文件列表中显示每个文件的词数</div>
-              </div>
-              <div class="setting-control">
-                <label class="switch">
-                  <input type="checkbox" id="showWordCountToggle">
-                  <span class="switch-slider"></span>
-                </label>
+
+              <div class="setting-item">
+                <div>
+                  <div class="setting-label">折叠过长文件名</div>
+                  <div class="setting-description">开启时用省略号截断；关闭时显示完整文件名，超出部分可在该文件所在文件夹区域内横向滚动查看</div>
+                </div>
+                <div class="setting-control">
+                  <label class="switch">
+                    <input type="checkbox" id="truncateFileNamesToggle" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
               </div>
             </div>
 
-            <div class="setting-item">
-              <div>
-                <div class="setting-label">折叠过长文件名</div>
-                <div class="setting-description">开启时用省略号截断；关闭时显示完整文件名，超出部分可在该文件所在文件夹区域内横向滚动查看</div>
-              </div>
-              <div class="setting-control">
-                <label class="switch">
-                  <input type="checkbox" id="truncateFileNamesToggle" checked>
-                  <span class="switch-slider"></span>
-                </label>
-              </div>
-            </div>
-            
-            <div class="setting-item">
-              <div>
-                <div class="setting-label">下载此文章</div>
-                <div class="setting-description">下载当前文档为 MD 格式</div>
-              </div>
-              <div class="setting-control">
-                <button id="downloadMdBtn" class="download-btn">下载 MD</button>
+            <div class="settings-subsection">
+              <div class="settings-subsection-title">操作</div>
+              <div class="setting-item">
+                <div>
+                  <div class="setting-label">下载此文章</div>
+                  <div class="setting-description">下载当前文档为 MD 格式</div>
+                </div>
+                <div class="setting-control">
+                  <button id="downloadMdBtn" class="download-btn">下载 MD</button>
+                </div>
               </div>
             </div>
           </div>

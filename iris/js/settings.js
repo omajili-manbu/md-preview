@@ -304,6 +304,7 @@
     save: saveSettings,
     open: openSettingsPanel,
     close: closeSettingsPanel,
+    resetCustomColors: resetCustomColors,
     init: init
   };
 
