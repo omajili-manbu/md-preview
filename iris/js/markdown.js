@@ -699,7 +699,9 @@
         heading.style.marginLeft = '';
       });
 
-      heading.addEventListener('click', () => {
+      heading.addEventListener('click', (e) => {
+        // 点击锚点按钮时不触发的标题滚动逻辑
+        if (e.target.closest('.heading-anchor')) return;
         const id = heading.id;
         if (id) {
           // 平滑滚动到标题，不覆盖文档路由 hash
@@ -714,28 +716,59 @@
   function copyHeadingLink(headingId, btn) {
     const { state } = window.MarkdownPreview;
     const docPath = state.currentFilePath;
-    if (!docPath) return;
+    if (!docPath) {
+      console.warn('复制失败：未找到当前文档路径');
+      return;
+    }
     const base = window.location.origin + window.location.pathname;
     const link = `${base}#/${docPath}#${headingId}`;
-    navigator.clipboard.writeText(link).then(() => {
+
+    function markCopied() {
       btn.classList.add('copied');
-      const original = btn.title;
+      const original = btn.getAttribute('data-original-title') || btn.title;
+      if (!btn.getAttribute('data-original-title')) {
+        btn.setAttribute('data-original-title', original);
+      }
       btn.title = '已复制！';
       setTimeout(() => {
         btn.classList.remove('copied');
         btn.title = original;
       }, 1500);
-    }).catch(() => {
-      // 降级：选中文本供用户复制
-      const ta = document.createElement('textarea');
-      ta.value = link;
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch (e) {}
-      document.body.removeChild(ta);
-      btn.classList.add('copied');
-      setTimeout(() => btn.classList.remove('copied'), 1500);
-    });
+    }
+
+    // 优先使用 Clipboard API（需安全上下文 https/localhost）
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(link).then(markCopied).catch(() => {
+        fallbackCopy(link, markCopied);
+      });
+    } else {
+      fallbackCopy(link, markCopied);
+    }
+  }
+
+  // 降级复制：用临时 textarea + execCommand
+  function fallbackCopy(text, onSuccess) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.left = '-9999px';
+    ta.setAttribute('readonly', '');
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (e) {
+      console.warn('降级复制失败:', e);
+    }
+    document.body.removeChild(ta);
+    if (ok) {
+      onSuccess();
+    } else {
+      console.warn('复制失败，请手动复制:', text);
+    }
   }
 
   function highlightCodeBlocks() {
