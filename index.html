@@ -178,8 +178,8 @@
 
             <div class="setting-item setting-item-block">
               <div>
-                <div class="setting-label">自定义主题色</div>
-                <div class="setting-description">调整主色与强调色，点击色块取色；重置恢复默认</div>
+                <div class="setting-label">自定义强调色</div>
+                <div class="setting-description">调整主色及派生色，点击色块取色</div>
               </div>
               <div class="setting-control color-picker-row">
                 <label class="color-pick" title="主色 (--color-accent-purple)">
@@ -193,6 +193,35 @@
                 <label class="color-pick" title="深色 (--color-accent-purple-deep)">
                   <input type="color" id="customColorPurpleDeep" data-var="--color-accent-purple-deep" value="#b88aad">
                   <span class="color-pick-label">深色</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-item setting-item-block">
+              <div>
+                <div class="setting-label">自定义中性色</div>
+                <div class="setting-description">调整背景、表面、文字与边框色，可做出亮色或暗色主题</div>
+              </div>
+              <div class="setting-control color-picker-row">
+                <label class="color-pick" title="背景 (--color-bg)">
+                  <input type="color" id="customColorBg" data-var="--color-bg" value="#fafafa">
+                  <span class="color-pick-label">背景</span>
+                </label>
+                <label class="color-pick" title="表面 (--color-surface)">
+                  <input type="color" id="customColorSurface" data-var="--color-surface" value="#ffffff">
+                  <span class="color-pick-label">表面</span>
+                </label>
+                <label class="color-pick" title="边框 (--color-border)">
+                  <input type="color" id="customColorBorder" data-var="--color-border" value="#f0f0f0">
+                  <span class="color-pick-label">边框</span>
+                </label>
+                <label class="color-pick" title="文字 (--color-text)">
+                  <input type="color" id="customColorText" data-var="--color-text" value="#2d2d2d">
+                  <span class="color-pick-label">文字</span>
+                </label>
+                <label class="color-pick" title="次要文字 (--color-text-muted)">
+                  <input type="color" id="customColorTextMuted" data-var="--color-text-muted" value="#999999">
+                  <span class="color-pick-label">次要</span>
                 </label>
                 <button class="color-reset-btn" id="resetColorsBtn" type="button">重置</button>
               </div>

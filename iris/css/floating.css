@@ -223,6 +223,18 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+/* 块状设置项：取色器行占满宽度 */
+.setting-item.setting-item-block {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.setting-item.setting-item-block .setting-control {
+  margin-left: 0;
+  width: 100%;
+}
+
 .setting-label {
   font-size: 15px;
   font-weight: 500;

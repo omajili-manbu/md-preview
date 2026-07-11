@@ -15,7 +15,19 @@
   const defaultColors = {
     '--color-accent-purple': '#d4a5c9',
     '--color-accent-pink': '#f2c4ce',
-    '--color-accent-purple-deep': '#b88aad'
+    '--color-accent-purple-deep': '#b88aad',
+    '--color-glow': 'rgba(255, 255, 255, 0.8)',
+    '--color-bg': '#fafafa',
+    '--color-surface': '#ffffff',
+    '--color-border': '#f0f0f0',
+    '--color-text': '#2d2d2d',
+    '--color-text-muted': '#999999'
+  };
+
+  // 取色器分组：强调色 / 中性色。glow 是 rgba，需特殊处理
+  const colorGroups = {
+    accent: ['--color-accent-purple', '--color-accent-pink', '--color-accent-purple-deep'],
+    neutral: ['--color-bg', '--color-surface', '--color-border', '--color-text', '--color-text-muted']
   };
 
   function loadSettings() {
