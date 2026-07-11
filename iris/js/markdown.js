@@ -369,13 +369,7 @@
       heading.id = id;
     });
 
-    document.querySelectorAll('.markdown-body pre').forEach(pre => {
-      pre.addEventListener('click', () => {
-        window.MarkdownPreview.ui.copyCodeToClipboard(pre);
-      });
-    });
-
-    setupCopyButtons();
+    setupClickDelegate();
     highlightCodeBlocks();
 
     interceptLinks(currentPath);
@@ -673,17 +667,13 @@
       heading.style.cursor = 'pointer';
       heading.style.position = 'relative';
 
-      // 锚点分享按钮：仅 H1（文档主标题）显示，点击复制直达链接
+      // 锚点分享按钮：仅 H1（文档主标题）显示，点击复制由事件委托处理
       if (heading.tagName === 'H1' && heading.id && !heading.querySelector('.heading-anchor')) {
         const anchorBtn = document.createElement('span');
         anchorBtn.className = 'heading-anchor';
         anchorBtn.title = '复制此标题的直达链接';
         anchorBtn.setAttribute('aria-label', '复制此标题的直达链接');
         anchorBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
-        anchorBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          copyHeadingLink(heading.id, anchorBtn);
-        });
         heading.appendChild(anchorBtn);
       }
 
@@ -710,6 +700,47 @@
         }
       });
     });
+  }
+
+  // 事件委托：在 markdownContent 上统一处理 copy-btn 和 heading-anchor 的点击
+  // 避免 renderWithPlugins 替换 DOM 后事件丢失
+  let clickDelegateInitialized = false;
+  function setupClickDelegate() {
+    if (clickDelegateInitialized) return;
+    clickDelegateInitialized = true;
+    dom.markdownContent.addEventListener('click', (e) => {
+      // 代码块复制按钮
+      const copyBtn = e.target.closest('.copy-btn');
+      if (copyBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const pre = copyBtn.closest('pre');
+        const code = pre && pre.querySelector('code');
+        if (code) {
+          console.log('[copy] copy-btn clicked');
+          copyToClipboard(code.textContent).then(ok => {
+            if (ok) {
+              copyBtn.classList.add('copied');
+              setTimeout(() => copyBtn.classList.remove('copied'), 1500);
+            }
+          });
+        }
+        return;
+      }
+      // 标题锚点按钮（仅 H1）
+      const anchorBtn = e.target.closest('.heading-anchor');
+      if (anchorBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        const heading = anchorBtn.closest('h1');
+        if (heading && heading.id) {
+          console.log('[copy] heading-anchor clicked');
+          copyHeadingLink(heading.id, anchorBtn);
+        }
+        return;
+      }
+    });
+    console.log('[copy] click delegate initialized');
   }
 
   // 通用复制函数：返回 Promise<boolean>
@@ -809,26 +840,8 @@
     });
   }
 
-  function setupCopyButtons() {
-    const buttons = dom.markdownContent.querySelectorAll('.copy-btn');
-    buttons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const pre = btn.closest('pre');
-        const code = pre.querySelector('code');
-        if (code) {
-          const text = code.textContent;
-          copyToClipboard(text).then(ok => {
-            if (ok) {
-              btn.classList.add('copied');
-              setTimeout(() => btn.classList.remove('copied'), 1500);
-            }
-          });
-        }
-      });
-    });
-  }
+  // 代码块复制已由 setupClickDelegate 事件委托处理，无需单独绑定
+  function setupCopyButtons() {}
 
   window.MarkdownPreview.markdown = {
     loadMarkdownFile,
