@@ -712,39 +712,23 @@
     });
   }
 
-  // 复制标题直达链接到剪贴板
-  function copyHeadingLink(headingId, btn) {
-    const { state } = window.MarkdownPreview;
-    const docPath = state.currentFilePath;
-    if (!docPath) {
-      console.warn('复制失败：未找到当前文档路径');
-      flashButton(btn, false);
-      return;
-    }
-    const base = window.location.origin + window.location.pathname;
-    const link = `${base}#/${docPath}#${headingId}`;
-
-    // 优先用同步 execCommand（在用户手势上下文内最可靠），
-    // 成功则直接给反馈；失败再尝试异步 Clipboard API
-    let ok = execCommandCopy(link);
+  function copyToClipboard(text, btn) {
+    let ok = execCommandCopy(text);
     if (ok) {
-      flashButton(btn, true);
+      markCopied(btn);
       return;
     }
-
-    // 降级：异步 Clipboard API
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(link).then(() => {
-        flashButton(btn, true);
+      navigator.clipboard.writeText(text).then(() => {
+        markCopied(btn);
       }).catch(() => {
-        flashButton(btn, false);
+        console.warn('Clipboard API 复制失败');
       });
     } else {
-      flashButton(btn, false);
+      console.warn('复制失败：浏览器不支持');
     }
   }
 
-  // 同步复制：临时 textarea + execCommand
   function execCommandCopy(text) {
     const ta = document.createElement('textarea');
     ta.value = text;
@@ -753,6 +737,7 @@
     ta.style.left = '0';
     ta.style.top = '0';
     ta.style.opacity = '0';
+    ta.style.zIndex = '-9999';
     document.body.appendChild(ta);
     ta.focus();
     ta.select();
@@ -765,6 +750,31 @@
     }
     document.body.removeChild(ta);
     return ok;
+  }
+
+  function markCopied(btn) {
+    btn.classList.add('copied');
+    setTimeout(() => btn.classList.remove('copied'), 1500);
+  }
+
+  // 复制标题直达链接到剪贴板
+  function copyHeadingLink(headingId, btn) {
+    const { state } = window.MarkdownPreview;
+    const docPath = state.currentFilePath;
+    if (!docPath) {
+      console.warn('复制失败：未找到当前文档路径');
+      return;
+    }
+    const base = window.location.origin + window.location.pathname;
+    const link = `${base}#/${docPath}#${headingId}`;
+    const ok = execCommandCopy(link);
+    if (ok) {
+      flashButton(btn, true);
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(() => flashButton(btn, true)).catch(() => flashButton(btn, false));
+    } else {
+      flashButton(btn, false);
+    }
   }
 
   // 按钮视觉反馈：成功显示对勾，失败显示提示
@@ -815,10 +825,19 @@
         const pre = btn.closest('pre');
         const code = pre.querySelector('code');
         if (code) {
-          navigator.clipboard.writeText(code.textContent).then(() => {
+          const text = code.textContent;
+          const ok = execCommandCopy(text);
+          if (ok) {
             btn.classList.add('copied');
-            setTimeout(() => btn.classList.remove('copied'), 2000);
-          });
+            setTimeout(() => btn.classList.remove('copied'), 1500);
+          } else if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+              btn.classList.add('copied');
+              setTimeout(() => btn.classList.remove('copied'), 1500);
+            }).catch(() => {
+              console.warn('代码块复制失败');
+            });
+          }
         }
       });
     });
