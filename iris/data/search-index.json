@@ -10,6 +10,11 @@
     "preview": "配置参考 Markdown Preview 的配置分为两层： 1. 构建/部署配置 — iris/config.json（仓库级，所有访客共享） 2. 运行时设置 — 浏览器 localStorage（用户级，仅当前浏览器生效） --- 一、iris/config.json（仓库级配置） 修改此文件后需推送代码触发重新部署。 基础配置 | 字段 | 类型 | 默认值 | 说明 | |------|"
   },
   {
+    "path": "docs/editor.md",
+    "title": "Markdown 编辑器",
+    "preview": "Markdown 编辑器 Markdown Preview 内置一个类 Jupyter 的 Cell 化 Markdown 编辑器，可在浏览器内即时编写、运行、预览 Markdown，并支持自动保存、搜索替换、导入导出等能力。 编辑器以全屏覆盖层的形式叠加在文档站之上，复用站点已有的渲染管线（marked.js + 各扩展渲染器），所有渲染结果与文档站完全一致。 --- 一、入口与退出 进入编辑器"
+  },
+  {
     "path": "docs/examples/apexcharts-examples.md",
     "title": "ApexCharts 交互式图表示例",
     "preview": "ApexCharts 交互式图表示例 本页面展示 ApexCharts 的各种图表类型和配置方式。 --- 1. 折线图 基础折线图 源码： 渲染效果： --- 多系列折线图 源码： 渲染效果： --- 2. 面积图 基础面积图 源码： 渲染效果： --- 多系列面积图 源码： 渲染效果： --- 3. 柱状图 基础柱状图 源码： 渲染效果： --- 分组柱状图 源码： 渲染效果： --- 4. "
