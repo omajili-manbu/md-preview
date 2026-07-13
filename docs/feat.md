@@ -137,7 +137,7 @@
 - **现状**：跨所有 Cell textarea 查找 / 替换 / 全部替换，`F3` / `Shift+F3` 导航，状态栏显示匹配数与当前位置。
 
 ### 22.10 工具栏菜单与私有语法 — ✅ 已完成
-- **现状**：7 大下拉菜单（Markdown / HTML / 私有语法 / 工具渲染 / 插入 / 下载 / 导入），覆盖 17 种画廊样式、5 种 GitHub Alerts、Mermaid/PlantUML/ApexCharts 模板等。
+- **现状**：8 大下拉菜单（Markdown / HTML / 私有语法 / 工具渲染 / 插入 / 嵌入 / 下载 / 导入），覆盖 17 种画廊样式、5 种 GitHub Alerts、Mermaid 15 种、PlantUML 12 种、ApexCharts 13 种、13 种外部嵌入、17 种原生 HTML 标签等。
 
 ### 22.11 右键菜单与 Cell 操作 — ✅ 已完成
 - **现状**：2 列 17 项右键菜单，左列「运行与插入」7 项，右列「编辑与清理」10 项，`showContextMenu` 四方向边界检测定位，窄屏回退单列。

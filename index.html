@@ -553,21 +553,55 @@
               <button class="dropdown-item" data-insert="x<sup>2</sup>">上标 sup</button>
               <button class="dropdown-item" data-insert="<kbd>Ctrl+C</kbd>" data-cursor="-7">键盘键位 kbd</button>
               <button class="dropdown-item" data-insert="<abbr title=&quot;全称&quot;>缩写</abbr>" data-cursor="-8">缩写 abbr</button>
+              <button class="dropdown-item" data-insert="<time datetime=&quot;2024-01-01&quot;>2024年1月</time>" data-cursor="-8">时间 time</button>
+              <button class="dropdown-item" data-insert="<del>删除</del> <ins>新增</ins>" data-cursor="-7">删除/新增 del/ins</button>
+              <button class="dropdown-item" data-insert="<cite>作品名</cite>" data-cursor="-8">作品引用 cite</button>
+              <button class="dropdown-item" data-insert="<var>变量名</var>" data-cursor="-8">变量 var</button>
+              <button class="dropdown-item" data-insert="<samp>程序输出</samp>" data-cursor="-8">程序输出 samp</button>
+              <button class="dropdown-item" data-insert="<dfn>术语</dfn>" data-cursor="-6">定义术语 dfn</button>
+              <button class="dropdown-item" data-insert="<q>短引用</q>" data-cursor="-5">短引用 q</button>
+              <button class="dropdown-item" data-insert="<wbr>">可选换行 wbr</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">结构与布局</div>
               <button class="dropdown-item" data-insert="<details>\n<summary>点击展开</summary>\n\n内容\n\n</details>" data-cursor="-15">折叠面板 details</button>
               <button class="dropdown-item" data-insert="<div align=&quot;center&quot;>\n居中内容\n</div>" data-cursor="-7">居中对齐</button>
               <button class="dropdown-item" data-insert="<dl>\n<dt>术语</dt>\n<dd>定义内容</dd>\n</dl>" data-cursor="-6">定义列表 dl</button>
+              <button class="dropdown-item" data-insert="<figure>\n  <img src=&quot;url&quot; alt=&quot;图片&quot;>\n  <figcaption>图片说明</figcaption>\n</figure>" data-cursor="-13">图文组合 figure</button>
+              <button class="dropdown-item" data-insert="<ruby>汉<rp>(</rp><rt>hàn</rt><rp>)</rp></ruby>" data-cursor="-7">注音 ruby</button>
+              <button class="dropdown-item" data-insert="<address>联系信息</address>" data-cursor="-11">联系方式 address</button>
               <button class="dropdown-item" data-insert="<br>">换行 br</button>
               <button class="dropdown-item" data-insert="<hr>">水平线 hr</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">交互组件</div>
+              <button class="dropdown-item" data-insert="<dialog open>\n  <p>对话框内容</p>\n  <form method=&quot;dialog&quot;><button>关闭</button></form>\n</dialog>" data-cursor="-13">模态对话框 dialog</button>
+              <button class="dropdown-item" data-insert="<button popovertarget=&quot;myPopover&quot;>触发</button>\n<div popover id=&quot;myPopover&quot;>\n  弹出内容\n</div>" data-cursor="-7">原生弹出层 popover</button>
+              <button class="dropdown-item" data-insert="<div contenteditable=&quot;true&quot;>可编辑内容</div>" data-cursor="-7">可编辑区域 contenteditable</button>
+              <button class="dropdown-item" data-insert="<template id=&quot;tpl&quot;>\n  <div>模板内容</div>\n</template>" data-cursor="-13">模板 template</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">表单与控件</div>
+              <button class="dropdown-item" data-insert="<meter value=&quot;60&quot; min=&quot;0&quot; max=&quot;100&quot;>60%</meter>" data-cursor="-10">仪表盘 meter</button>
+              <button class="dropdown-item" data-insert="<progress value=&quot;70&quot; max=&quot;100&quot;>70%</progress>" data-cursor="-12">进度条 progress</button>
+              <button class="dropdown-item" data-insert="<input list=&quot;opts&quot; placeholder=&quot;选择...&quot;>\n<datalist id=&quot;opts&quot;>\n  <option value=&quot;选项1&quot;>\n  <option value=&quot;选项2&quot;>\n</datalist>" data-cursor="-14">自动补全 datalist</button>
+              <button class="dropdown-item" data-insert="<form oninput=&quot;result.value=parseInt(a.value)+parseInt(b.value)&quot;>\n  <input type=&quot;number&quot; id=&quot;a&quot;> + <input type=&quot;number&quot; id=&quot;b&quot;>\n  = <output name=&quot;result&quot;>0</output>\n</form>" data-cursor="-8">计算表单 output</button>
+              <button class="dropdown-item" data-insert="<fieldset>\n  <legend>分组标题</legend>\n  内容\n</fieldset>" data-cursor="-13">内容分组 fieldset</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">多媒体与绘图</div>
+              <button class="dropdown-item" data-insert="<svg width=&quot;100&quot; height=&quot;100&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;>\n  <rect x=&quot;10&quot; y=&quot;10&quot; width=&quot;80&quot; height=&quot;80&quot; fill=&quot;#d4a5c9&quot;/>\n  <circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;30&quot; fill=&quot;#b88aad&quot;/>\n</svg>" data-cursor="-7">内联 SVG</button>
+              <button class="dropdown-item" data-insert="<canvas id=&quot;cv&quot; width=&quot;200&quot; height=&quot;100&quot;></canvas>\n<script>\n  const ctx = document.getElementById('cv').getContext('2d');\n  ctx.fillStyle = '#d4a5c9';\n  ctx.fillRect(10, 10, 180, 80);\n</script>" data-cursor="-11">Canvas 画布</button>
+              <button class="dropdown-item" data-insert="<iframe srcdoc=&quot;<h1>内联 HTML</h1><p>独立文档</p>&quot; width=&quot;100%&quot; height=&quot;200&quot;></iframe>" data-cursor="-12">内联框架 iframe srcdoc</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">颜色与注释</div>
               <button class="dropdown-item" data-insert="<span style=&quot;color: #e74c3c&quot;>红色文字</span>" data-cursor="-8">红色文字</button>
               <button class="dropdown-item" data-insert="<span style=&quot;color: #3498db&quot;>蓝色文字</span>" data-cursor="-8">蓝色文字</button>
               <button class="dropdown-item" data-insert="<span style=&quot;color: #2ecc71&quot;>绿色文字</span>" data-cursor="-8">绿色文字</button>
-              <button class="dropdown-item" data-insert="<font color=&quot;#9b59b6&quot;>紫色文字</font>" data-cursor="-8">紫色文字</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color: #f39c12&quot;>橙色文字</span>" data-cursor="-8">橙色文字</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color: #9b59b6&quot;>紫色文字</span>" data-cursor="-8">紫色文字</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;background: #fff3cd&quot;>背景高亮</span>" data-cursor="-8">背景高亮</button>
               <button class="dropdown-item" data-insert="<!-- 这是一条注释 -->" data-cursor="-4">HTML 注释</button>
             </div>
           </div>
@@ -619,36 +653,73 @@
           <div class="dropdown-menu" id="dropdownTools">
             <div class="dropdown-group">
               <div class="dropdown-group-title">Mermaid 图表</div>
-              <button class="dropdown-item" data-insert="```mermaid\ngraph TD\n    A --> B\n```" data-cursor="-6">流程图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nflowchart TD\n    A --> B\n    B --> C\n```" data-cursor="-6">流程图 flowchart</button>
               <button class="dropdown-item" data-insert="```mermaid\nsequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi\n```" data-cursor="-6">时序图</button>
               <button class="dropdown-item" data-insert="```mermaid\nclassDiagram\n    class Animal {\n        +String name\n        +makeSound()\n    }\n    class Dog {\n        +fetch()\n    }\n    Animal <|-- Dog\n```" data-cursor="-6">类图</button>
               <button class="dropdown-item" data-insert="```mermaid\nstateDiagram-v2\n    [*] --> 待机\n    待机 --> 运行: 启动\n    运行 --> [*]: 停止\n```" data-cursor="-6">状态图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nerDiagram\n    CUSTOMER ||--o{ ORDER : places\n    ORDER ||--|{ LINE-ITEM : contains\n```" data-cursor="-6">ER 关系图</button>
               <button class="dropdown-item" data-insert="```mermaid\ngantt\n    title 项目计划\n    dateFormat YYYY-MM-DD\n    section 阶段一\n    任务1 :a1, 2024-01-01, 7d\n    任务2 :after a1, 5d\n```" data-cursor="-6">甘特图</button>
               <button class="dropdown-item" data-insert="```mermaid\npie title 占比\n    &quot;A&quot; : 40\n    &quot;B&quot; : 35\n    &quot;C&quot; : 25\n```" data-cursor="-6">饼图</button>
-              <button class="dropdown-item" data-insert="```mermaid\nerDiagram\n    CUSTOMER ||--o{ ORDER : places\n    ORDER ||--|{ LINE-ITEM : contains\n```" data-cursor="-6">ER 关系图</button>
+              <button class="dropdown-item" data-insert="```mermaid\njourney\n    title 用户旅程\n    section 购物阶段\n    浏览商品: 5: 用户\n    加入购物车: 4: 用户\n    section 结算阶段\n    填写地址: 3: 用户\n    支付: 5: 用户, 系统\n```" data-cursor="-6">用户旅程图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nmindmap\n  root((主题))\n    分支A\n      子项1\n      子项2\n    分支B\n      子项3\n```" data-cursor="-6">思维导图</button>
+              <button class="dropdown-item" data-insert="```mermaid\ntimeline\n    title 时间线\n    2024-01 : 项目启动\n    2024-06 : Beta 发布\n    2024-12 : 正式版\n```" data-cursor="-6">时间线</button>
+              <button class="dropdown-item" data-insert="```mermaid\nquadrantChart\n    title 四象限分析\n    x-axis 低影响 --> 高影响\n    y-axis 低努力 --> 高努力\n    quadrant-1 快速见效\n    quadrant-2 重大项目\n    quadrant-3 次要任务\n    quadrant-4 考虑放弃\n    功能A: [0.3, 0.6]\n    功能B: [0.7, 0.8]\n```" data-cursor="-6">四象限图</button>
+              <button class="dropdown-item" data-insert="```mermaid\ngitGraph\n    commit id: 'init'\n    commit id: 'feat1'\n    branch develop\n    checkout develop\n    commit id: 'feat2'\n    checkout main\n    merge develop\n```" data-cursor="-6">Git 分支图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nblock-beta\n    columns 3\n    doc[&quot;文档&quot;] server[&quot;服务器&quot;] db[(数据库)]\n    doc --> server --> db\n```" data-cursor="-6">块图 block</button>
+              <button class="dropdown-item" data-insert="```mermaid\nC4Context\n    title 系统架构\n    Person(user, 用户)\n    System(app, 应用系统)\n    SystemDb(db, 数据库)\n    Rel(user, app, 使用)\n    Rel(app, db, 读写)\n```" data-cursor="-6">C4 架构图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nxychart-beta\n    title 月度销量\n    x-axis [1月, 2月, 3月, 4月, 5月]\n    y-axis 销量 0 --> 100\n    bar [30, 45, 35, 60, 75]\n```" data-cursor="-6">XY 图表</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">PlantUML</div>
-              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nAlice -> Bob: Hello\nBob --> Alice: Hi\n@enduml\n```" data-cursor="-6">PlantUML 时序图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nAlice -> Bob: Hello\nBob --> Alice: Hi\n@enduml\n```" data-cursor="-6">时序图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nclass Animal\nAnimal : + String name\nAnimal : + makeSound()\n\nclass Dog\nDog : + fetch()\n\nAnimal <|-- Dog\n@enduml\n```" data-cursor="-6">类图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nleft to right direction\nactor 用户 as U\nrectangle 系统 {\n  usecase 登录 as L\n  usecase 注册 as R\n  usecase 浏览 as B\n}\nU --> L\nU --> R\nL --> B\n@enduml\n```" data-cursor="-6">用例图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nstart\n:登录;\nif (验证成功?) then (是)\n  :进入主页;\nelse (否)\n  :显示错误;\n  stop\nendif\n:退出;\nstop\n@enduml\n```" data-cursor="-6">活动图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\n[*] --> 待机\n待机 --> 运行: 启动\n运行 --> 待机: 停止\n待机 --> [*]\n@enduml\n```" data-cursor="-6">状态图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\npackage 前端 {\n  [Web UI] as ui\n}\npackage 后端 {\n  [API 服务] as api\n  database 数据库 as db\n}\nui --> api\napi --> db\n@enduml\n```" data-cursor="-6">组件图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nnode 客户端 {\n  [浏览器] as browser\n}\nnode 服务器 {\n  [Web 服务] as web\n}\ncloud 云 {\n  database 数据库 as db\n}\nbrowser --> web\ndb <-- web\n@enduml\n```" data-cursor="-6">部署图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startmindmap\n* 项目\n** 前端\n*** 框架\n*** 样式\n** 后端\n*** API\n*** 数据库\n@endmindmap\n```" data-cursor="-6">思维导图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startwbs\n* 项目\n** 需求分析\n** 设计\n*** 架构设计\n*** UI 设计\n** 开发\n** 测试\n@endwbs\n```" data-cursor="-6">WBS 工作分解</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\njson {\n  &quot;name&quot;: &quot;项目&quot;,\n  &quot;version&quot;: &quot;1.0&quot;,\n  &quot;deps&quot;: [&quot;a&quot;, &quot;b&quot;]\n}\n@enduml\n```" data-cursor="-6">JSON 数据图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nentity 用户 {\n  * id : bigint <<PK>>\n  --\n  * 用户名 : string\n  * 密码 : string\n  created_at : datetime\n}\nentity 订单 {\n  * id : bigint <<PK>>\n  --\n  user_id : bigint <<FK>>\n  金额 : decimal\n}\n用户 ||--o{ 订单\n@enduml\n```" data-cursor="-6">ER 实体关系图</button>
+              <button class="dropdown-item" data-insert="```plantuml\n@startsalt\n{\n  登录\n  用户名: [          ]\n  密  码: [          ]\n  [确定] | [取消]\n}\n@endsalt\n```" data-cursor="-6">线框图 salt</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">ApexCharts</div>
-              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;bar&quot;},&quot;series&quot;:[{&quot;data&quot;:[30,40,35]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;]}}\n```" data-cursor="-6">柱状图</button>
-              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;line&quot;},&quot;series&quot;:[{&quot;data&quot;:[10,20,15,30]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;]}}\n```" data-cursor="-6">折线图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;line&quot;},&quot;series&quot;:[{&quot;name&quot;:&quot;销量&quot;,&quot;data&quot;:[10,20,15,30,25]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;1月&quot;,&quot;2月&quot;,&quot;3月&quot;,&quot;4月&quot;,&quot;5月&quot;]}}\n```" data-cursor="-6">折线图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;area&quot;},&quot;series&quot;:[{&quot;name&quot;:&quot;访问量&quot;,&quot;data&quot;:[30,40,35,50,49,60]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;一&quot;,&quot;二&quot;,&quot;三&quot;,&quot;四&quot;,&quot;五&quot;,&quot;六&quot;]}}\n```" data-cursor="-6">面积图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;bar&quot;},&quot;series&quot;:[{&quot;name&quot;:&quot;A&quot;,&quot;data&quot;:[30,40,35]},{&quot;name&quot;:&quot;B&quot;,&quot;data&quot;:[20,35,40]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;东&quot;,&quot;西&quot;,&quot;北&quot;]}}\n```" data-cursor="-6">柱状图（分组）</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;bar&quot;,&quot;stacked&quot;:true},&quot;series&quot;:[{&quot;name&quot;:&quot;已售&quot;,&quot;data&quot;:[30,40,35]},{&quot;name&quot;:&quot;库存&quot;,&quot;data&quot;:[20,15,25]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;]}}\n```" data-cursor="-6">堆叠柱状图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;bar&quot;,&quot;horizontal&quot;:true},&quot;series&quot;:[{&quot;data&quot;:[40,35,50,30]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;项目1&quot;,&quot;项目2&quot;,&quot;项目3&quot;,&quot;项目4&quot;]}}\n```" data-cursor="-6">条形图（水平）</button>
               <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;pie&quot;},&quot;series&quot;:[30,40,30],&quot;labels&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;]}\n```" data-cursor="-6">饼图</button>
-              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;area&quot;},&quot;series&quot;:[{&quot;data&quot;:[10,20,15,30,25]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,&quot;5&quot;]}}\n```" data-cursor="-6">面积图</button>
-              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;radar&quot;},&quot;series&quot;:[{&quot;data&quot;:[80,50,90,70,60]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;速度&quot;,&quot;力量&quot;,&quot;技巧&quot;,&quot;耐力&quot;,&quot;智力&quot;]}}\n```" data-cursor="-6">雷达图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;donut&quot;},&quot;series&quot;:[44,55,13,33],&quot;labels&quot;:[&quot;团队A&quot;,&quot;团队B&quot;,&quot;团队C&quot;,&quot;团队D&quot;]}\n```" data-cursor="-6">环形图 donut</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;radar&quot;},&quot;series&quot;:[{&quot;name&quot;:&quot;能力&quot;,&quot;data&quot;:[80,50,90,70,60]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;速度&quot;,&quot;力量&quot;,&quot;技巧&quot;,&quot;耐力&quot;,&quot;智力&quot;]}}\n```" data-cursor="-6">雷达图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;scatter&quot;},&quot;series&quot;:[{&quot;name&quot;:&quot;A&quot;,&quot;data&quot;:[[10,30],[20,40],[30,35],[40,50]]}]}\n```" data-cursor="-6">散点图 scatter</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;bubble&quot;},&quot;series&quot;:[{&quot;name&quot;:&quot;A&quot;,&quot;data&quot;:[[1,30,10],[2,40,15],[3,35,20]]}]}\n```" data-cursor="-6">气泡图 bubble</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;polarArea&quot;},&quot;series&quot;:[14,23,21,17,12],&quot;labels&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;,&quot;D&quot;,&quot;E&quot;]}\n```" data-cursor="-6">极坐标图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;rangeArea&quot;},&quot;series&quot;:[{&quot;name&quot;:&quot;温度范围&quot;,&quot;data&quot;:[{&quot;x&quot;:&quot;1月&quot;,&quot;y&quot;:[5,15]},{&quot;x&quot;:&quot;2月&quot;,&quot;y&quot;:[7,18]},{&quot;x&quot;:&quot;3月&quot;,&quot;y&quot;:[10,22]}]}]}\n```" data-cursor="-6">范围区域图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;candlestick&quot;},&quot;series&quot;:[{&quot;data&quot;:[{&quot;x&quot;:&quot;1日&quot;,&quot;y&quot;:[100,120,90,110]},{&quot;x&quot;:&quot;2日&quot;,&quot;y&quot;:[110,130,105,125]}]}]}\n```" data-cursor="-6">烛台图 candlestick</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">代码与数学</div>
-              <button class="dropdown-item" data-insert="```diff\n+ 新增行\n- 删除行\n```" data-cursor="-6">Diff 差异</button>
+              <button class="dropdown-item" data-insert="```diff\n+ 新增行\n- 删除行\n  未变更行\n```" data-cursor="-6">Diff 差异</button>
               <button class="dropdown-item" data-insert="$$\nE = mc^2\n$$" data-cursor="-4">KaTeX 公式块</button>
               <button class="dropdown-item" data-insert="$E = mc^2$" data-cursor="-1">KaTeX 行内公式</button>
+              <button class="dropdown-item" data-insert="$$\n\\begin{pmatrix}a & b \\\\ c & d\\end{pmatrix}\n$$" data-cursor="-4">矩阵 pmatrix</button>
+              <button class="dropdown-item" data-insert="$$\n\\begin{cases}\n  x + y = 1 \\\\\n  x - y = 3\n\\end{cases}\n$$" data-cursor="-4">方程组 cases</button>
+              <button class="dropdown-item" data-insert="$$\n\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}\n$$" data-cursor="-4">求和与极限</button>
+              <button class="dropdown-item" data-insert="```qrcode\nhttps://github.com\n```" data-cursor="-6">二维码</button>
+              <button class="dropdown-item" data-insert="```qrcode\n{&quot;data&quot;:&quot;https://github.com&quot;,&quot;size&quot;:180}\n```" data-cursor="-6">二维码（自定义尺寸）</button>
+              <button class="dropdown-item" data-insert="```abc\nX:1\nT:曲名\nM:4/4\nL:1/4\nK:C\nC D E F|G A B c|\n```" data-cursor="-6">ABC 乐谱</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">地理</div>
-              <button class="dropdown-item" data-insert="```geo\n{&quot;lat&quot;:39.9042,&quot;lng&quot;:116.4074,&quot;zoom&quot;:12}\n```" data-cursor="-6">Geo 地图 (北京)</button>
-              <button class="dropdown-item" data-insert="```geo\n{&quot;lat&quot;:31.2304,&quot;lng&quot;:121.4737,&quot;zoom&quot;:12}\n```" data-cursor="-6">Geo 地图 (上海)</button>
+              <button class="dropdown-item" data-insert="```geo\n{&quot;lat&quot;:39.9042,&quot;lng&quot;:116.4074,&quot;zoom&quot;:12}\n```" data-cursor="-6">坐标地图 (北京)</button>
+              <button class="dropdown-item" data-insert="```geo\n{&quot;lat&quot;:31.2304,&quot;lng&quot;:121.4737,&quot;zoom&quot;:12}\n```" data-cursor="-6">坐标地图 (上海)</button>
+              <button class="dropdown-item" data-insert="```geojson\n{\n  &quot;type&quot;: &quot;FeatureCollection&quot;,\n  &quot;features&quot;: [\n    {&quot;type&quot;:&quot;Feature&quot;,&quot;properties&quot;:{&quot;name&quot;:&quot;北京&quot;},&quot;geometry&quot;:{&quot;type&quot;:&quot;Point&quot;,&quot;coordinates&quot;:[116.4074,39.9042]}},\n    {&quot;type&quot;:&quot;Feature&quot;,&quot;properties&quot;:{&quot;name&quot;:&quot;上海&quot;},&quot;geometry&quot;:{&quot;type&quot;:&quot;Point&quot;,&quot;coordinates&quot;:[121.4737,31.2304]}}\n  ]\n}\n```" data-cursor="-6">GeoJSON 多点</button>
+              <button class="dropdown-item" data-insert="```geojson\n{\n  &quot;type&quot;: &quot;Feature&quot;,\n  &quot;geometry&quot;: {\n    &quot;type&quot;: &quot;LineString&quot;,\n    &quot;coordinates&quot;: [[116.4,39.9],[121.4,31.2],[120.1,30.2]]\n  }\n}\n```" data-cursor="-6">GeoJSON 线</button>
+              <button class="dropdown-item" data-insert="```geojson\n{\n  &quot;type&quot;: &quot;Feature&quot;,\n  &quot;geometry&quot;: {\n    &quot;type&quot;: &quot;Polygon&quot;,\n    &quot;coordinates&quot;: [[[116.3,39.9],[116.5,39.9],[116.5,40.0],[116.3,40.0],[116.3,39.9]]]\n  }\n}\n```" data-cursor="-6">GeoJSON 多边形</button>
+              <button class="dropdown-item" data-insert="```topojson\n{\n  &quot;type&quot;: &quot;Topology&quot;,\n  &quot;objects&quot;: {&quot;place&quot;: {&quot;type&quot;:&quot;GeometryCollection&quot;,&quot;geometries&quot;:[{&quot;type&quot;:&quot;Point&quot;,&quot;properties&quot;:{&quot;name&quot;:&quot;A&quot;},&quot;coordinates&quot;:[0,0]}]}},\n  &quot;arcs&quot;: [],\n  &quot;transform&quot;: {&quot;scale&quot;:[1,1],&quot;translate&quot;:[0,0]}\n}\n```" data-cursor="-6">TopoJSON</button>
             </div>
           </div>
         </div>
@@ -673,18 +744,62 @@
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">颜色色块</div>
-              <button class="dropdown-item" data-insert="🟥 红色标记"><span class="color-dot" style="background:#e74c3c"></span>红色</button>
-              <button class="dropdown-item" data-insert="🟧 橙色标记"><span class="color-dot" style="background:#e67e22"></span>橙色</button>
-              <button class="dropdown-item" data-insert="🟨 黄色标记"><span class="color-dot" style="background:#f1c40f"></span>黄色</button>
-              <button class="dropdown-item" data-insert="🟩 绿色标记"><span class="color-dot" style="background:#2ecc71"></span>绿色</button>
-              <button class="dropdown-item" data-insert="🟦 蓝色标记"><span class="color-dot" style="background:#3498db"></span>蓝色</button>
-              <button class="dropdown-item" data-insert="🟪 紫色标记"><span class="color-dot" style="background:#9b59b6"></span>紫色</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color:#e74c3c&quot;>●</span> 红色标记"><span class="color-dot" style="background:#e74c3c"></span>红色</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color:#e67e22&quot;>●</span> 橙色标记"><span class="color-dot" style="background:#e67e22"></span>橙色</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color:#f1c40f&quot;>●</span> 黄色标记"><span class="color-dot" style="background:#f1c40f"></span>黄色</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color:#2ecc71&quot;>●</span> 绿色标记"><span class="color-dot" style="background:#2ecc71"></span>绿色</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color:#3498db&quot;>●</span> 蓝色标记"><span class="color-dot" style="background:#3498db"></span>蓝色</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color:#9b59b6&quot;>●</span> 紫色标记"><span class="color-dot" style="background:#9b59b6"></span>紫色</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">分隔线样式</div>
               <button class="dropdown-item" data-insert="---\n">--- 水平线</button>
               <button class="dropdown-item" data-insert="***\n">*** 星号线</button>
               <button class="dropdown-item" data-insert="___\n">___ 下划线</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">徽章</div>
+              <button class="dropdown-item" data-insert="![构建](https://img.shields.io/badge/build-passing-brightgreen)">Shields.io 徽章</button>
+              <button class="dropdown-item" data-insert="![版本](https://badgen.net/badge/version/v1.0.0/blue)">Badgen 徽章</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 嵌入 -->
+        <div class="toolbar-dropdown" data-dropdown="embed">
+          <button class="toolbar-btn" title="嵌入外部内容">嵌入 <svg class="ico ico-xs"><use href="#i-chevron-down"/></svg></button>
+          <div class="dropdown-menu" id="dropdownEmbed">
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">视频</div>
+              <button class="dropdown-item" data-insert="@[youtube](dQw4w9WgXcQ)">YouTube</button>
+              <button class="dropdown-item" data-insert="@[bilibili](BV1xx411c7mD)">Bilibili</button>
+              <button class="dropdown-item" data-insert="@[vimeo](76979871)">Vimeo</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">社交</div>
+              <button class="dropdown-item" data-insert="@[twitter](https://twitter.com/elk/status/20)">Twitter / X 推文</button>
+              <button class="dropdown-item" data-insert="@[twitter](https://twitter.com/elk)">Twitter 用户时间线</button>
+              <button class="dropdown-item" data-insert="@[gist](https://gist.github.com/user/gist_id)">GitHub Gist</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">代码演示</div>
+              <button class="dropdown-item" data-insert="@[codepen](https://codepen.io/user/pen/abc)">CodePen</button>
+              <button class="dropdown-item" data-insert="@[jsfiddle](https://jsfiddle.net/user/abc/)">JSFiddle</button>
+              <button class="dropdown-item" data-insert="@[stackblitz](https://stackblitz.com/edit/user-project)">StackBlitz</button>
+              <button class="dropdown-item" data-insert="@[replit](https://replit.com/@user/project)">Replit</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">设计稿</div>
+              <button class="dropdown-item" data-insert="@[figma](https://www.figma.com/file/abc/Design)">Figma</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">地图</div>
+              <button class="dropdown-item" data-insert="@[googlemaps](https://www.google.com/maps/place/Beijing)">Google Maps</button>
+              <button class="dropdown-item" data-insert="@[openstreetmap](https://www.openstreetmap.org/?mlat=39.9042&mlon=116.4074#map=12)">OpenStreetMap</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">办公文档</div>
+              <button class="dropdown-item" data-insert="@[googledocs](https://docs.google.com/document/d/abc/edit)">Google Docs</button>
             </div>
           </div>
         </div>
