@@ -7,7 +7,7 @@
   {
     "path": "docs/configuration.md",
     "title": "配置参考",
-    "preview": "配置参考 所有配置都通过 iris/config.json 文件进行管理，无需修改 JavaScript 代码。 基础配置 | 字段 | 类型 | 默认值 | 说明 | |------|------|--------|------| | owner | string | - | GitHub 用户名或组织名 | | repo | string | - | 仓库名 | 完整配置项 以下是所有支持的配"
+    "preview": "配置参考 Markdown Preview 的配置分为两层： 1. 构建/部署配置 — iris/config.json（仓库级，所有访客共享） 2. 运行时设置 — 浏览器 localStorage（用户级，仅当前浏览器生效） --- 一、iris/config.json（仓库级配置） 修改此文件后需推送代码触发重新部署。 基础配置 | 字段 | 类型 | 默认值 | 说明 | |------|"
   },
   {
     "path": "docs/examples/apexcharts-examples.md",
@@ -30,6 +30,11 @@
     "preview": "外部服务嵌入示例 本页面展示各种外部服务的嵌入方式和渲染效果。 --- 1. 视频平台 YouTube 源码： 渲染效果： --- Bilibili 源码： 渲染效果： --- Vimeo 源码： 渲染效果： --- 2. 设计稿 Figma 源码： 渲染效果： --- 3. 代码演示 CodePen 源码： 渲染效果： --- JSFiddle 源码： 渲染效果： --- StackBlitz "
   },
   {
+    "path": "docs/examples/gallery-layouts.md",
+    "title": "画廊布局样式速查",
+    "preview": "画廊布局样式速查 本页是画廊布局样式的快速查阅卡片。完整示例与说明见 图片画廊与懒加载示例。 语法 在连续图片之前，用单独一行 @样式名 指定该组图片的渲染样式： - @style 必须独占一行（单独成段） - 标记只作用于紧跟其后的一组连续图片 - 不写 @style 时，连续 2 张及以上图片自动使用默认网格布局 - 未识别的 @xxx 会被当作普通文本输出 样式速查表 | 样式 | 说明 |"
+  },
+  {
     "path": "docs/examples/geojson-examples.md",
     "title": "GeoJSON / TopoJSON 示例",
     "preview": "GeoJSON / TopoJSON 示例 本页面展示地理数据可视化功能，支持 GeoJSON 和 TopoJSON 格式的嵌入渲染。 --- 1. GeoJSON 点数据 单个点 源码： 渲染效果： --- 多个城市点 源码： 渲染效果： --- 2. GeoJSON 线数据 简单线段 源码： 渲染效果： --- 多段线路 源码： 渲染效果： --- 3. GeoJSON 多边形数据 简单多边形"
@@ -42,7 +47,7 @@
   {
     "path": "docs/examples/image-gallery-examples.md",
     "title": "图片画廊与懒加载示例",
-    "preview": "图片画廊与懒加载示例 本页面展示图片的懒加载、画廊模式和错误降级功能。 --- 1. 图片懒加载 所有图片都自动添加了 loading=\"lazy\" 属性，会在图片进入视口时才加载。 语法格式： 图片会在滚动到视口时才开始加载，提升页面性能。 --- 2. 画廊模式 当文档中出现连续两张或以上的图片（中间无其他内容）时，会自动包装成画廊布局。 两张图片画廊 以下两张图片会自动布局成画廊： !图片1"
+    "preview": "图片画廊与懒加载示例 本页面展示图片的懒加载、画廊模式（含多种布局样式）、图片灯箱和错误降级功能。 --- 1. 图片懒加载 所有图片都自动添加了 loading=\"lazy\" 属性，会在图片进入视口时才加载。 语法格式： 图片会在滚动到视口时才开始加载，提升页面性能。 --- 2. 画廊模式 当文档中出现连续两张或以上的图片（中间无其他内容）时，会自动包装成画廊布局。 两张图片画廊 以下两张图片"
   },
   {
     "path": "docs/examples/latex-examples.md",
@@ -96,8 +101,13 @@
   },
   {
     "path": "docs/feat.md",
-    "title": "feat.md — 未来优化方向",
-    "preview": "feat.md — 未来优化方向 > 基于当前代码现状整理的优化路线图，按类别分组，标注优先级（P0 高 / P1 中 / P2 低）与用户决策。 > 每条均说明现状、问题与建议改动。 --- 一、搜索体验 1. 升级为 FlexSearch 全文检索 — P0 ✅ 要做 - 现状：search.js 虽引入了 flexsearch.bundle.js，但实际使用的是 simpleSearch()"
+    "title": "feat.md — 优化路线图",
+    "preview": "feat.md — 优化路线图 > 基于代码现状整理的优化路线图，按类别分组，标注优先级（P0 高 / P1 中 / P2 低）与实施状态。 > ✅ 已完成 / ❌ 不做 / ⏳ 待办 --- 一、搜索体验 1. 升级为 FlexSearch 全文检索 — P0 ✅ 已完成 - 现状：search.js 使用 FlexSearch 构建标题 + 正文 + 路径复合索引，自定义 CJK 编码器支持中"
+  },
+  {
+    "path": "docs/features.md",
+    "title": "功能总览",
+    "preview": "功能总览 Markdown Preview 是一个极简风格的 Markdown 文档预览站点，专为 GitHub Pages 设计，完全静态，无需后端。 --- 一、文档浏览 | 功能 | 说明 | |------|------| | 自动发现 | 扫描仓库所有 .md 文件，构建嵌套目录树 | | 字数统计 | 每个文件旁显示字数（可在设置中关闭） | | 文件名截断 | 长文件名截断/展开切换"
   },
   {
     "path": "docs/getting-started.md",
@@ -110,8 +120,13 @@
     "preview": "插件开发指南 插件机制概述 Markdown Preview 的插件系统允许你扩展 Markdown 渲染能力，自定义处理特定的代码块。插件放入 iris/plugins/ 目录后，加载器会自动发现并注册。 插件接口 每个插件是一个导出对象的 JavaScript 模块，需要实现以下接口： API 说明 | 方法 | 参数 | 返回值 | 说明 | |------|------|--------|"
   },
   {
+    "path": "docs/rss.md",
+    "title": "RSS 订阅",
+    "preview": "RSS 订阅 Markdown Preview 自动为 docs/ 目录下的所有 Markdown 文档生成 RSS 2.0 feed，方便他人通过 RSS 阅读器订阅你的文档更新。 --- 订阅地址 部署后，RSS feed 位于： 例如本站： > feed.xml 不放在仓库根目录，而是放在 iris/data/ 下，与 file-tree.json、search-index.json 等预构"
+  },
+  {
     "path": "docs/theme-customization.md",
     "title": "主题定制",
-    "preview": "主题定制 内置主题 | ID | 名称 | 说明 | |----|------|------| | default | 默认 | 浅紫浅粉渐变风格 | | github-light | GitHub Light | GitHub 明亮风格 | | github-dark | GitHub Dark | GitHub 深色风格 | | notion | Notion | Notion 暖灰风格 | "
+    "preview": "主题定制 Markdown Preview 提供三种层级的外观定制方式，由易到难： 1. 预设主题 — 内置 7 套配色，一键切换 2. 可视化取色器 — 拖动色块即可调整主题色，无需写 CSS 3. 自定义 CSS — 加载外部 CSS 文件，完全控制样式 --- 一、内置主题 | ID | 名称 | 说明 | |----|------|------| | default | 默认 | 浅紫浅粉"
   }
 ]
