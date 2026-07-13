@@ -319,9 +319,14 @@
   function initDownloadButtons() {
     const downloadMdBtn = document.getElementById('downloadMdBtn');
     const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    const openEditorBtn = document.getElementById('openEditorBtn');
 
     downloadMdBtn?.addEventListener('click', () => downloadCurrentFile());
     downloadPdfBtn?.addEventListener('click', exportPdf);
+    openEditorBtn?.addEventListener('click', () => {
+      window.open('editor.html', '_blank');
+      closeSettingsPanel();
+    });
   }
 
   // 导出 PDF：通过浏览器打印对话框

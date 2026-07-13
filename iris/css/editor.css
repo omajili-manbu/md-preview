@@ -1,0 +1,404 @@
+/* ============== 编辑器页面全局 ============== */
+
+.editor-body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ============== 顶部工具栏 ============== */
+
+.editor-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 16px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-home {
+  color: var(--color-accent-purple);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.toolbar-home:hover {
+  color: var(--color-accent-purple-deep);
+}
+
+.toolbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 工具栏按钮 */
+.toolbar-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+  background: rgba(212, 165, 201, 0.1);
+  border-color: var(--color-accent-purple);
+}
+
+/* 运行按钮 */
+.toolbar-run-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.toolbar-run-btn.primary {
+  background: var(--color-accent-purple);
+  color: #fff;
+  border-color: var(--color-accent-purple);
+}
+
+.toolbar-run-btn.primary:hover {
+  background: var(--color-accent-purple-deep);
+  border-color: var(--color-accent-purple-deep);
+}
+
+.toolbar-run-btn:hover {
+  background: rgba(212, 165, 201, 0.1);
+}
+
+/* ============== 下拉菜单 ============== */
+
+.toolbar-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 220px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 6px 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+}
+
+.toolbar-dropdown.open .dropdown-menu {
+  display: block;
+}
+
+.dropdown-group {
+  padding: 4px 0;
+}
+
+.dropdown-group + .dropdown-group {
+  border-top: 1px solid var(--color-border);
+}
+
+.dropdown-group-title {
+  padding: 4px 14px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dropdown-item:hover {
+  background: rgba(212, 165, 201, 0.12);
+}
+
+.dropdown-item-separator {
+  margin-top: 4px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 10px;
+}
+
+/* ============== 编辑器主区域 ============== */
+
+.editor-main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+/* ============== Cell ============== */
+
+.cell {
+  margin-bottom: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s;
+}
+
+.cell:focus-within {
+  border-color: var(--color-accent-purple);
+  box-shadow: 0 0 0 2px rgba(212, 165, 201, 0.2);
+}
+
+.cell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(212, 165, 201, 0.05);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.cell-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell-number {
+  font-weight: 600;
+  color: var(--color-accent-purple);
+}
+
+.cell-run-btn {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cell-run-btn:hover {
+  background: var(--color-accent-purple);
+  color: #fff;
+  border-color: var(--color-accent-purple);
+}
+
+.cell-delete-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.cell-delete-btn:hover {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.08);
+}
+
+/* 编辑区 textarea */
+.cell-editor {
+  width: 100%;
+  min-height: 120px;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: none;
+  resize: vertical;
+  outline: none;
+  tab-size: 2;
+}
+
+.cell-editor::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* 渲染输出区 */
+.cell-output {
+  display: none;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.cell-output.visible {
+  display: block;
+}
+
+.cell-output .markdown-body {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* 新建 Cell 按钮 */
+.add-cell-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 2px dashed var(--color-border);
+  border-radius: 10px;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.add-cell-btn:hover {
+  border-color: var(--color-accent-purple);
+  color: var(--color-accent-purple);
+  background: rgba(212, 165, 201, 0.05);
+}
+
+/* ============== 自动补全 ============== */
+
+.autocomplete-list {
+  display: none;
+  position: fixed;
+  z-index: 300;
+  min-width: 200px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  font-size: 13px;
+}
+
+.autocomplete-list.visible {
+  display: block;
+}
+
+.autocomplete-item {
+  padding: 7px 14px;
+  cursor: pointer;
+  color: var(--color-text);
+  transition: background 0.12s;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+  background: rgba(212, 165, 201, 0.14);
+}
+
+.autocomplete-item-label {
+  font-weight: 500;
+}
+
+.autocomplete-item-desc {
+  margin-left: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* ============== 响应式 ============== */
+
+@media (max-width: 768px) {
+  .editor-toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .toolbar-center {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    gap: 2px;
+  }
+
+  .toolbar-btn {
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+
+  .toolbar-right {
+    gap: 4px;
+  }
+
+  .editor-main {
+    padding: 12px 8px 60px;
+  }
+
+  .cell-editor {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .dropdown-menu {
+    min-width: 180px;
+    max-height: 320px;
+  }
+}
