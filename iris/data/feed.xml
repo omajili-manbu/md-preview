@@ -5,20 +5,20 @@
     <link>https://theforeveriris.github.io/md-preview/</link>
     <description>一个简洁优雅的 Markdown 文档预览站点，支持多种渲染功能</description>
     <language>zh-CN</language>
-    <lastBuildDate>Mon, 13 Jul 2026 02:46:48 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 13 Jul 2026 03:01:48 GMT</lastBuildDate>
     <atom:link href="https://theforeveriris.github.io/md-preview/iris/data/feed.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>画廊布局样式速查</title>
       <link>https://theforeveriris.github.io/md-preview/#/docs/examples/gallery-layouts.md</link>
       <guid isPermaLink="true">https://theforeveriris.github.io/md-preview/#/docs/examples/gallery-layouts.md</guid>
-      <pubDate>Mon, 13 Jul 2026 02:46:28 GMT</pubDate>
+      <pubDate>Mon, 13 Jul 2026 03:01:35 GMT</pubDate>
       <description>本页是画廊布局样式的快速查阅卡片。完整示例与说明见 图片画廊与懒加载示例。 在连续图片之前，用单独一行 指定该组图片的渲染样式： - 必须独占一行（单独成段） - 标记只作用于紧跟其后的一组连续图片 - 不写 时，连续 2 张及以上图片自动使用默认网格布局 - 未识别的 会被当作普通文本输出 | 样式 | 说明 | 推荐图片数 | |------|------|-----------| | | 默</description>
     </item>
     <item>
       <title>图片画廊与懒加载示例</title>
       <link>https://theforeveriris.github.io/md-preview/#/docs/examples/image-gallery-examples.md</link>
       <guid isPermaLink="true">https://theforeveriris.github.io/md-preview/#/docs/examples/image-gallery-examples.md</guid>
-      <pubDate>Mon, 13 Jul 2026 02:46:28 GMT</pubDate>
+      <pubDate>Mon, 13 Jul 2026 03:01:35 GMT</pubDate>
       <description>本页面展示图片的懒加载、画廊模式（含多种布局样式）、图片灯箱和错误降级功能。 --- 所有图片都自动添加了 属性，会在图片进入视口时才加载。 语法格式： 图片会在滚动到视口时才开始加载，提升页面性能。 --- 当文档中出现连续两张或以上的图片（中间无其他内容）时，会自动包装成画廊布局。 以下两张图片会自动布局成画廊： 连续四张图片也会自动组成画廊： 如果只有一张图片，则不会触发画廊模式，保持原样：</description>
     </item>
     <item>
