@@ -53,6 +53,7 @@ Markdown Preview 是一个极简风格的 Markdown 文档预览站点，专为 G
 | 二维码 | `qrcode` 代码块 | [示例](examples/qrcode-examples.md) |
 | Diff | Git Diff 语法高亮对比 | [示例](examples/diff-examples.md) |
 | GeoJSON | 基于 Leaflet 的地理数据地图 | [示例](examples/geojson-examples.md) |
+| Packet Tracer | Cisco .pkt 网络拓扑图（Cytoscape.js 渲染） | [示例](examples/pkt-examples.md) |
 | 外部嵌入 | YouTube、Bilibili、Figma、CodePen 等 | [示例](examples/embed-examples.md) |
 
 ## 五、主题与外观
@@ -118,6 +119,7 @@ Markdown Preview 是一个极简风格的 Markdown 文档预览站点，专为 G
 | 文件树预构建 | `build-file-tree.js` |
 | 搜索索引预构建 | `build-search-index.js`（`docs/**` 变更自动触发） |
 | RSS feed 预构建 | `build-feed.js`（`docs/**` 变更自动触发） |
+| PKT 拓扑构建 | `build-pkt.yml` CI 自动解密解析 .pkt 文件生成 JSON（mtime 增量） |
 | Product 分支同步 | 自动创建无文档的纯应用分支 |
 | 调试模式 | URL 加 `?debug=1` 显示环境/性能/文档/搜索/主题/缓存 6 大类调试信息，每 2 秒自动刷新 |
 
@@ -139,6 +141,7 @@ Markdown Preview 是一个极简风格的 Markdown 文档预览站点，专为 G
 
 - [快速开始](getting-started.md)
 - [编辑器说明](editor.md)
+- [Packet Tracer 拓扑示例](examples/pkt-examples.md)
 - [配置参考](configuration.md)
 - [主题定制](theme-customization.md)
 - [代码高亮主题](code-highlight-theme.md)

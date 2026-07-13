@@ -22,6 +22,8 @@
 | KaTeX | LaTeX 公式 |
 | Leaflet.js | 地理数据地图 |
 | diff2html | Git Diff 可视化 |
+| Cytoscape.js | Packet Tracer 网络拓扑图渲染 |
+| Python 3（仅构建） | .pkt 文件解密解析（零第三方依赖） |
 | localStorage | 编辑器自动保存与偏好持久化 |
 
 ## 项目架构
@@ -63,14 +65,16 @@
 │   │   │   └── theme-manager.js  # 主题管理器（预设/自定义 CSS/hljs）
 │   │   ├── plugins/
 │   │   │   └── loader.js   # 插件加载器
-│   │   └── renderers/      # 扩展渲染器
-│   │       ├── mermaid.js
-│   │       ├── plantuml.js
-│   │       ├── apexcharts.js
-│   │       ├── katex.js
-│   │       ├── diff.js
-│   │       ├── geo.js
-│   │       └── embedded.js
+│   │   ├── renderers/      # 扩展渲染器
+│   │   │   ├── mermaid.js
+│   │   │   ├── plantuml.js
+│   │   │   ├── apexcharts.js
+│   │   │   ├── katex.js
+│   │   │   ├── diff.js
+│   │   │   ├── geo.js
+│   │   │   └── embedded.js
+│   │   └── pkt/
+│   │       └── pkt-renderer.js  # Packet Tracer 拓扑渲染器
 │   ├── vendor/             # 第三方依赖（本地化，无 CDN）
 │   │   ├── marked.js
 │   │   ├── flexsearch.bundle.js
@@ -80,6 +84,7 @@
 │   │   ├── pako.min.js
 │   │   ├── katex/
 │   │   ├── leaflet/
+│   │   ├── cytoscape/       # Cytoscape.js（拓扑图）
 │   │   └── diff2html/
 │   ├── plugins/            # 自定义插件
 │   │   └── qrcode.js
@@ -87,17 +92,29 @@
 │   ├── data/               # 预构建数据
 │   │   ├── file-tree.json
 │   │   ├── search-index.json
-│   │   └── feed.xml        # RSS 2.0 feed
+│   │   ├── feed.xml        # RSS 2.0 feed
+│   │   └── pkt/            # Packet Tracer 拓扑数据
+│   │       ├── raw/         # .pkt 原始文件
+│   │       ├── xml/         # 解密解压后的 XML
+│   │       ├── json/        # 解析后的拓扑 JSON
+│   │       └── icons.svg    # 设备类型 SVG 图标
 │   └── scripts/            # 构建脚本
 │       ├── build-file-tree.js
 │       ├── build-search-index.js
-│       └── build-feed.js   # RSS feed 生成
+│       ├── build-feed.js   # RSS feed 生成
+│       └── pkt/            # .pkt 解密解析（Python）
+│           ├── decrypt.py   # XOR + Twofish EAX 解密
+│           ├── decompress.py # zlib 解压
+│           ├── parse.py     # XML + IOS 配置解析
+│           ├── output.py    # JSON 输出
+│           └── main.py      # 主入口（mtime 增量）
 ├── docs/
 │   └── examples/           # 功能示例文档
 └── .github/workflows/
     ├── build-and-deploy.yml     # 主部署流程
     ├── build-search-index.yml   # 搜索索引构建
     ├── build-feed.yml           # RSS feed 构建
+    ├── build-pkt.yml            # PKT 拓扑构建
     └── sync-to-product.yml      # product 分支同步
 ```
 
@@ -111,7 +128,7 @@ app.js (入口)
   ├── router.js        # Hash 路由
   ├── debug.js         # 调试面板
   ├── markdown.js      # Markdown 渲染（代码块/灯箱/锚点）
-  │     ├── renderers/ # 各扩展渲染器
+  │     ├── renderers/ # 各扩展渲染器（含 embedded.js → pkt-renderer.js）
   │     └── plugins/   # 自定义插件
   ├── themes/          # 主题管理（自定义 CSS/hljs）
   ├── settings.js      # 设置面板、悬浮菜单、PDF 导出、编辑器入口
@@ -239,6 +256,25 @@ cells = [{
 
 **样式**：`iris/css/editor.css`，包含工具栏、Cell、右键菜单、补全列表、搜索面板、选中浮动工具栏、状态栏等全部样式。
 
+#### `pkt-renderer.js` — Packet Tracer 拓扑渲染
+
+基于 Cytoscape.js 渲染 Cisco Packet Tracer 网络拓扑图，通过 `@[pkt](name)` 嵌入语法触发（由 `embedded.js` 调用）。
+
+**渲染流程**：
+1. `loadAndRender(container, jsonPath)` — 从 `iris/data/pkt/json/` 拉取 JSON
+2. `renderTopology(container, jsonData)` — 构建 DOM + 初始化 Cytoscape 实例
+3. 设备节点使用 SVG data-URI 图标（13 种类型），连线按线缆类型着色
+
+**交互**：
+- 节点点击 → `openDrawer(node)` 弹出右侧抽屉，5 标签页（接口表 / 配置 / VLAN / ACL / 路由）
+- 搜索框 → 按设备名 / IP / 类型过滤，匹配高亮 + 非匹配淡出
+- 工具栏 → PT 坐标布局 ↔ 力导向布局 / 网格切换 / 适配视图 / 导出（PNG / JSON / Markdown）
+- 连线 hover → tooltip 显示接口和线缆信息
+
+**全局 API**：`MarkdownPreview.pkt.loadAndRender(el, name)`
+
+**样式**：`iris/css/pkt/pkt.css`，含拓扑容器、工具栏、画布、抽屉、标签页、接口表、IOS 语法高亮、移动端响应式（抽屉底部弹出 70vh）。
+
 ### 插件系统
 
 插件接口：
@@ -288,6 +324,16 @@ export default {
 - 运行 `iris/scripts/build-feed.js` 生成 `iris/data/feed.xml`
 - 提交并推送到仓库
 
+### Packet Tracer 拓扑构建
+
+工作流：`build-pkt.yml`
+
+- 当 `iris/data/pkt/raw/` 或 `iris/scripts/pkt/` 下文件变更时触发
+- 设置 Python 3.11，运行 `iris/scripts/pkt/main.py --verbose`
+- 管线：XOR/Twofish 解密 → zlib 解压 → XML 解析 → IOS 配置提取 → JSON 输出
+- mtime 增量构建（仅处理变更的 .pkt 文件）
+- 提交生成的 JSON 和 XML 到仓库
+
 ### Product 分支同步
 
 工作流：`sync-to-product.yml`
@@ -320,6 +366,9 @@ node iris/scripts/build-search-index.js
 
 # 构建 RSS feed
 node iris/scripts/build-feed.js
+
+# 构建 Packet Tracer 拓扑（需 Python 3）
+python3 iris/scripts/pkt/main.py --verbose
 
 # 用浏览器直接打开 index.html 即可预览
 ```
@@ -373,4 +422,4 @@ CSS 采用模块化架构，按功能拆分到 `iris/css/` 目录下的各文件
 
 ---
 
-**文档版本**: 3.2
+**文档版本**: 3.3

@@ -125,6 +125,7 @@ node iris/scripts/build-feed.js
 | **二维码** | 使用 `qrcode` 代码块生成二维码 |
 | **Diff 可视化** | Git Diff 语法高亮对比 |
 | **GeoJSON** | 基于 Leaflet 的地理数据地图 |
+| **Packet Tracer** | Cisco .pkt 网络拓扑图渲染（Cytoscape.js） |
 | **外部嵌入** | YouTube、Bilibili、Figma、CodePen 等 |
 | **GitHub Alerts** | `[!NOTE]` `[!TIP]` `[!WARNING]` 等 |
 
@@ -146,8 +147,8 @@ node iris/scripts/build-feed.js
 │   ├── vendor/             # 第三方依赖（本地化）
 │   ├── plugins/            # 插件目录
 │   ├── icons/              # 图标资源
-│   ├── data/               # 预构建数据（file-tree/search-index/feed）
-│   └── scripts/            # 构建脚本（file-tree/search-index/feed）
+│   ├── data/               # 预构建数据（file-tree/search-index/feed/pkt）
+│   └── scripts/            # 构建脚本（file-tree/search-index/feed/pkt）
 ├── docs/                   # 文档目录
 │   ├── editor.md           # 编辑器说明
 │   └── examples/           # 功能示例

@@ -150,6 +150,27 @@
 
 ---
 
+## 八.6、Packet Tracer 拓扑渲染
+
+### 22.14 .pkt 文件解密解析管线 — ✅ 已完成
+- **现状**：[iris/scripts/pkt/](../iris/scripts/pkt/) 下 5 个 Python 脚本（零第三方依赖）实现完整管线：
+  - `decrypt.py` — XOR（旧版）+ Twofish EAX（PT 7.3+）解密，含纯 Python Twofish 实现
+  - `decompress.py` — zlib 多策略解压（size-prefixed / raw / deflate / gzip 兜底）
+  - `parse.py` — XML 解析 + Cisco IOS 配置提取（接口 / VLAN / ACL / 路由）
+  - `output.py` — 分区化 JSON schema（`{meta, devices, links, configs, interfaces, vlans, acls, routes, groups}`）
+  - `main.py` — mtime 增量构建 + 错误兜底 JSON
+
+### 22.15 Cytoscape.js 拓扑渲染 — ✅ 已完成
+- **现状**：[pkt-renderer.js](../iris/js/pkt/pkt-renderer.js) 基于 Cytoscape.js 渲染交互式拓扑图，`@[pkt](name)` 嵌入语法集成到 [embedded.js](../iris/js/renderers/embedded.js)。功能包括：
+  - 13 种设备类型 SVG 图标 + 线缆类型颜色映射
+  - 节点点击弹出右侧抽屉（5 标签页：接口表 / 配置 / VLAN / ACL / 路由）
+  - 搜索高亮（按设备名 / IP / 类型过滤）+ 布局切换（PT 坐标 ↔ 力导向）+ 网格背景
+  - 导出 PNG / JSON / Markdown
+  - 自定义 IOS 语法高亮 + 移动端响应式（抽屉底部弹出）
+- **CI**：[build-pkt.yml](../.github/workflows/build-pkt.yml) 在 `iris/data/pkt/raw/` 或 `scripts/pkt/` 变更时自动触发
+
+---
+
 ## 九、工程与质量
 
 ### 23. 核心模块单元测试 — ❌ 不做
@@ -206,6 +227,10 @@
 6. ✅ #22.11 右键菜单与 Cell 操作（2 列 17 项）
 7. ✅ #22.12 导入导出（.md / .html / .pdf / .mdnb）
 8. ✅ #22.13 SVG 图标库（24 symbol，全站移除 emoji）
+
+### 第七批（Packet Tracer 拓扑渲染）
+1. ✅ #22.14 .pkt 文件解密解析管线（Python 零依赖：XOR + Twofish EAX + zlib + XML + IOS 配置解析）
+2. ✅ #22.15 Cytoscape.js 拓扑渲染（@[pkt] 嵌入 + 抽屉 5 标签页 + 搜索高亮 + 导出 + CI 自动构建）
 
 ---
 

@@ -74,6 +74,12 @@
             "wordCount": 781
           },
           {
+            "name": "pkt-examples.md",
+            "type": "file",
+            "path": "docs/examples/pkt-examples.md",
+            "wordCount": 186
+          },
+          {
             "name": "plantuml-examples.md",
             "type": "file",
             "path": "docs/examples/plantuml-examples.md",
