@@ -1,5 +1,5 @@
-const CACHE_NAME = 'md-preview-v6.0';
-const RUNTIME_CACHE = 'md-preview-runtime';
+const CACHE_NAME = 'md-preview-v6.1';
+const RUNTIME_CACHE = 'md-preview-runtime-v2';
 
 // 预缓存：首屏关键静态资源
 const PRECACHE_URLS = [
@@ -13,6 +13,7 @@ const PRECACHE_URLS = [
   './iris/css/components.css',
   './iris/css/floating.css',
   './iris/css/responsive.css',
+  './iris/css/galleries.css',
   './iris/css/themes/themes.css',
   './iris/app.js',
   './iris/js/config.js',
@@ -76,7 +77,7 @@ async function precache() {
 }
 
 self.addEventListener('install', event => {
-  console.log('[SW] Installing v6.0...');
+  console.log('[SW] Installing v6.1...');
   event.waitUntil(
     precache()
       .then(() => self.skipWaiting())
@@ -88,7 +89,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating v6.0...');
+  console.log('[SW] Activating v6.1...');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
@@ -120,7 +121,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== location.origin) return;
 
-  // 静态资源：缓存优先，后台更新
+  // 静态资源：stale-while-revalidate — 先返回缓存（快速），后台更新缓存
   if (isStaticAsset(url)) {
     event.respondWith(
       caches.match(request).then(cached => {
@@ -131,6 +132,7 @@ self.addEventListener('fetch', event => {
           }
           return response;
         }).catch(() => cached);
+        // 有缓存就先返回缓存，同时后台更新；无缓存则等待网络
         return cached || fetchPromise;
       })
     );
