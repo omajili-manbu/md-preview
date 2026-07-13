@@ -803,41 +803,32 @@
       <button class="sel-btn" data-format="ul" title="无序列表"><svg class="ico ico-sm"><use href="#i-list"/></svg></button>
     </div>
 
-    <!-- Cell 右键上下文菜单 -->
+    <!-- Cell 右键上下文菜单（2 列布局） -->
     <div class="context-menu" id="contextMenu">
-      <div class="context-menu-group">
-        <div class="context-menu-item" data-action="ctx-run"><svg class="ico ico-sm"><use href="#i-play"/></svg>运行此 Cell</div>
-        <div class="context-menu-item" data-action="ctx-run-below"><svg class="ico ico-sm"><use href="#i-arrow-down"/></svg>运行此 Cell 及下方</div>
-      </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-group">
-        <div class="context-menu-item" data-action="ctx-insert-above"><svg class="ico ico-sm"><use href="#i-arrow-up"/></svg>上方插入 Cell</div>
-        <div class="context-menu-item" data-action="ctx-insert-below"><svg class="ico ico-sm"><use href="#i-arrow-down"/></svg>下方插入 Cell</div>
-      </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-group">
-        <div class="context-menu-item" data-action="ctx-move-up"><svg class="ico ico-sm"><use href="#i-arrow-up"/></svg>上移</div>
-        <div class="context-menu-item" data-action="ctx-move-down"><svg class="ico ico-sm"><use href="#i-arrow-down"/></svg>下移</div>
-        <div class="context-menu-item" data-action="ctx-duplicate"><svg class="ico ico-sm"><use href="#i-copy"/></svg>复制 Cell</div>
-      </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-group">
-        <div class="context-menu-item" data-action="ctx-toggle-type"><svg class="ico ico-sm"><use href="#i-refresh"/></svg>切换类型 (Markdown / 纯文本)</div>
-        <div class="context-menu-item" data-action="ctx-collapse-editor"><svg class="ico ico-sm"><use href="#i-chevron-right"/></svg>折叠/展开编辑器</div>
-        <div class="context-menu-item" data-action="ctx-collapse-output"><svg class="ico ico-sm"><use href="#i-chevron-right"/></svg>折叠/展开输出</div>
-        <div class="context-menu-item" data-action="ctx-copy-html"><svg class="ico ico-sm"><use href="#i-clipboard"/></svg>复制输出 HTML</div>
-        <div class="context-menu-item" data-action="ctx-export-cell"><svg class="ico ico-sm"><use href="#i-save"/></svg>导出此 Cell</div>
-      </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-group">
-        <div class="context-menu-item" data-action="ctx-collapse-all"><svg class="ico ico-sm"><use href="#i-chevron-right"/></svg>折叠全部 Cell</div>
-        <div class="context-menu-item" data-action="ctx-expand-all"><svg class="ico ico-sm"><use href="#i-chevron-down"/></svg>展开全部 Cell</div>
-      </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-group">
-        <div class="context-menu-item" data-action="ctx-clear-output"><svg class="ico ico-sm"><use href="#i-x"/></svg>清空输出</div>
-        <div class="context-menu-item" data-action="ctx-clear-content"><svg class="ico ico-sm"><use href="#i-ban"/></svg>清空内容</div>
-        <div class="context-menu-item context-menu-item-danger" data-action="ctx-delete"><svg class="ico ico-sm"><use href="#i-trash"/></svg>删除 Cell</div>
+      <div class="context-menu-columns">
+        <div class="context-menu-col">
+          <div class="context-menu-col-title">运行与插入</div>
+          <div class="context-menu-item" data-action="ctx-run"><svg class="ico ico-sm"><use href="#i-play"/></svg>运行此 Cell</div>
+          <div class="context-menu-item" data-action="ctx-run-below"><svg class="ico ico-sm"><use href="#i-arrow-down"/></svg>运行此 Cell 及下方</div>
+          <div class="context-menu-item" data-action="ctx-insert-above"><svg class="ico ico-sm"><use href="#i-arrow-up"/></svg>上方插入 Cell</div>
+          <div class="context-menu-item" data-action="ctx-insert-below"><svg class="ico ico-sm"><use href="#i-arrow-down"/></svg>下方插入 Cell</div>
+          <div class="context-menu-item" data-action="ctx-move-up"><svg class="ico ico-sm"><use href="#i-arrow-up"/></svg>上移</div>
+          <div class="context-menu-item" data-action="ctx-move-down"><svg class="ico ico-sm"><use href="#i-arrow-down"/></svg>下移</div>
+          <div class="context-menu-item" data-action="ctx-duplicate"><svg class="ico ico-sm"><use href="#i-copy"/></svg>复制 Cell</div>
+        </div>
+        <div class="context-menu-col">
+          <div class="context-menu-col-title">编辑与清理</div>
+          <div class="context-menu-item" data-action="ctx-toggle-type"><svg class="ico ico-sm"><use href="#i-refresh"/></svg>切换类型</div>
+          <div class="context-menu-item" data-action="ctx-collapse-editor"><svg class="ico ico-sm"><use href="#i-chevron-right"/></svg>折叠编辑器</div>
+          <div class="context-menu-item" data-action="ctx-collapse-output"><svg class="ico ico-sm"><use href="#i-chevron-right"/></svg>折叠输出</div>
+          <div class="context-menu-item" data-action="ctx-copy-html"><svg class="ico ico-sm"><use href="#i-clipboard"/></svg>复制输出 HTML</div>
+          <div class="context-menu-item" data-action="ctx-export-cell"><svg class="ico ico-sm"><use href="#i-save"/></svg>导出此 Cell</div>
+          <div class="context-menu-item" data-action="ctx-collapse-all"><svg class="ico ico-sm"><use href="#i-chevron-right"/></svg>折叠全部</div>
+          <div class="context-menu-item" data-action="ctx-expand-all"><svg class="ico ico-sm"><use href="#i-chevron-down"/></svg>展开全部</div>
+          <div class="context-menu-item" data-action="ctx-clear-output"><svg class="ico ico-sm"><use href="#i-x"/></svg>清空输出</div>
+          <div class="context-menu-item" data-action="ctx-clear-content"><svg class="ico ico-sm"><use href="#i-ban"/></svg>清空内容</div>
+          <div class="context-menu-item context-menu-item-danger" data-action="ctx-delete"><svg class="ico ico-sm"><use href="#i-trash"/></svg>删除 Cell</div>
+        </div>
       </div>
     </div>
 

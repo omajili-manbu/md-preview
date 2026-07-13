@@ -580,7 +580,7 @@ body.editor-mode .floating-menu {
   display: none;
   position: fixed;
   z-index: 500;
-  min-width: 200px;
+  min-width: 360px;
   padding: 6px 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -592,6 +592,30 @@ body.editor-mode .floating-menu {
 
 .context-menu.visible {
   display: block;
+}
+
+/* 2 列布局 */
+.context-menu-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.context-menu-col {
+  padding: 4px 0;
+}
+
+.context-menu-col + .context-menu-col {
+  border-left: 1px solid var(--color-border);
+}
+
+.context-menu-col-title {
+  padding: 2px 14px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .context-menu-group {
@@ -762,6 +786,21 @@ body.editor-mode .floating-menu {
   .statusbar-left span:nth-child(n+4),
   .statusbar-right span:nth-child(n+4) {
     display: none;
+  }
+
+  /* 移动端右键菜单改为单列 */
+  .context-menu {
+    min-width: 200px;
+    max-width: calc(100vw - 16px);
+  }
+
+  .context-menu-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .context-menu-col + .context-menu-col {
+    border-left: none;
+    border-top: 1px solid var(--color-border);
   }
 }
 
@@ -967,29 +1006,6 @@ body.editor-mode .floating-menu {
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   color: var(--color-text);
-}
-
-/* ============== Cell 拖拽 ============== */
-
-.cell-drag-handle {
-  display: flex;
-  align-items: center;
-  cursor: grab;
-  padding: 0 4px;
-  color: var(--color-text-muted);
-  user-select: none;
-}
-
-.cell-drag-handle:active {
-  cursor: grabbing;
-}
-
-.cell.cell-dragging {
-  opacity: 0.5;
-}
-
-.cell.cell-drag-over {
-  border-top: 3px solid var(--color-accent-purple);
 }
 
 /* ============== 新建 Cell 提示按钮 ============== */

@@ -52,6 +52,7 @@
   let cellCounter = 0;
   let activeCellId = null;
   let contextMenuCellId = null;
+  let globalAddBtn = null;
 
   // ============== 画廊样式注册 ==============
   const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic', 'scattered', 'hexagon', 'coverflow', 'tape', 'duotone', 'frame', 'arch', 'masonry', 'slider', 'ticket', 'panorama'];
@@ -181,12 +182,10 @@
     cellDiv.className = 'cell cell-type-' + cellType;
     cellDiv.dataset.cellId = id;
     cellDiv.dataset.cellType = cellType;
-    cellDiv.draggable = true;
 
     cellDiv.innerHTML = `
       <div class="cell-header">
         <div class="cell-header-left">
-          <span class="cell-drag-handle" title="拖拽排序"><svg class="ico ico-sm"><use href="#i-grip"/></svg></span>
           <span class="cell-number">
             <span class="cell-status-dot"></span>
             Cell [<span class="cell-num">${id}</span>]
@@ -216,15 +215,9 @@
       </div>
     `;
 
-    const addBtn = document.createElement('button');
-    addBtn.className = 'add-cell-btn';
-    addBtn.textContent = '+ 新建 Cell';
-    addBtn.dataset.afterCellId = id;
-
     const cellData = {
       id,
       div: cellDiv,
-      addBtn,
       textarea: cellDiv.querySelector('.cell-editor'),
       output: cellDiv.querySelector('.cell-output'),
       outputToolbar: cellDiv.querySelector('.cell-output-toolbar'),
@@ -238,16 +231,16 @@
     };
     cells.push(cellData);
 
-    // 插入到 DOM
+    // 插入到 DOM：在全局 addBtn 之前插入
     if (afterCellId) {
       const afterCell = getCell(afterCellId);
       if (afterCell) {
-        afterCell.addBtn.after(cellDiv);
-        cellDiv.after(addBtn);
+        afterCell.div.after(cellDiv);
+      } else {
+        editorMain.insertBefore(cellDiv, globalAddBtn);
       }
     } else {
-      editorMain.appendChild(cellDiv);
-      cellDiv.after(addBtn);
+      editorMain.insertBefore(cellDiv, globalAddBtn);
     }
 
     if (initialContent) {
@@ -314,21 +307,12 @@
       });
     });
 
-    // 拖拽排序
-    div.addEventListener('dragstart', (e) => onCellDragStart(e, cellData));
-    div.addEventListener('dragover', (e) => onCellDragOver(e, cellData));
-    div.addEventListener('dragleave', (e) => onCellDragLeave(e, cellData));
-    div.addEventListener('drop', (e) => onCellDrop(e, cellData));
-    div.addEventListener('dragend', (e) => onCellDragEnd(e, cellData));
-
     // 右键菜单
     div.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       contextMenuCellId = id;
       showContextMenu(e.clientX, e.clientY);
     });
-
-    cellData.addBtn.addEventListener('click', () => createCell(id));
   }
 
   // ============== 行号 ==============
@@ -434,48 +418,6 @@
 
   // ============== Cell 拖拽 ==============
 
-  let dragSourceCell = null;
-
-  function onCellDragStart(e, cellData) {
-    // 避免从 textarea 触发拖拽
-    if (e.target === cellData.textarea) { e.preventDefault(); return; }
-    dragSourceCell = cellData;
-    cellData.div.classList.add('cell-dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    try { e.dataTransfer.setData('text/plain', String(cellData.id)); } catch (_) {}
-  }
-
-  function onCellDragOver(e, cellData) {
-    if (!dragSourceCell || dragSourceCell.id === cellData.id) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    cellData.div.classList.add('cell-drag-over');
-  }
-
-  function onCellDragLeave(e, cellData) {
-    cellData.div.classList.remove('cell-drag-over');
-  }
-
-  function onCellDrop(e, cellData) {
-    e.preventDefault();
-    cellData.div.classList.remove('cell-drag-over');
-    if (!dragSourceCell || dragSourceCell.id === cellData.id) return;
-    // 把 dragSource 移到 cellData 之前
-    const fromIdx = cells.findIndex(c => c.id === dragSourceCell.id);
-    const toIdx = cells.findIndex(c => c.id === cellData.id);
-    if (fromIdx === -1 || toIdx === -1) return;
-    const [moved] = cells.splice(fromIdx, 1);
-    cells.splice(toIdx, 0, moved);
-    rebuildCellDOMOrder();
-    renumberCells();
-  }
-
-  function onCellDragEnd(e, cellData) {
-    cellData.div.classList.remove('cell-dragging');
-    document.querySelectorAll('.cell-drag-over').forEach(c => c.classList.remove('cell-drag-over'));
-    dragSourceCell = null;
-  }
-
   function getCell(id) {
     return cells.find(c => c.id === id);
   }
@@ -490,7 +432,6 @@
     if (idx === -1) return;
     const cell = cells[idx];
     cell.div.remove();
-    cell.addBtn.remove();
     cells.splice(idx, 1);
     if (activeCellId === id) {
       const newIdx = Math.min(idx, cells.length - 1);
@@ -522,12 +463,12 @@
   }
 
   function rebuildCellDOMOrder() {
-    // 清空 editorMain 并按新顺序重新插入
+    // 清空 editorMain 并按新顺序重新插入（保留全局 addBtn 在最后）
     editorMain.innerHTML = '';
     cells.forEach(cell => {
       editorMain.appendChild(cell.div);
-      cell.div.after(cell.addBtn);
     });
+    editorMain.appendChild(globalAddBtn);
   }
 
   function duplicateCell(id) {
@@ -788,19 +729,7 @@
     setTimeout(() => {
       cell.output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 100);
-    // 显示"新建 Cell"提示
-    showPostRunNewCellPrompt(cell);
     updateStatusbar();
-  }
-
-  function showPostRunNewCellPrompt(cell) {
-    // 移除已存在的提示
-    cell.output.querySelectorAll('.post-run-newcell').forEach(n => n.remove());
-    const prompt = document.createElement('span');
-    prompt.className = 'post-run-newcell';
-    prompt.textContent = '+ 下方新建 Cell';
-    prompt.addEventListener('click', () => createCell(cell.id));
-    cell.output.appendChild(prompt);
   }
 
   function runAllCells() {
@@ -1038,25 +967,38 @@
   // ============== Cell 右键上下文菜单 ==============
 
   function showContextMenu(x, y) {
-    contextMenu.style.left = x + 'px';
-    contextMenu.style.top = y + 'px';
+    // 先显示以获取尺寸
+    contextMenu.style.left = '0px';
+    contextMenu.style.top = '0px';
     contextMenu.classList.add('visible');
-
-    // 边界检查
     const rect = contextMenu.getBoundingClientRect();
-    if (rect.right > window.innerWidth) {
-      contextMenu.style.left = (x - rect.width) + 'px';
-    }
-    if (rect.bottom > window.innerHeight) {
-      contextMenu.style.top = (y - rect.height) + 'px';
-    }
+    const menuW = rect.width;
+    const menuH = rect.height;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const margin = 8;
+
+    // 水平定位：优先在点击点右侧，超出则左侧，再不行贴边
+    let left = x;
+    if (left + menuW > vw - margin) left = x - menuW;
+    if (left < margin) left = Math.min(x, vw - menuW - margin);
+    left = Math.max(margin, left);
+
+    // 垂直定位：优先在点击点下方，超出则上方，再不行贴边
+    let top = y;
+    if (top + menuH > vh - margin) top = y - menuH;
+    if (top < margin) top = Math.min(y, vh - menuH - margin);
+    top = Math.max(margin, top);
+
+    contextMenu.style.left = left + 'px';
+    contextMenu.style.top = top + 'px';
 
     // 禁用/启用菜单项
     const idx = cells.findIndex(c => c.id === contextMenuCellId);
     const moveUpItem = contextMenu.querySelector('[data-action="ctx-move-up"]');
     const moveDownItem = contextMenu.querySelector('[data-action="ctx-move-down"]');
-    moveUpItem.classList.toggle('context-menu-item-disabled', idx <= 0);
-    moveDownItem.classList.toggle('context-menu-item-disabled', idx >= cells.length - 1);
+    if (moveUpItem) moveUpItem.classList.toggle('context-menu-item-disabled', idx <= 0);
+    if (moveDownItem) moveDownItem.classList.toggle('context-menu-item-disabled', idx >= cells.length - 1);
   }
 
   function hideContextMenu() {
@@ -1077,10 +1019,9 @@
         case 'ctx-insert-above': {
           const idx = cells.findIndex(c => c.id === id);
           const newCell = createCell(idx > 0 ? cells[idx - 1].id : null);
-          // 如果是第一个，需要特殊处理：插入到最前面
+          // 如果是第一个，createCell 把新 cell 加到了末尾，需要移动到最前面
           if (idx === 0) {
             editorMain.insertBefore(newCell.div, cells[1].div);
-            editorMain.insertBefore(newCell.addBtn, cells[1].div);
           }
           renumberCells();
           break;
@@ -1623,7 +1564,7 @@
       if (!confirm('导入将替换当前所有 Cell，是否继续？')) return;
     }
     // 清空现有 Cell
-    cells.slice().forEach(c => { c.div.remove(); c.addBtn.remove(); });
+    cells.slice().forEach(c => { c.div.remove(); });
     cells.length = 0;
     cellCounter = 0;
     // 创建新 Cell
@@ -1649,7 +1590,7 @@
     if (cells.some(c => c.textarea.value.trim())) {
       if (!confirm('导入将替换当前所有 Cell，是否继续？')) return;
     }
-    cells.slice().forEach(c => { c.div.remove(); c.addBtn.remove(); });
+    cells.slice().forEach(c => { c.div.remove(); });
     cells.length = 0;
     cellCounter = 0;
     parts.forEach(part => {
@@ -1791,7 +1732,7 @@
       const data = JSON.parse(raw);
       if (!data || !Array.isArray(data.cells) || data.cells.length === 0) return false;
       // 清空现有
-      cells.slice().forEach(c => { c.div.remove(); c.addBtn.remove(); });
+      cells.slice().forEach(c => { c.div.remove(); });
       cells.length = 0;
       cellCounter = 0;
       data.cells.forEach(s => {
@@ -2007,6 +1948,17 @@
   }
 
   // ============== 初始化 ==============
+
+  // 创建全局"新建 Cell"按钮（始终在最后一个 cell 下方）
+  globalAddBtn = document.createElement('button');
+  globalAddBtn.className = 'add-cell-btn';
+  globalAddBtn.textContent = '+ 新建 Cell';
+  globalAddBtn.addEventListener('click', () => {
+    // 在最后一个 cell 后方新建
+    const lastCell = cells[cells.length - 1];
+    createCell(lastCell ? lastCell.id : null);
+  });
+  editorMain.appendChild(globalAddBtn);
 
   loadTheme();
 
