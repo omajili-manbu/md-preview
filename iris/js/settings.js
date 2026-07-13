@@ -324,7 +324,7 @@
     downloadMdBtn?.addEventListener('click', () => downloadCurrentFile());
     downloadPdfBtn?.addEventListener('click', exportPdf);
     openEditorBtn?.addEventListener('click', () => {
-      window.open('editor.html', '_blank');
+      window.open('editor/', '_blank');
       closeSettingsPanel();
     });
   }

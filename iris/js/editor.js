@@ -982,7 +982,7 @@
     const html = cell.output.innerHTML;
     if (!html.trim()) { alert('请先运行当前 Cell'); return; }
     const idx = cells.findIndex(c => c.id === activeCellId) + 1;
-    const fullHtml = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Cell ${idx}</title><link rel="stylesheet" href="iris/styles.css"><link rel="stylesheet" href="iris/css/galleries.css"><link rel="stylesheet" href="iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="iris/vendor/katex/katex.min.css"></head><body><article class="markdown-body" style="max-width:800px;margin:40px auto;padding:0 20px;">${html}</article></body></html>`;
+    const fullHtml = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Cell ${idx}</title><link rel="stylesheet" href="../iris/styles.css"><link rel="stylesheet" href="../iris/css/galleries.css"><link rel="stylesheet" href="../iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="../iris/vendor/katex/katex.min.css"></head><body><article class="markdown-body" style="max-width:800px;margin:40px auto;padding:0 20px;">${html}</article></body></html>`;
     downloadBlob(new Blob([fullHtml], { type: 'text/html;charset=utf-8' }), `cell-${idx}.html`);
   }
 
@@ -993,7 +993,7 @@
     if (!html.trim()) { alert('请先运行当前 Cell'); return; }
     const idx = cells.findIndex(c => c.id === activeCellId) + 1;
     const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cell ${idx}</title><link rel="stylesheet" href="iris/styles.css"><link rel="stylesheet" href="iris/css/galleries.css"><link rel="stylesheet" href="iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="iris/vendor/katex/katex.min.css"><style>@media print{body{margin:0;}}</style></head><body><article class="markdown-body" style="max-width:800px;margin:20px auto;padding:0 20px;">${html}</article></body></html>`);
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cell ${idx}</title><link rel="stylesheet" href="../iris/styles.css"><link rel="stylesheet" href="../iris/css/galleries.css"><link rel="stylesheet" href="../iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="../iris/vendor/katex/katex.min.css"><style>@media print{body{margin:0;}}</style></head><body><article class="markdown-body" style="max-width:800px;margin:20px auto;padding:0 20px;">${html}</article></body></html>`);
     win.document.close();
     setTimeout(() => { win.print(); }, 500);
   }
