@@ -77,11 +77,14 @@
 | `@polaroid` | 拍立得墙：白边相框，轻微旋转错落排布 |
 | `@stack` | 堆叠覆盖：图片相互覆盖，hover 时展开扇形 |
 | `@mosaic` | 马赛克：首张大图占两格，其余小图网格排布 |
-| `@carousel` | 3D 旋转木马：图片围成弧形，中间正中两侧 3D 倾斜后退 |
 | `@scattered` | 散落明信片：图片随机散落在画布上，hover 置顶拉直放大 |
 | `@hexagon` | 蜂巢六边形：图片裁切为六边形，错位蜂巢排列 |
 | `@coverflow` | Cover Flow：中间正中放大，两侧 3D 倾斜后退，hover 整体滑动 |
 | `@tape` | 胶带粘贴：每张图用半透明胶带斜贴在木板上，hover 胶带绷直 |
+| `@duotone` | 双色调：图片单色化叠加主题色，hover 恢复彩色（克制） |
+| `@frame` | 画框装裱：精致金属画框，居中纵列展示（克制） |
+| `@arch` | 拱形画廊：图片顶部裁切为拱形，罗马建筑感（克制） |
+| `@editorial` | 杂志跨页：左右交替错落，杂志排版风格（克制） |
 
 ### 3.1 `@grid` — 默认网格
 
@@ -152,21 +155,7 @@
 ![mosaic-4](https://picsum.photos/300/200?mos4)
 ![mosaic-5](https://picsum.photos/300/200?mos5)
 
-### 3.7 `@carousel` — 3D 旋转木马
-
-图片围成弧形排列，中间一张正中放大，两侧 3D 倾斜后退并降低亮度。hover 时侧边图轻微前推。
-
-@carousel
-
-![carousel-1](https://picsum.photos/400/500?car1)
-![carousel-2](https://picsum.photos/400/500?car2)
-![carousel-3](https://picsum.photos/400/500?car3)
-![carousel-4](https://picsum.photos/400/500?car4)
-![carousel-5](https://picsum.photos/400/500?car5)
-
-> 建议：carousel 最适合 5 张图，第 6 张及之后会被隐藏。
-
-### 3.8 `@scattered` — 散落明信片
+### 3.7 `@scattered` — 散落明信片
 
 图片随机散落在画布上，每张不同角度倾斜。hover 时置顶、拉直、放大上浮。
 
@@ -181,7 +170,7 @@
 
 > 建议：scattered 最适合 6 张以内的图，第 7 张及之后会自动流到下方网格。
 
-### 3.9 `@hexagon` — 蜂巢六边形
+### 3.8 `@hexagon` — 蜂巢六边形
 
 图片裁切为六边形，偶数列下移半格形成蜂巢排列。hover 时放大并提亮饱和度。
 
@@ -194,7 +183,7 @@
 ![hex-5](https://picsum.photos/300/400?hex5)
 ![hex-6](https://picsum.photos/300/400?hex6)
 
-### 3.10 `@coverflow` — Cover Flow
+### 3.9 `@coverflow` — Cover Flow
 
 中间一张正中放大，两侧 3D 倾斜后退并模糊。hover 整个画廊时向左滑动一张，露出右侧更多图。
 
@@ -208,7 +197,7 @@
 
 > 建议：coverflow 最适合 5 张图，第 6 张及之后会被隐藏。
 
-### 3.11 `@tape` — 胶带粘贴
+### 3.10 `@tape` — 胶带粘贴
 
 每张图片像用半透明黄色胶带斜贴在木板上（带木纹背景），每张角度不同。hover 时胶带绷直、图片拉直放大。
 
@@ -218,6 +207,51 @@
 ![tape-2](https://picsum.photos/400/300?tap2)
 ![tape-3](https://picsum.photos/400/300?tap3)
 ![tape-4](https://picsum.photos/400/300?tap4)
+
+### 3.11 `@duotone` — 双色调
+
+图片默认灰度化并叠加主题色（奇数张紫色、偶数张粉色），形成双色调艺术效果。hover 时恢复原色。克制：仅色彩变化，无位移。
+
+@duotone
+
+![duo-1](https://picsum.photos/400/300?duo1)
+![duo-2](https://picsum.photos/400/300?duo2)
+![duo-3](https://picsum.photos/400/300?duo3)
+![duo-4](https://picsum.photos/400/300?duo4)
+
+### 3.12 `@frame` — 画框装裱
+
+每张图片加精致金属画框（多层金边阴影），底部留白模拟卡纸装裱，居中纵列展示。hover 时画框泛微光，不位移。克制：静态展示。
+
+@frame
+
+![frame-1](https://picsum.photos/600/400?frm1)
+![frame-2](https://picsum.photos/600/400?frm2)
+![frame-3](https://picsum.photos/600/400?frm3)
+
+### 3.13 `@arch` — 拱形画廊
+
+图片顶部裁切为大圆角拱形，模拟罗马建筑拱门造型，居中纵列。偶数张略窄以营造节奏。hover 时仅提亮饱和度与阴影，不位移。克制：纯形状艺术。
+
+@arch
+
+![arch-1](https://picsum.photos/500/400?arh1)
+![arch-2](https://picsum.photos/500/400?arh2)
+![arch-3](https://picsum.photos/500/400?arh3)
+![arch-4](https://picsum.photos/500/400?arh4)
+
+### 3.14 `@editorial` — 杂志跨页
+
+图片左右交替错落，高度不一，形成杂志跨页排版节奏。hover 时仅微调对比度与轻微上浮。克制：无 3D，无大幅动效。
+
+@editorial
+
+![edit-1](https://picsum.photos/500/400?edt1)
+![edit-2](https://picsum.photos/500/400?edt2)
+![edit-3](https://picsum.photos/500/400?edt3)
+![edit-4](https://picsum.photos/500/400?edt4)
+![edit-5](https://picsum.photos/500/400?edt5)
+![edit-6](https://picsum.photos/500/400?edt6)
 
 ### 自定义样式
 

@@ -9,11 +9,14 @@
  *   - polaroid   拍立得墙：白边相框，轻微旋转错落排布
  *   - stack      堆叠覆盖：图片相互覆盖，hover 时展开扇形
  *   - mosaic     马赛克：首张大图占两格，其余小图网格排布
- *   - carousel   3D 旋转木马：图片围成弧形，中间正中两侧 3D 倾斜后退
  *   - scattered  散落明信片：图片随机散落在画布上，hover 置顶拉直放大
  *   - hexagon    蜂巢六边形：图片裁切为六边形，错位蜂巢排列
  *   - coverflow  Cover Flow：中间正中放大，两侧 3D 倾斜后退，hover 整体滑动
  *   - tape       胶带粘贴：每张图用半透明胶带斜贴在木板上，hover 胶带绷直
+ *   - duotone    双色调：图片单色化叠加主题色，hover 恢复彩色（克制）
+ *   - frame      画框装裱：精致金属画框，居中纵列展示（克制）
+ *   - arch       拱形画廊：图片顶部裁切为拱形，罗马建筑感（克制）
+ *   - editorial  杂志跨页：左右交替错落，杂志排版风格（克制）
  *
  * 注意：所有画廊容器的基础类仍为 .image-gallery，这里通过附加
  * .image-gallery--{style} 修饰类来切换布局。
@@ -452,113 +455,6 @@
   }
 }
 
-/* ============== @carousel — 3D 旋转木马 ============== */
-/* 图片围成圆环，整组可点击旋转方向移动一张 */
-
-.image-gallery--carousel {
-  display: block;
-  position: relative;
-  height: 360px;
-  padding: 0;
-  margin: 24px 0;
-  background: radial-gradient(ellipse at center, rgba(212, 165, 201, 0.12), transparent 70%);
-  border: none;
-  border-radius: 0;
-  overflow: hidden;
-  perspective: 1200px;
-}
-
-.image-gallery--carousel img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 220px;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-              opacity 0.6s ease,
-              filter 0.6s ease;
-  transform-origin: center center;
-  cursor: pointer;
-  --i: 0;
-  --total: 1;
-}
-
-/* 默认排列：相对中心偏移角度 = i * (360 / total) */
-.image-gallery--carousel img:nth-child(1) {
-  transform: translateX(-50%) translateX(-260px) rotateY(35deg) scale(0.85);
-  opacity: 0.55;
-  filter: brightness(0.7);
-  z-index: 1;
-}
-
-.image-gallery--carousel img:nth-child(2) {
-  transform: translateX(-50%) translateX(-130px) rotateY(20deg) scale(0.92);
-  opacity: 0.8;
-  filter: brightness(0.85);
-  z-index: 2;
-}
-
-.image-gallery--carousel img:nth-child(3) {
-  transform: translateX(-50%) rotateY(0deg) scale(1);
-  opacity: 1;
-  filter: brightness(1);
-  z-index: 5;
-}
-
-.image-gallery--carousel img:nth-child(4) {
-  transform: translateX(-50%) translateX(130px) rotateY(-20deg) scale(0.92);
-  opacity: 0.8;
-  filter: brightness(0.85);
-  z-index: 2;
-}
-
-.image-gallery--carousel img:nth-child(5) {
-  transform: translateX(-50%) translateX(260px) rotateY(-35deg) scale(0.85);
-  opacity: 0.55;
-  filter: brightness(0.7);
-  z-index: 1;
-}
-
-.image-gallery--carousel img:nth-child(n + 6) {
-  transform: translateX(-50%) scale(0.5);
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* hover 整体时，侧边图轻微前推 */
-.image-gallery--carousel:hover img:nth-child(1) {
-  transform: translateX(-50%) translateX(-280px) rotateY(40deg) scale(0.88);
-}
-
-.image-gallery--carousel:hover img:nth-child(5) {
-  transform: translateX(-50%) translateX(280px) rotateY(-40deg) scale(0.88);
-}
-
-@media (max-width: 768px) {
-  .image-gallery--carousel {
-    height: 280px;
-  }
-  .image-gallery--carousel img {
-    width: 160px;
-    height: 220px;
-  }
-  .image-gallery--carousel img:nth-child(1) {
-    transform: translateX(-50%) translateX(-190px) rotateY(35deg) scale(0.85);
-  }
-  .image-gallery--carousel img:nth-child(2) {
-    transform: translateX(-50%) translateX(-95px) rotateY(20deg) scale(0.92);
-  }
-  .image-gallery--carousel img:nth-child(4) {
-    transform: translateX(-50%) translateX(95px) rotateY(-20deg) scale(0.92);
-  }
-  .image-gallery--carousel img:nth-child(5) {
-    transform: translateX(-50%) translateX(190px) rotateY(-35deg) scale(0.85);
-  }
-}
-
 /* ============== @scattered — 散落明信片 ============== */
 /* 图片随机散落在画布上，每张不同角度，hover 置顶拉直放大 */
 
@@ -957,5 +853,279 @@
     width: 56px;
     height: 20px;
     top: -8px;
+  }
+}
+
+/* ============== @duotone — 双色调 ============== */
+/* 图片默认单色化叠加主题色，hover 恢复彩色。克制：仅色彩变化，无位移 */
+
+.image-gallery--duotone {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 20px;
+  margin: 16px 0;
+  background: #0e0e12;
+  border-radius: 12px;
+  border: 1px solid #1f1f28;
+}
+
+.image-gallery--duotone img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 4px;
+  /* 双色调：灰度 + 主题色叠加 */
+  filter: grayscale(1) contrast(1.1) brightness(0.9);
+  transition: filter 0.6s ease, transform 0.6s ease;
+  cursor: pointer;
+  /* 用 mix-blend 让叠加色与图片融合 */
+  mix-blend-mode: normal;
+}
+
+/* 伪元素：覆盖主题色，配合 mix-blend-mode 实现双色调 */
+.image-gallery--duotone img::after {
+  content: '';
+}
+
+/* 由于 img 不支持伪元素，用容器背景 + blend 模拟。
+   这里改用 box-shadow inset 叠加主题色（克制实现） */
+.image-gallery--duotone img {
+  box-shadow:
+    inset 0 0 0 1000px rgba(184, 138, 173, 0.45);
+}
+
+/* 交错色调：偶数张用粉色叠加 */
+.image-gallery--duotone img:nth-child(even) {
+  box-shadow:
+    inset 0 0 0 1000px rgba(242, 196, 206, 0.4);
+}
+
+.image-gallery--duotone img:hover {
+  filter: grayscale(0) contrast(1) brightness(1);
+  box-shadow: none;
+  transform: scale(1.01);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--duotone {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    padding: 12px;
+  }
+  .image-gallery--duotone img {
+    height: 160px;
+  }
+}
+
+/* ============== @frame — 画框装裱 ============== */
+/* 每张图加精致金属画框，居中纵列展示。克制：静态展示，hover 仅画框微光 */
+
+.image-gallery--frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 40px 20px;
+  margin: 16px 0;
+  background:
+    linear-gradient(180deg, rgba(250, 250, 250, 0.6), rgba(240, 240, 240, 0.4)),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 20px,
+      rgba(0, 0, 0, 0.015) 20px,
+      rgba(0, 0, 0, 0.015) 21px
+    );
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.image-gallery--frame img {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  object-fit: cover;
+  padding: 16px 16px 48px;
+  background: #fff;
+  /* 金属画框：多层渐变模拟金边 */
+  border: 1px solid #c9a96a;
+  box-shadow:
+    0 0 0 4px #f5e6c8,
+    0 0 0 5px #b8956a,
+    0 12px 28px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.5s ease;
+  cursor: pointer;
+}
+
+/* 画框底部留白处显示图片序号（克制装饰） */
+.image-gallery--frame img {
+  counter-increment: frame-counter;
+}
+
+.image-gallery--frame {
+  counter-reset: frame-counter;
+}
+
+/* hover：画框微光，不位移 */
+.image-gallery--frame img:hover {
+  box-shadow:
+    0 0 0 4px #f8edd0,
+    0 0 0 5px #d4af6e,
+    0 0 24px rgba(212, 175, 110, 0.3),
+    0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--frame {
+    gap: 24px;
+    padding: 24px 12px;
+  }
+  .image-gallery--frame img {
+    max-width: 100%;
+    padding: 10px 10px 32px;
+    box-shadow:
+      0 0 0 3px #f5e6c8,
+      0 0 0 4px #b8956a,
+      0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* ============== @arch — 拱形画廊 ============== */
+/* 图片顶部裁切为拱形（罗马建筑感），居中纵列。克制：纯形状艺术，无 hover 位移 */
+
+.image-gallery--arch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 32px 20px;
+  margin: 16px 0;
+  background:
+    linear-gradient(180deg, rgba(212, 165, 201, 0.06), rgba(242, 196, 206, 0.03));
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.image-gallery--arch img {
+  width: 100%;
+  max-width: 480px;
+  height: 320px;
+  object-fit: cover;
+  /* 拱形：顶部大圆角 + 底部直角，模拟罗马拱门 */
+  border-radius: 240px 240px 8px 8px;
+  /* 柔和阴影模拟浮雕感 */
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  transition: filter 0.5s ease, box-shadow 0.5s ease;
+  cursor: pointer;
+  filter: saturate(0.92) contrast(1.02);
+}
+
+/* 偶数张略窄，营造节奏感 */
+.image-gallery--arch img:nth-child(even) {
+  max-width: 380px;
+  height: 280px;
+  border-radius: 190px 190px 6px 6px;
+}
+
+/* hover：仅提亮 + 阴影加深，不位移 */
+.image-gallery--arch img:hover {
+  filter: saturate(1.05) contrast(1.05) brightness(1.02);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--arch {
+    gap: 16px;
+    padding: 20px 12px;
+  }
+  .image-gallery--arch img {
+    height: 220px;
+    border-radius: 160px 160px 6px 6px;
+  }
+  .image-gallery--arch img:nth-child(even) {
+    height: 200px;
+    border-radius: 140px 140px 6px 6px;
+  }
+}
+
+/* ============== @editorial — 杂志跨页 ============== */
+/* 图片左右交替错落，像杂志排版。克制：仅位置错落，无 3D 与大幅动效 */
+
+.image-gallery--editorial {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 32px;
+  padding: 24px 16px;
+  margin: 16px 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.image-gallery--editorial img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 2px;
+  transition: filter 0.5s ease, transform 0.5s ease;
+  cursor: pointer;
+  filter: contrast(1.03);
+}
+
+/* 奇数张靠左，偶数张靠右，形成跨页错落感 */
+.image-gallery--editorial img:nth-child(odd) {
+  justify-self: start;
+  transform: translateY(0);
+}
+
+.image-gallery--editorial img:nth-child(even) {
+  justify-self: end;
+  transform: translateY(32px);
+}
+
+/* 第 3 张起交替偏移量加大，增强节奏 */
+.image-gallery--editorial img:nth-child(3n) {
+  height: 340px;
+}
+
+.image-gallery--editorial img:nth-child(4n) {
+  height: 240px;
+  transform: translateY(-16px);
+}
+
+/* hover：仅微调对比与轻微上浮，克制 */
+.image-gallery--editorial img:hover {
+  filter: contrast(1.08) saturate(1.05);
+  transform: translateY(-4px);
+}
+
+/* 保持偶数张的偏移基线 */
+.image-gallery--editorial img:nth-child(even):hover {
+  transform: translateY(28px);
+}
+
+.image-gallery--editorial img:nth-child(4n):hover {
+  transform: translateY(-20px);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--editorial {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px 8px;
+  }
+  .image-gallery--editorial img {
+    height: 200px;
+    justify-self: stretch !important;
+    transform: none !important;
+  }
+  .image-gallery--editorial img:nth-child(3n),
+  .image-gallery--editorial img:nth-child(4n) {
+    height: 200px;
   }
 }

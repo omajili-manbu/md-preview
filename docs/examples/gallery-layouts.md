@@ -29,11 +29,14 @@
 | `@polaroid` | 拍立得墙：白边相框，轻微旋转错落排布 | 任意 |
 | `@stack` | 堆叠覆盖：图片相互覆盖，hover 时展开扇形 | 3-5 张 |
 | `@mosaic` | 马赛克：首张大图占两格，其余小图网格排布 | 5 张 |
-| `@carousel` | 3D 旋转木马：图片围成弧形，中间正中两侧 3D 倾斜后退 | 5 张 |
 | `@scattered` | 散落明信片：图片随机散落画布，hover 置顶拉直放大 | 6 张以内 |
 | `@hexagon` | 蜂巢六边形：图片裁切为六边形，错位蜂巢排列 | 任意 |
 | `@coverflow` | Cover Flow：中间正中放大，两侧 3D 倾斜后退，hover 整体滑动 | 5 张 |
 | `@tape` | 胶带粘贴：每张图用半透明胶带斜贴在木板上，hover 胶带绷直 | 任意 |
+| `@duotone` | 双色调：单色化叠加主题色，hover 恢复彩色（克制） | 任意 |
+| `@frame` | 画框装裱：精致金属画框，居中纵列展示（克制） | 任意 |
+| `@arch` | 拱形画廊：顶部裁切为拱形，罗马建筑感（克制） | 任意 |
+| `@editorial` | 杂志跨页：左右交替错落，杂志排版风格（克制） | 偶数张 |
 
 ## 效果演示
 
@@ -92,16 +95,6 @@
 ![mosaic-4](https://picsum.photos/300/200?mos4)
 ![mosaic-5](https://picsum.photos/300/200?mos5)
 
-### `@carousel` — 3D 旋转木马
-
-@carousel
-
-![carousel-1](https://picsum.photos/400/500?car1)
-![carousel-2](https://picsum.photos/400/500?car2)
-![carousel-3](https://picsum.photos/400/500?car3)
-![carousel-4](https://picsum.photos/400/500?car4)
-![carousel-5](https://picsum.photos/400/500?car5)
-
 ### `@scattered` — 散落明信片
 
 @scattered
@@ -142,6 +135,43 @@
 ![tape-2](https://picsum.photos/400/300?tap2)
 ![tape-3](https://picsum.photos/400/300?tap3)
 ![tape-4](https://picsum.photos/400/300?tap4)
+
+### `@duotone` — 双色调
+
+@duotone
+
+![duo-1](https://picsum.photos/400/300?duo1)
+![duo-2](https://picsum.photos/400/300?duo2)
+![duo-3](https://picsum.photos/400/300?duo3)
+![duo-4](https://picsum.photos/400/300?duo4)
+
+### `@frame` — 画框装裱
+
+@frame
+
+![frame-1](https://picsum.photos/600/400?frm1)
+![frame-2](https://picsum.photos/600/400?frm2)
+![frame-3](https://picsum.photos/600/400?frm3)
+
+### `@arch` — 拱形画廊
+
+@arch
+
+![arch-1](https://picsum.photos/500/400?arh1)
+![arch-2](https://picsum.photos/500/400?arh2)
+![arch-3](https://picsum.photos/500/400?arh3)
+![arch-4](https://picsum.photos/500/400?arh4)
+
+### `@editorial` — 杂志跨页
+
+@editorial
+
+![edit-1](https://picsum.photos/500/400?edt1)
+![edit-2](https://picsum.photos/500/400?edt2)
+![edit-3](https://picsum.photos/500/400?edt3)
+![edit-4](https://picsum.photos/500/400?edt4)
+![edit-5](https://picsum.photos/500/400?edt5)
+![edit-6](https://picsum.photos/500/400?edt6)
 
 ## 自定义样式
 
