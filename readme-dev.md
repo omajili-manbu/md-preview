@@ -286,12 +286,43 @@ CSS 采用模块化架构，按功能拆分到 `iris/css/` 目录下的各文件
 
 ## 调试模式
 
-访问 URL 时添加 `?debug=1` 参数，右上角会显示调试面板，包含：
-- 加载耗时
-- 文件数量
-- 搜索索引状态
-- 内存使用
+访问 URL 时添加 `?debug=1` 参数，右下角会显示调试面板，每 2 秒自动刷新，包含 6 个分组：
+
+### 环境
+- 浏览器（解析 UA）
+- 视口尺寸 + DPR
+- 平台、语言
+- 在线状态、连接类型（4g/wifi 等）
+
+### 性能
+- 首屏耗时（自 `?debug=1` 启用时刻）
+- TTFB / DOM Ready / Load（Performance Timing API）
+- FCP（PerformanceObserver `first-contentful-paint`）
+- JS 堆内存 / 总堆内存 / 堆上限（Chrome only，`performance.memory`）
+
+### 当前文档
+- 路径、源大小、HTML 大小、渲染耗时
+- 标题数 / 图片数 / 代码块数 / 表格数 / 链接数（DOM 查询）
+- Frontmatter 字段列表
+
+### 文件树 & 搜索
+- 文件总数（递归统计 `state.fileTreeData`）
+- 加载来源（`prebuilt` / `api`）
+- 搜索索引来源（`prebuilt` / `runtime`）
+- 索引条目数、搜索引擎（FlexSearch / simple）
+
+### 主题
+- 当前主题、代码主题
+- 自定义色数（localStorage 中实际生效的颜色数）
+- 自定义 CSS / 自定义 hljs 是否启用
+
+### 缓存与网络
+- API 调用次数、缓存命中（命中 / 调用）
+- LocalStorage 占用字节数
+- Service Worker 状态（activated / 未注册 / 不支持）
+
+实现：[iris/js/debug.js](iris/js/debug.js)，相关状态字段定义在 [iris/js/state.js](iris/js/state.js)（`fileTreeSource` / `searchIndexStats` / `lastDocStats`）。
 
 ---
 
-**文档版本**: 3.0
+**文档版本**: 3.1

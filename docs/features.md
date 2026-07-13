@@ -99,7 +99,7 @@ Markdown Preview 是一个极简风格的 Markdown 文档预览站点，专为 G
 | 搜索索引预构建 | `build-search-index.js`（`docs/**` 变更自动触发） |
 | RSS feed 预构建 | `build-feed.js`（`docs/**` 变更自动触发） |
 | Product 分支同步 | 自动创建无文档的纯应用分支 |
-| 调试模式 | URL 加 `?debug=1` 显示加载耗时、文件数量、内存等 |
+| 调试模式 | URL 加 `?debug=1` 显示环境/性能/文档/搜索/主题/缓存 6 大类调试信息，每 2 秒自动刷新 |
 
 ## 十、悬浮球菜单
 

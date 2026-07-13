@@ -838,15 +838,18 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 280px;
+  width: 340px;
+  max-height: 75vh;
   background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  font-size: 13px;
+  font-size: 12px;
   color: #fff;
   z-index: 10000;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .debug-header {
@@ -856,6 +859,7 @@
   padding: 12px 16px;
   background: rgba(212, 165, 201, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .debug-title {
@@ -885,34 +889,68 @@
 }
 
 .debug-content {
-  padding: 12px 16px;
+  padding: 8px 16px 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+.debug-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.debug-content::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+.debug-section {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.debug-section:last-child {
+  border-bottom: none;
+}
+
+.debug-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent-pink);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  padding-top: 4px;
 }
 
 .debug-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.debug-item:last-child {
-  border-bottom: none;
+  padding: 3px 0;
+  gap: 12px;
 }
 
 .debug-label {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
 }
 
 .debug-value {
   color: #00c851;
   font-weight: 500;
   font-family: 'SF Mono', Monaco, Consolas, monospace;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
 }
 
 @media (max-width: 768px) {
   .debug-panel {
     width: calc(100% - 40px);
+    max-height: 60vh;
     bottom: 10px;
     right: 10px;
     left: 10px;

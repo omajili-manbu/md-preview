@@ -36,6 +36,15 @@
     documents = indexData;
     isIndexLoaded = true;
 
+    // 标记索引来源：有数据则视为预构建，空数组回退运行时构建
+    const { state } = window.MarkdownPreview;
+    if (state) {
+      state.searchIndexStats = {
+        source: indexData && indexData.length > 0 ? 'prebuilt' : 'runtime',
+        entries: indexData ? indexData.length : 0
+      };
+    }
+
     if (typeof FlexSearch !== 'undefined') {
       flexIndex = new FlexSearch.Index({
         encode: cjkEncode,

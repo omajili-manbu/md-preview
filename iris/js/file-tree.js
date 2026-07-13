@@ -18,15 +18,18 @@
           window.MarkdownPreview.debug.incrementCacheHits();
         }
         state.fileTreeData = await response.json();
+        state.fileTreeSource = 'prebuilt';
         renderFileTree(state.fileTreeData);
         onFilesLoaded();
         return;
       } else {
         console.log('⚠️ 预构建文件不存在，使用 GitHub API');
+        state.fileTreeSource = 'api';
         await loadFileTreeFromGitHubAPI();
       }
     } catch (error) {
       console.error('⚠️ 加载预构建文件树失败，使用 GitHub API:', error);
+      state.fileTreeSource = 'api';
       await loadFileTreeFromGitHubAPI();
     }
   }

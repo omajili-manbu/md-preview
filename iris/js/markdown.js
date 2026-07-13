@@ -308,6 +308,7 @@
   }
 
   function renderMarkdown(markdown, currentPath = '') {
+    const renderStartTime = performance.now();
     const { frontmatter, content } = parseFrontmatter(markdown);
 
     if (frontmatter.title) {
@@ -363,6 +364,14 @@
     }
 
     dom.markdownContent.innerHTML = finalHtml;
+
+    // 调试面板用：记录当前文档渲染信息
+    state.lastDocStats = {
+      path: currentPath,
+      sourceLength: markdown.length,
+      htmlLength: finalHtml.length,
+      renderMs: Math.round(performance.now() - renderStartTime)
+    };
 
     document.querySelectorAll('.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6').forEach(heading => {
       const text = heading.textContent;

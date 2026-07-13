@@ -364,25 +364,72 @@
   <div class="debug-panel hidden" id="debugPanel">
     <div class="debug-header">
       <span class="debug-title">调试模式</span>
-      <button class="debug-close" id="debugClose">&times;</button>
+      <button class="debug-close" id="debugClose" aria-label="关闭">&times;</button>
     </div>
     <div class="debug-content">
-      <div class="debug-item">
-        <span class="debug-label">API 调用:</span>
-        <span class="debug-value" id="debugApiCalls">0 次</span>
+
+      <div class="debug-section">
+        <div class="debug-section-title">环境</div>
+        <div class="debug-item"><span class="debug-label">浏览器</span><span class="debug-value" id="dbgBrowser">-</span></div>
+        <div class="debug-item"><span class="debug-label">视口</span><span class="debug-value" id="dbgViewport">-</span></div>
+        <div class="debug-item"><span class="debug-label">平台</span><span class="debug-value" id="dbgPlatform">-</span></div>
+        <div class="debug-item"><span class="debug-label">语言</span><span class="debug-value" id="dbgLang">-</span></div>
+        <div class="debug-item"><span class="debug-label">在线状态</span><span class="debug-value" id="dbgOnline">-</span></div>
+        <div class="debug-item"><span class="debug-label">连接</span><span class="debug-value" id="dbgConn">-</span></div>
       </div>
-      <div class="debug-item">
-        <span class="debug-label">缓存命中:</span>
-        <span class="debug-value" id="debugCacheHits">0 / 0</span>
+
+      <div class="debug-section">
+        <div class="debug-section-title">性能</div>
+        <div class="debug-item"><span class="debug-label">首屏耗时</span><span class="debug-value" id="dbgFirstScreen">-</span></div>
+        <div class="debug-item"><span class="debug-label">TTFB</span><span class="debug-value" id="dbgTtfb">-</span></div>
+        <div class="debug-item"><span class="debug-label">DOM Ready</span><span class="debug-value" id="dbgDomReady">-</span></div>
+        <div class="debug-item"><span class="debug-label">Load</span><span class="debug-value" id="dbgLoad">-</span></div>
+        <div class="debug-item"><span class="debug-label">FCP</span><span class="debug-value" id="dbgFcp">-</span></div>
+        <div class="debug-item"><span class="debug-label">JS 堆内存</span><span class="debug-value" id="dbgMemJs">-</span></div>
+        <div class="debug-item"><span class="debug-label">总堆内存</span><span class="debug-value" id="dbgMemTotal">-</span></div>
+        <div class="debug-item"><span class="debug-label">堆上限</span><span class="debug-value" id="dbgMemLimit">-</span></div>
       </div>
-      <div class="debug-item">
-        <span class="debug-label">首屏耗时:</span>
-        <span class="debug-value" id="debugRenderTime">-ms</span>
+
+      <div class="debug-section">
+        <div class="debug-section-title">当前文档</div>
+        <div class="debug-item"><span class="debug-label">路径</span><span class="debug-value" id="dbgDocPath">-</span></div>
+        <div class="debug-item"><span class="debug-label">源大小</span><span class="debug-value" id="dbgDocSourceSize">-</span></div>
+        <div class="debug-item"><span class="debug-label">HTML 大小</span><span class="debug-value" id="dbgDocHtmlSize">-</span></div>
+        <div class="debug-item"><span class="debug-label">渲染耗时</span><span class="debug-value" id="dbgDocRenderMs">-</span></div>
+        <div class="debug-item"><span class="debug-label">标题数</span><span class="debug-value" id="dbgHeadings">-</span></div>
+        <div class="debug-item"><span class="debug-label">图片数</span><span class="debug-value" id="dbgImages">-</span></div>
+        <div class="debug-item"><span class="debug-label">代码块</span><span class="debug-value" id="dbgCodeBlocks">-</span></div>
+        <div class="debug-item"><span class="debug-label">表格数</span><span class="debug-value" id="dbgTables">-</span></div>
+        <div class="debug-item"><span class="debug-label">链接数</span><span class="debug-value" id="dbgLinks">-</span></div>
+        <div class="debug-item"><span class="debug-label">Frontmatter</span><span class="debug-value" id="dbgFrontmatter">-</span></div>
       </div>
-      <div class="debug-item">
-        <span class="debug-label">渲染器:</span>
-        <span class="debug-value">Marked.js</span>
+
+      <div class="debug-section">
+        <div class="debug-section-title">文件树 & 搜索</div>
+        <div class="debug-item"><span class="debug-label">文件总数</span><span class="debug-value" id="dbgFileTotal">-</span></div>
+        <div class="debug-item"><span class="debug-label">加载来源</span><span class="debug-value" id="dbgFileSource">-</span></div>
+        <div class="debug-item"><span class="debug-label">索引来源</span><span class="debug-value" id="dbgSearchSource">-</span></div>
+        <div class="debug-item"><span class="debug-label">索引条目</span><span class="debug-value" id="dbgSearchEntries">-</span></div>
+        <div class="debug-item"><span class="debug-label">搜索引擎</span><span class="debug-value" id="dbgSearchEngine">-</span></div>
       </div>
+
+      <div class="debug-section">
+        <div class="debug-section-title">主题</div>
+        <div class="debug-item"><span class="debug-label">当前主题</span><span class="debug-value" id="dbgTheme">-</span></div>
+        <div class="debug-item"><span class="debug-label">代码主题</span><span class="debug-value" id="dbgCodeTheme">-</span></div>
+        <div class="debug-item"><span class="debug-label">自定义色数</span><span class="debug-value" id="dbgCustomColors">-</span></div>
+        <div class="debug-item"><span class="debug-label">自定义 CSS</span><span class="debug-value" id="dbgCustomCSS">-</span></div>
+        <div class="debug-item"><span class="debug-label">自定义 hljs</span><span class="debug-value" id="dbgCustomHljs">-</span></div>
+      </div>
+
+      <div class="debug-section">
+        <div class="debug-section-title">缓存与网络</div>
+        <div class="debug-item"><span class="debug-label">API 调用</span><span class="debug-value" id="dbgApiCalls">0 次</span></div>
+        <div class="debug-item"><span class="debug-label">缓存命中</span><span class="debug-value" id="dbgCacheHits">0 / 0</span></div>
+        <div class="debug-item"><span class="debug-label">LocalStorage</span><span class="debug-value" id="dbgLocalStorage">-</span></div>
+        <div class="debug-item"><span class="debug-label">Service Worker</span><span class="debug-value" id="dbgSW">-</span></div>
+      </div>
+
     </div>
   </div>
   
