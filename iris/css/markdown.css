@@ -788,41 +788,15 @@
 }
 
 .image-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin: 16px 0;
-  padding: 16px;
-  background: rgba(212, 165, 201, 0.05);
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-}
-
-.image-gallery img {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-}
-
-.image-gallery img:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 24px rgba(212, 165, 201, 0.2);
+  /* 画廊布局样式统一在 css/galleries.css 中定义 */
 }
 
 @media (max-width: 768px) {
-  .image-gallery {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
-    padding: 12px;
-  }
-  
   .image-placeholder {
     padding: 24px 16px;
     min-height: 120px;
   }
-  
+
   .placeholder-icon {
     font-size: 36px;
   }

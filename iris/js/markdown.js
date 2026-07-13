@@ -236,16 +236,33 @@
     });
     
     if (images.length < 2) return;
-    
+
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = container.innerHTML;
-    
+
     const allElements = Array.from(tempDiv.childNodes);
     const galleryGroups = [];
     let currentGroup = [];
+    // 待应用的画廊样式（来自紧邻图片组前的 @style 标记）
+    let pendingStyle = null;
+    // 已收集到样式的标记节点，分组完成后从 DOM 移除
+    const markersToRemove = [];
 
     allElements.forEach((node, index) => {
       if (node.nodeName === 'P') {
+        // 画廊样式标记：<p class="gallery-style-marker" data-style="xxx">
+        if (node.classList && node.classList.contains('gallery-style-marker')) {
+          // 上一组若未闭合则先结束（标记本身是分隔符）
+          if (currentGroup.length >= 2) {
+            galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
+          }
+          currentGroup = [];
+          // 记录新样式，等待下一个图片组消费
+          pendingStyle = node.getAttribute('data-style') || null;
+          markersToRemove.push(node);
+          return;
+        }
+
         const imgs = node.querySelectorAll('img');
         if (imgs.length > 0 && node.textContent.trim() === '') {
           currentGroup.push(...Array.from(imgs));
@@ -253,39 +270,51 @@
           const nextNode = allElements[index + 1];
           if (!nextNode || nextNode.nodeName !== 'P' || nextNode.querySelectorAll('img').length === 0) {
             if (currentGroup.length >= 2) {
-              galleryGroups.push([...currentGroup]);
+              galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
             }
             currentGroup = [];
+            // 标记被消费，清空
+            pendingStyle = null;
           }
         } else {
           if (currentGroup.length >= 2) {
-            galleryGroups.push([...currentGroup]);
+            galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
           }
           currentGroup = [];
+          // 遇到非图片段落，待应用的样式失效
+          pendingStyle = null;
         }
       } else {
         if (currentGroup.length >= 2) {
-          galleryGroups.push([...currentGroup]);
+          galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
         }
         currentGroup = [];
+        pendingStyle = null;
       }
     });
 
     if (currentGroup.length >= 2) {
-      galleryGroups.push([...currentGroup]);
+      galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
     }
 
-    galleryGroups.forEach(group => {
-      if (group.length < 2) return;
+    // 移除所有标记节点
+    markersToRemove.forEach(node => node.remove());
 
-      const firstImg = group[0];
+    galleryGroups.forEach(group => {
+      if (group.imgs.length < 2) return;
+
+      const firstImg = group.imgs[0];
       const parentP = firstImg.closest('p');
       if (!parentP) return;
 
       const galleryDiv = document.createElement('div');
+      // 基础类 + 样式修饰类
       galleryDiv.className = 'image-gallery';
+      if (group.style) {
+        galleryDiv.classList.add(`image-gallery--${group.style}`);
+      }
 
-      group.forEach(img => {
+      group.imgs.forEach(img => {
         galleryDiv.appendChild(img.cloneNode(true));
       });
 
@@ -338,6 +367,22 @@
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>
         </button>${langLabel}<code${languageClass}>${escapedText}</code></pre>`;
+    };
+    // 识别画廊样式标记：单独一段 @style（如 @cardstack）转为隐藏标记节点
+    // 支持 @xxx 或 @xxx 备注（备注会被忽略）
+    renderer.paragraph = function(token) {
+      const trimmed = (token && token.text ? token.text : '').trim();
+      const markerMatch = trimmed.match(/^@([a-zA-Z][\w-]*)(\s.*)?$/);
+      if (markerMatch) {
+        const style = markerMatch[1].toLowerCase();
+        // 仅识别已注册的画廊样式，未知的原样输出
+        const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic'];
+        if (knownStyles.includes(style)) {
+          return `<p class="gallery-style-marker" data-style="${style}"></p>`;
+        }
+      }
+      // 默认渲染
+      return `<p>${this.parser.parseInline(token.tokens)}</p>`;
     };
     let html = marked.parse(processedContent, {
       breaks: true,

@@ -1,0 +1,448 @@
+/**
+ * 画廊布局样式集
+ *
+ * 在 Markdown 中，连续图片前用单独一段 `@style` 指定画廊渲染样式。
+ * 当前支持的 style：
+ *   - grid       默认网格（自动布局，与不写 @style 相同）
+ *   - cardstack  扑克牌堆：中间一张主图，左右错层露出上下张的一角，边缘模糊
+ *   - filmstrip  胶片条：横向滚动，上下带胶片穿孔装饰
+ *   - polaroid   拍立得墙：白边相框，轻微旋转错落排布
+ *   - stack      堆叠覆盖：图片相互覆盖，hover 时展开扇形
+ *   - mosaic     马赛克：首张大图占两格，其余小图网格排布
+ *
+ * 注意：所有画廊容器的基础类仍为 .image-gallery，这里通过附加
+ * .image-gallery--{style} 修饰类来切换布局。
+ */
+
+/* ============== 基础容器（默认 = grid） ============== */
+
+.image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+  padding: 16px;
+  background: rgba(212, 165, 201, 0.05);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.image-gallery img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  display: block;
+}
+
+.image-gallery img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(212, 165, 201, 0.2);
+}
+
+@media (max-width: 768px) {
+  .image-gallery {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+/* ============== @grid — 显式指定网格布局 ============== */
+
+.image-gallery--grid {
+  /* 与默认一致，仅作为显式声明 */
+}
+
+/* ============== @cardstack — 扑克牌堆 ============== */
+
+.image-gallery--cardstack {
+  display: block;
+  position: relative;
+  height: 320px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.image-gallery--cardstack img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 240px;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s ease,
+              opacity 0.35s ease;
+  transform-origin: center center;
+  backface-visibility: hidden;
+}
+
+/* 中间主图（第一张）— 正中显示 */
+.image-gallery--cardstack img:nth-child(1) {
+  z-index: 3;
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+/* 左侧图（第二张）— 高位错层，露出左上角 */
+.image-gallery--cardstack img:nth-child(2) {
+  z-index: 2;
+  transform: translate(-118%, -55%) rotate(-5deg);
+  /* 仅露出一角：右侧与底部裁掉 */
+  clip-path: polygon(0 0, 55% 0, 55% 70%, 0 70%);
+  /* 边缘模糊：用 mask 渐变叠加 */
+  -webkit-mask-image: linear-gradient(135deg, #000 35%, transparent 75%);
+  mask-image: linear-gradient(135deg, #000 35%, transparent 75%);
+  opacity: 0.85;
+  filter: blur(0.4px);
+}
+
+/* 右侧图（第三张）— 低位错层，露出右下角 */
+.image-gallery--cardstack img:nth-child(3) {
+  z-index: 2;
+  transform: translate(-82%, -45%) rotate(5deg);
+  clip-path: polygon(45% 30%, 100% 30%, 100% 100%, 45% 100%);
+  -webkit-mask-image: linear-gradient(315deg, #000 35%, transparent 75%);
+  mask-image: linear-gradient(315deg, #000 35%, transparent 75%);
+  opacity: 0.85;
+  filter: blur(0.4px);
+}
+
+/* 第四张及之后 — 藏在更深处，仅露极小一角 */
+.image-gallery--cardstack img:nth-child(n + 4) {
+  z-index: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+  clip-path: polygon(0 0, 0 0, 0 0, 0 0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* hover 主图时整体轻微抬起 */
+.image-gallery--cardstack:hover img:nth-child(1) {
+  transform: translate(-50%, -54%) rotate(0deg);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+.image-gallery--cardstack:hover img:nth-child(2) {
+  transform: translate(-122%, -58%) rotate(-6deg);
+}
+
+.image-gallery--cardstack:hover img:nth-child(3) {
+  transform: translate(-78%, -42%) rotate(6deg);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--cardstack {
+    height: 240px;
+  }
+  .image-gallery--cardstack img {
+    width: 180px;
+    height: 240px;
+  }
+}
+
+/* ============== @filmstrip — 胶片条 ============== */
+
+.image-gallery--filmstrip {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0;
+  padding: 20px 0;
+  margin: 16px 0;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #333;
+  /* 上下胶片穿孔：用 repeating-linear-gradient 模拟 */
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 14px,
+      rgba(255, 255, 255, 0.85) 14px,
+      rgba(255, 255, 255, 0.85) 22px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 14px,
+      rgba(255, 255, 255, 0.85) 14px,
+      rgba(255, 255, 255, 0.85) 22px
+    ),
+    #1a1a1a;
+  background-position: 0 0, 0 100%;
+  background-size: auto 14px, auto 14px;
+  background-repeat: repeat-x;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent-purple) transparent;
+}
+
+.image-gallery--filmstrip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.image-gallery--filmstrip::-webkit-scrollbar-thumb {
+  background: var(--color-accent-purple);
+  border-radius: 3px;
+}
+
+.image-gallery--filmstrip img {
+  flex: 0 0 auto;
+  width: 240px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 0;
+  margin: 0 4px;
+  filter: saturate(0.92);
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.image-gallery--filmstrip img:hover {
+  transform: scale(1.04);
+  filter: saturate(1.1);
+  z-index: 2;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .image-gallery--filmstrip img {
+    width: 180px;
+    height: 120px;
+  }
+}
+
+/* ============== @polaroid — 拍立得墙 ============== */
+
+.image-gallery--polaroid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 16px;
+  margin: 16px 0;
+  background: linear-gradient(135deg, rgba(212, 165, 201, 0.08), rgba(242, 196, 206, 0.05));
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.image-gallery--polaroid img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  padding: 12px 12px 40px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+
+/* 交错旋转，模拟随手贴在墙上的拍立得 */
+.image-gallery--polaroid img:nth-child(odd) {
+  transform: rotate(-4deg);
+}
+
+.image-gallery--polaroid img:nth-child(even) {
+  transform: rotate(3deg);
+}
+
+.image-gallery--polaroid img:nth-child(3n) {
+  transform: rotate(-2deg) translateY(8px);
+}
+
+.image-gallery--polaroid img:nth-child(4n) {
+  transform: rotate(5deg) translateY(-6px);
+}
+
+.image-gallery--polaroid img:hover {
+  transform: rotate(0deg) scale(1.08) translateY(-8px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  z-index: 5;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .image-gallery--polaroid img {
+    width: 140px;
+    height: 140px;
+    padding: 8px 8px 28px;
+  }
+}
+
+/* ============== @stack — 堆叠覆盖 ============== */
+
+.image-gallery--stack {
+  display: block;
+  position: relative;
+  height: 320px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.image-gallery--stack img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 320px;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform-origin: bottom center;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
+  cursor: pointer;
+}
+
+/* 多张图堆叠：第 N 张向右下偏移并旋转一点，像扑克摊开 */
+.image-gallery--stack img:nth-child(1) {
+  z-index: 5;
+  transform: translate(-50%, -50%) rotate(-6deg);
+}
+
+.image-gallery--stack img:nth-child(2) {
+  z-index: 4;
+  transform: translate(-42%, -46%) rotate(-2deg);
+}
+
+.image-gallery--stack img:nth-child(3) {
+  z-index: 3;
+  transform: translate(-34%, -42%) rotate(2deg);
+}
+
+.image-gallery--stack img:nth-child(4) {
+  z-index: 2;
+  transform: translate(-26%, -38%) rotate(6deg);
+}
+
+.image-gallery--stack img:nth-child(n + 5) {
+  z-index: 1;
+  transform: translate(-18%, -34%) rotate(10deg);
+  opacity: 0.6;
+}
+
+.image-gallery--stack:hover img:nth-child(1) {
+  transform: translate(-70%, -50%) rotate(-12deg);
+}
+
+.image-gallery--stack:hover img:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(-4deg);
+}
+
+.image-gallery--stack:hover img:nth-child(3) {
+  transform: translate(-30%, -50%) rotate(4deg);
+}
+
+.image-gallery--stack:hover img:nth-child(4) {
+  transform: translate(-10%, -50%) rotate(12deg);
+}
+
+.image-gallery--stack:hover img:nth-child(n + 5) {
+  transform: translate(10%, -50%) rotate(20deg);
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .image-gallery--stack {
+    height: 240px;
+  }
+  .image-gallery--stack img {
+    width: 220px;
+    height: 165px;
+  }
+}
+
+/* ============== @mosaic — 马赛克（首图大，其余小） ============== */
+
+.image-gallery--mosaic {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  padding: 8px;
+  margin: 16px 0;
+  background: rgba(212, 165, 201, 0.05);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  min-height: 320px;
+}
+
+/* 第一张占据左侧大格（跨两行） */
+.image-gallery--mosaic img:nth-child(1) {
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-gallery--mosaic img:nth-child(2) {
+  grid-row: 1;
+  grid-column: 2;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-gallery--mosaic img:nth-child(3) {
+  grid-row: 1;
+  grid-column: 3;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-gallery--mosaic img:nth-child(4) {
+  grid-row: 2;
+  grid-column: 2;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-gallery--mosaic img:nth-child(5) {
+  grid-row: 2;
+  grid-column: 3;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 第 6 张及之后：自动流到下一行 */
+.image-gallery--mosaic img:nth-child(n + 6) {
+  grid-row: auto;
+  grid-column: auto;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-gallery--mosaic img:hover {
+  transform: scale(1.03);
+  z-index: 2;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .image-gallery--mosaic {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    min-height: 0;
+  }
+  .image-gallery--mosaic img:nth-child(1) {
+    grid-row: 1;
+    grid-column: 1 / span 2;
+    height: 180px;
+  }
+  .image-gallery--mosaic img:nth-child(2) {
+    grid-row: 2;
+    grid-column: 1;
+    height: 120px;
+  }
+  .image-gallery--mosaic img:nth-child(3) {
+    grid-row: 2;
+    grid-column: 2;
+    height: 120px;
+  }
+}
