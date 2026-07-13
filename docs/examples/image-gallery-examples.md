@@ -80,11 +80,14 @@
 | `@scattered` | 散落明信片：图片随机散落在画布上，hover 置顶拉直放大 |
 | `@hexagon` | 蜂巢六边形：图片裁切为六边形，错位蜂巢排列 |
 | `@coverflow` | Cover Flow：中间正中放大，两侧 3D 倾斜后退，hover 整体滑动 |
-| `@tape` | 胶带粘贴：每张图用半透明胶带斜贴在木板上，hover 胶带绷直 |
+| `@tape` | 软木板留言墙：软木纹理背景 + 多色和纸胶带贴顶角 |
 | `@duotone` | 双色调：图片单色化叠加主题色，hover 恢复彩色（克制） |
 | `@frame` | 画框装裱：精致金属画框，居中纵列展示（克制） |
 | `@arch` | 拱形画廊：图片顶部裁切为拱形，罗马建筑感（克制） |
-| `@editorial` | 杂志跨页：左右交替错落，杂志排版风格（克制） |
+| `@masonry` | 瀑布流：CSS columns 错落排布，保持原始宽高比（实用） |
+| `@stamp` | 邮票：齿孔白边 + 邮戳装饰，邮票造型（克制） |
+| `@slider` | 幻灯片：scroll-snap 横向轮播，一次看一张（实用） |
+| `@ticket` | 票根：撕边虚线 + 半圆缺口，票根造型（克制） |
 
 ### 3.1 `@grid` — 默认网格
 
@@ -197,9 +200,9 @@
 
 > 建议：coverflow 最适合 5 张图，第 6 张及之后会被隐藏。
 
-### 3.10 `@tape` — 胶带粘贴
+### 3.10 `@tape` — 软木板留言墙
 
-每张图片像用半透明黄色胶带斜贴在木板上（带木纹背景），每张角度不同。hover 时胶带绷直、图片拉直放大。
+软木板纹理背景（细密颗粒点阵 + 暖棕渐变），每张图片用两条多色和纸胶带（粉/紫/黄/蓝/绿交替）贴在顶角，不同高度悬挂。无白边相框，胶带是主角。hover 时胶带绷直、图片轻微浮起。
 
 @tape
 
@@ -240,18 +243,50 @@
 ![arch-3](https://picsum.photos/500/400?arh3)
 ![arch-4](https://picsum.photos/500/400?arh4)
 
-### 3.14 `@editorial` — 杂志跨页
+### 3.14 `@masonry` — 瀑布流
 
-图片左右交替错落，高度不一，形成杂志跨页排版节奏。hover 时仅微调对比度与轻微上浮。克制：无 3D，无大幅动效。
+CSS columns 实现的瀑布流布局，图片保持原始宽高比错落排布。响应式：宽屏 3 列、平板 2 列、手机 1 列。实用：适合大量不同比例的图片。
 
-@editorial
+@masonry
 
-![edit-1](https://picsum.photos/500/400?edt1)
-![edit-2](https://picsum.photos/500/400?edt2)
-![edit-3](https://picsum.photos/500/400?edt3)
-![edit-4](https://picsum.photos/500/400?edt4)
-![edit-5](https://picsum.photos/500/400?edt5)
-![edit-6](https://picsum.photos/500/400?edt6)
+![mas-1](https://picsum.photos/400/600?mas1)
+![mas-2](https://picsum.photos/400/300?mas2)
+![mas-3](https://picsum.photos/400/500?mas3)
+![mas-4](https://picsum.photos/400/400?mas4)
+![mas-5](https://picsum.photos/400/700?mas5)
+![mas-6](https://picsum.photos/400/350?mas6)
+
+### 3.15 `@stamp` — 邮票
+
+图片加白色齿孔边框（用 radial-gradient mask 模拟边缘圆形缺口），右下角叠加圆形邮戳装饰。hover 时轻微浮起。克制：静态展示。
+
+@stamp
+
+![stamp-1](https://picsum.photos/300/300?stm1)
+![stamp-2](https://picsum.photos/300/300?stm2)
+![stamp-3](https://picsum.photos/300/300?stm3)
+![stamp-4](https://picsum.photos/300/300?stm4)
+
+### 3.16 `@slider` — 幻灯片
+
+横向 scroll-snap 轮播，一次主要看一张，左右滑动浏览。暗色底衬托，左右渐变遮罩暗示可滑动。实用：故事线、步骤展示、产品图集。
+
+@slider
+
+![slide-1](https://picsum.photos/800/400?sld1)
+![slide-2](https://picsum.photos/800/400?sld2)
+![slide-3](https://picsum.photos/800/400?sld3)
+![slide-4](https://picsum.photos/800/400?sld4)
+
+### 3.17 `@ticket` — 票根
+
+图片裁切为票根造型：左侧主图 + 右侧半圆缺口（撕票口）+ 撕边虚线。偶数张换暖色调（sepia）。hover 时虚线变主题色。克制：静态展示。
+
+@ticket
+
+![ticket-1](https://picsum.photos/600/300?tkt1)
+![ticket-2](https://picsum.photos/600/300?tkt2)
+![ticket-3](https://picsum.photos/600/300?tkt3)
 
 ### 自定义样式
 

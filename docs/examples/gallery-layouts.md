@@ -32,11 +32,14 @@
 | `@scattered` | 散落明信片：图片随机散落画布，hover 置顶拉直放大 | 6 张以内 |
 | `@hexagon` | 蜂巢六边形：图片裁切为六边形，错位蜂巢排列 | 任意 |
 | `@coverflow` | Cover Flow：中间正中放大，两侧 3D 倾斜后退，hover 整体滑动 | 5 张 |
-| `@tape` | 胶带粘贴：每张图用半透明胶带斜贴在木板上，hover 胶带绷直 | 任意 |
+| `@tape` | 软木板留言墙：软木纹理 + 多色和纸胶带贴顶角 | 任意 |
 | `@duotone` | 双色调：单色化叠加主题色，hover 恢复彩色（克制） | 任意 |
 | `@frame` | 画框装裱：精致金属画框，居中纵列展示（克制） | 任意 |
 | `@arch` | 拱形画廊：顶部裁切为拱形，罗马建筑感（克制） | 任意 |
-| `@editorial` | 杂志跨页：左右交替错落，杂志排版风格（克制） | 偶数张 |
+| `@masonry` | 瀑布流：CSS columns 错落排布，保持原始宽高比（实用） | 任意（≥4 张效果更佳） |
+| `@stamp` | 邮票：齿孔白边 + 邮戳装饰，邮票造型（克制） | 任意 |
+| `@slider` | 幻灯片：scroll-snap 横向轮播，一次看一张（实用） | 任意（≥3 张） |
+| `@ticket` | 票根：撕边虚线 + 半圆缺口，票根造型（克制） | 任意 |
 
 ## 效果演示
 
@@ -127,7 +130,7 @@
 ![cov-4](https://picsum.photos/400/500?cov4)
 ![cov-5](https://picsum.photos/400/500?cov5)
 
-### `@tape` — 胶带粘贴
+### `@tape` — 软木板留言墙
 
 @tape
 
@@ -162,16 +165,42 @@
 ![arch-3](https://picsum.photos/500/400?arh3)
 ![arch-4](https://picsum.photos/500/400?arh4)
 
-### `@editorial` — 杂志跨页
+### `@masonry` — 瀑布流
 
-@editorial
+@masonry
 
-![edit-1](https://picsum.photos/500/400?edt1)
-![edit-2](https://picsum.photos/500/400?edt2)
-![edit-3](https://picsum.photos/500/400?edt3)
-![edit-4](https://picsum.photos/500/400?edt4)
-![edit-5](https://picsum.photos/500/400?edt5)
-![edit-6](https://picsum.photos/500/400?edt6)
+![mas-1](https://picsum.photos/400/600?mas1)
+![mas-2](https://picsum.photos/400/300?mas2)
+![mas-3](https://picsum.photos/400/500?mas3)
+![mas-4](https://picsum.photos/400/400?mas4)
+![mas-5](https://picsum.photos/400/700?mas5)
+![mas-6](https://picsum.photos/400/350?mas6)
+
+### `@stamp` — 邮票
+
+@stamp
+
+![stamp-1](https://picsum.photos/300/300?stm1)
+![stamp-2](https://picsum.photos/300/300?stm2)
+![stamp-3](https://picsum.photos/300/300?stm3)
+![stamp-4](https://picsum.photos/300/300?stm4)
+
+### `@slider` — 幻灯片
+
+@slider
+
+![slide-1](https://picsum.photos/800/400?sld1)
+![slide-2](https://picsum.photos/800/400?sld2)
+![slide-3](https://picsum.photos/800/400?sld3)
+![slide-4](https://picsum.photos/800/400?sld4)
+
+### `@ticket` — 票根
+
+@ticket
+
+![ticket-1](https://picsum.photos/600/300?tkt1)
+![ticket-2](https://picsum.photos/600/300?tkt2)
+![ticket-3](https://picsum.photos/600/300?tkt3)
 
 ## 自定义样式
 

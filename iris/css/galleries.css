@@ -12,11 +12,14 @@
  *   - scattered  散落明信片：图片随机散落在画布上，hover 置顶拉直放大
  *   - hexagon    蜂巢六边形：图片裁切为六边形，错位蜂巢排列
  *   - coverflow  Cover Flow：中间正中放大，两侧 3D 倾斜后退，hover 整体滑动
- *   - tape       胶带粘贴：每张图用半透明胶带斜贴在木板上，hover 胶带绷直
+ *   - tape       软木板留言墙：软木纹理背景 + 多色和纸胶带贴顶角
  *   - duotone    双色调：图片单色化叠加主题色，hover 恢复彩色（克制）
  *   - frame      画框装裱：精致金属画框，居中纵列展示（克制）
  *   - arch       拱形画廊：图片顶部裁切为拱形，罗马建筑感（克制）
- *   - editorial  杂志跨页：左右交替错落，杂志排版风格（克制）
+ *   - masonry    瀑布流：CSS columns 错落排布，保持原始宽高比（实用）
+ *   - stamp      邮票：齿孔白边 + 邮戳装饰，邮票造型（克制）
+ *   - slider     幻灯片：scroll-snap 横向轮播，一次看一张（实用）
+ *   - ticket     票根：撕边虚线 + 半圆缺口，票根造型（克制）
  *
  * 注意：所有画廊容器的基础类仍为 .image-gallery，这里通过附加
  * .image-gallery--{style} 修饰类来切换布局。
@@ -748,27 +751,28 @@
   }
 }
 
-/* ============== @tape — 胶带粘贴 ============== */
-/* 每张图片用半透明胶带斜贴在木板上，hover 胶带绷直 */
+/* ============== @tape — 软木板留言墙 ============== */
+/* 软木板纹理背景 + 多色和纸胶带贴顶角，图片不同高度悬挂。区别于 polaroid：
+   无白边相框，胶带是主角，背景是软木质感 */
 
 .image-gallery--tape {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: center;
-  gap: 32px 40px;
-  padding: 40px 20px;
+  gap: 28px 36px;
+  padding: 36px 24px;
   margin: 16px 0;
+  /* 软木板纹理：细密颗粒点阵 */
   background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(180, 140, 100, 0.04) 0,
-      rgba(180, 140, 100, 0.04) 2px,
-      transparent 2px,
-      transparent 40px
-    ),
-    linear-gradient(135deg, rgba(212, 165, 201, 0.06), rgba(242, 196, 206, 0.04));
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
+    radial-gradient(circle at 20% 30%, rgba(139, 90, 43, 0.12) 0, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(139, 90, 43, 0.1) 0, transparent 40%),
+    radial-gradient(circle, rgba(139, 90, 43, 0.18) 1px, transparent 1.5px),
+    linear-gradient(135deg, #c9a574, #b8895a);
+  background-size: auto, auto, 12px 12px, 100% 100%;
+  border-radius: 10px;
+  border: 1px solid #a07840;
+  box-shadow: inset 0 0 40px rgba(101, 67, 33, 0.25);
 }
 
 .image-gallery--tape img {
@@ -777,82 +781,155 @@
   height: 160px;
   object-fit: cover;
   border-radius: 2px;
-  padding: 8px;
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  /* 无白边，直接贴在板上，仅留投影 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
 }
 
-/* 胶带：用伪元素覆盖在图片上方，半透明带锯齿边 */
-.image-gallery--tape img::before {
+/* 两条和纸胶带：分别贴在左上、右上角，颜色交替 */
+.image-gallery--tape img::before,
+.image-gallery--tape img::after {
   content: '';
   position: absolute;
-  top: -12px;
-  left: 50%;
-  width: 80px;
-  height: 28px;
-  transform: translateX(-50%) rotate(-3deg);
-  background: rgba(255, 235, 150, 0.55);
-  /* 锯齿边缘：用 mask 渐变模拟撕边 */
-  -webkit-mask-image:
-    linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%),
-    radial-gradient(circle 2px at 50% 0, transparent 98%, #000 100%);
-  mask-image:
-    linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  top: -10px;
+  width: 56px;
+  height: 24px;
+  /* 和纸胶带：半透明 + 竖纹纹理 */
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    ),
+    rgba(242, 196, 206, 0.7);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
   z-index: 2;
 }
 
-/* 每张图不同角度 + 胶带角度微调 */
-.image-gallery--tape img:nth-child(odd) {
-  transform: rotate(-2deg);
+.image-gallery--tape img::before {
+  left: 8px;
+  transform: rotate(-8deg);
 }
 
-.image-gallery--tape img:nth-child(odd)::before {
-  transform: translateX(-50%) rotate(-6deg);
+.image-gallery--tape img::after {
+  right: 8px;
+  transform: rotate(6deg);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    ),
+    rgba(212, 165, 201, 0.7);
+}
+
+/* 交错胶带配色：偶数张换色 */
+.image-gallery--tape img:nth-child(even)::before {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    ),
+    rgba(255, 220, 130, 0.7);
+}
+
+.image-gallery--tape img:nth-child(even)::after {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    ),
+    rgba(170, 210, 200, 0.7);
+}
+
+/* 第三种配色：3n 张 */
+.image-gallery--tape img:nth-child(3n)::before {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    ),
+    rgba(180, 200, 240, 0.7);
+}
+
+.image-gallery--tape img:nth-child(3n)::after {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    ),
+    rgba(240, 180, 200, 0.7);
+}
+
+/* 不同高度悬挂：奇偶交错偏移 */
+.image-gallery--tape img:nth-child(odd) {
+  transform: rotate(-2deg) translateY(8px);
 }
 
 .image-gallery--tape img:nth-child(even) {
-  transform: rotate(3deg);
-}
-
-.image-gallery--tape img:nth-child(even)::before {
-  transform: translateX(-50%) rotate(5deg);
+  transform: rotate(2deg) translateY(-6px);
 }
 
 .image-gallery--tape img:nth-child(3n) {
-  transform: rotate(-4deg) translateY(6px);
+  transform: rotate(-1deg) translateY(16px);
 }
 
-.image-gallery--tape img:nth-child(3n)::before {
-  transform: translateX(-50%) rotate(8deg);
-}
-
+/* hover：胶带绷直，图片轻微浮起 */
 .image-gallery--tape img:hover {
-  transform: rotate(0deg) scale(1.06) translateY(-6px);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  transform: rotate(0deg) scale(1.05) translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
   z-index: 5;
 }
 
+.image-gallery--tape img:hover::before,
+.image-gallery--tape img:hover::after {
+  transform: rotate(0deg);
+}
+
 .image-gallery--tape img:hover::before {
-  transform: translateX(-50%) rotate(0deg);
-  background: rgba(255, 220, 120, 0.7);
+  left: 12px;
+}
+
+.image-gallery--tape img:hover::after {
+  right: 12px;
 }
 
 @media (max-width: 768px) {
   .image-gallery--tape {
     gap: 24px 20px;
-    padding: 28px 12px;
+    padding: 24px 14px;
   }
   .image-gallery--tape img {
     width: 150px;
     height: 110px;
-    padding: 6px;
+  }
+  .image-gallery--tape img::before,
+  .image-gallery--tape img::after {
+    width: 40px;
+    height: 18px;
+    top: -7px;
   }
   .image-gallery--tape img::before {
-    width: 56px;
-    height: 20px;
-    top: -8px;
+    left: 6px;
+  }
+  .image-gallery--tape img::after {
+    right: 6px;
   }
 }
 
@@ -1053,79 +1130,264 @@
   }
 }
 
-/* ============== @editorial — 杂志跨页 ============== */
-/* 图片左右交替错落，像杂志排版。克制：仅位置错落，无 3D 与大幅动效 */
+/* ============== @masonry — 瀑布流 ============== */
+/* CSS columns 实现的瀑布流，图片保持原始宽高比错落排布。实用：适合大量图片 */
 
-.image-gallery--editorial {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px 32px;
-  padding: 24px 16px;
+.image-gallery--masonry {
+  display: block;
+  column-count: 3;
+  column-gap: 16px;
+  padding: 16px;
   margin: 16px 0;
-  background: transparent;
-  border: none;
-  border-radius: 0;
+  background: rgba(212, 165, 201, 0.04);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
 }
 
-.image-gallery--editorial img {
+.image-gallery--masonry img {
+  display: block;
   width: 100%;
-  height: 280px;
-  object-fit: cover;
-  border-radius: 2px;
-  transition: filter 0.5s ease, transform 0.5s ease;
+  height: auto;
+  margin: 0 0 16px;
+  border-radius: 6px;
+  break-inside: avoid;
+  transition: transform 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease;
   cursor: pointer;
-  filter: contrast(1.03);
+  filter: saturate(0.96);
 }
 
-/* 奇数张靠左，偶数张靠右，形成跨页错落感 */
-.image-gallery--editorial img:nth-child(odd) {
-  justify-self: start;
-  transform: translateY(0);
+.image-gallery--masonry img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 28px rgba(212, 165, 201, 0.25);
+  filter: saturate(1.08);
+  z-index: 2;
+  position: relative;
 }
 
-.image-gallery--editorial img:nth-child(even) {
-  justify-self: end;
-  transform: translateY(32px);
+@media (max-width: 900px) {
+  .image-gallery--masonry {
+    column-count: 2;
+  }
 }
 
-/* 第 3 张起交替偏移量加大，增强节奏 */
-.image-gallery--editorial img:nth-child(3n) {
-  height: 340px;
+@media (max-width: 540px) {
+  .image-gallery--masonry {
+    column-count: 1;
+    column-gap: 0;
+  }
+  .image-gallery--masonry img {
+    margin-bottom: 12px;
+  }
 }
 
-.image-gallery--editorial img:nth-child(4n) {
-  height: 240px;
-  transform: translateY(-16px);
+/* ============== @stamp — 邮票 ============== */
+/* 图片加白色齿孔边框，模拟邮票造型。克制：静态展示，hover 仅轻微浮起 */
+
+.image-gallery--stamp {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 28px 20px;
+  margin: 16px 0;
+  background: linear-gradient(135deg, rgba(250, 250, 250, 0.8), rgba(240, 240, 240, 0.5));
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
 }
 
-/* hover：仅微调对比与轻微上浮，克制 */
-.image-gallery--editorial img:hover {
-  filter: contrast(1.08) saturate(1.05);
-  transform: translateY(-4px);
+.image-gallery--stamp img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  padding: 16px;
+  background: #fff;
+  /* 齿孔效果：用 radial-gradient 模拟边缘圆形缺口 */
+  --hole: radial-gradient(circle 5px at center, transparent 98%, #fff 100%);
+  -webkit-mask-image:
+    /* 四角齿孔 */
+    radial-gradient(circle 5px at 5px 5px, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at calc(100% - 5px) 5px, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 5px calc(100% - 5px), transparent 98%, #000 100%),
+    radial-gradient(circle 5px at calc(100% - 5px) calc(100% - 5px), transparent 98%, #000 100%),
+    /* 四边齿孔 */
+    radial-gradient(circle 5px at 33% 0, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 66% 0, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 33% 100%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 66% 100%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 0 33%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 0 66%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 100% 33%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 100% 66%, transparent 98%, #000 100%),
+    /* 主体填充 */
+    linear-gradient(#000, #000);
+  -webkit-mask-composite: source-over;
+  mask-image:
+    radial-gradient(circle 5px at 5px 5px, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at calc(100% - 5px) 5px, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 5px calc(100% - 5px), transparent 98%, #000 100%),
+    radial-gradient(circle 5px at calc(100% - 5px) calc(100% - 5px), transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 33% 0, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 66% 0, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 33% 100%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 66% 100%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 0 33%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 0 66%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 100% 33%, transparent 98%, #000 100%),
+    radial-gradient(circle 5px at 100% 66%, transparent 98%, #000 100%),
+    linear-gradient(#000, #000);
+  mask-composite: add;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  cursor: pointer;
+  filter: saturate(0.95);
 }
 
-/* 保持偶数张的偏移基线 */
-.image-gallery--editorial img:nth-child(even):hover {
-  transform: translateY(28px);
+/* 邮戳装饰：用伪元素叠加圆形邮戳（克制，不遮挡图片） */
+.image-gallery--stamp img::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(180, 60, 60, 0.6);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 40%, rgba(180, 60, 60, 0.15) 70%);
+  z-index: 3;
+  pointer-events: none;
 }
 
-.image-gallery--editorial img:nth-child(4n):hover {
-  transform: translateY(-20px);
+.image-gallery--stamp img:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  filter: saturate(1.05);
 }
 
 @media (max-width: 768px) {
-  .image-gallery--editorial {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 16px 8px;
+  .image-gallery--stamp img {
+    width: 140px;
+    height: 140px;
+    padding: 12px;
   }
-  .image-gallery--editorial img {
-    height: 200px;
-    justify-self: stretch !important;
-    transform: none !important;
+}
+
+/* ============== @slider — 幻灯片 ============== */
+/* 横向 scroll-snap 轮播，一次主要看一张，可滑动浏览。实用：故事/步骤展示 */
+
+.image-gallery--slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 0;
+  padding: 0;
+  margin: 16px 0;
+  background: #111;
+  border-radius: 12px;
+  border: 1px solid #222;
+  scrollbar-width: none;
+}
+
+.image-gallery--slider::-webkit-scrollbar {
+  display: none;
+}
+
+.image-gallery--slider img {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 380px;
+  object-fit: cover;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  border-radius: 0;
+  transition: filter 0.4s ease;
+  cursor: grab;
+  filter: brightness(0.92);
+}
+
+.image-gallery--slider img:active {
+  cursor: grabbing;
+}
+
+.image-gallery--slider img:hover {
+  filter: brightness(1);
+}
+
+/* 滚动提示：左右渐变遮罩，暗示可滑动 */
+.image-gallery--slider {
+  position: relative;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 2%, #000 98%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 2%, #000 98%, transparent 100%);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--slider img {
+    height: 240px;
   }
-  .image-gallery--editorial img:nth-child(3n),
-  .image-gallery--editorial img:nth-child(4n) {
-    height: 200px;
+}
+
+/* ============== @ticket — 票根 ============== */
+/* 图片裁切为票根造型：左侧主图 + 右侧序号区，中间撕边虚线。克制：静态 */
+
+.image-gallery--ticket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 20px;
+  margin: 16px 0;
+  background: linear-gradient(180deg, rgba(250, 250, 250, 0.6), rgba(240, 240, 240, 0.3));
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.image-gallery--ticket img {
+  width: 100%;
+  max-width: 560px;
+  height: 220px;
+  object-fit: cover;
+  /* 票根造型：左圆角、右半圆缺口（撕票口） */
+  border-radius: 8px 0 0 8px;
+  /* 右侧用 mask 切出半圆缺口，模拟票根撕边 */
+  -webkit-mask-image:
+    radial-gradient(circle 14px at 100% 50%, transparent 98%, #000 100%),
+    linear-gradient(#000, #000);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(circle 14px at 100% 50%, transparent 98%, #000 100%),
+    linear-gradient(#000, #000);
+  mask-composite: intersect;
+  /* 撕边虚线：用 border-right + 虚线模拟 */
+  box-shadow:
+    inset -2px 0 0 0 #fff,
+    inset -3px 0 0 0 var(--color-border),
+    0 6px 18px rgba(0, 0, 0, 0.15);
+  transition: transform 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease;
+  cursor: pointer;
+  filter: contrast(1.02);
+}
+
+/* 交错配色：偶数张换成暖色调 */
+.image-gallery--ticket img:nth-child(even) {
+  filter: contrast(1.02) sepia(0.15);
+}
+
+.image-gallery--ticket img:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow:
+    inset -2px 0 0 0 #fff,
+    inset -3px 0 0 0 var(--color-accent-purple),
+    0 12px 28px rgba(0, 0, 0, 0.22);
+  filter: contrast(1.05);
+}
+
+.image-gallery--ticket img:nth-child(even):hover {
+  filter: contrast(1.05) sepia(0.1);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--ticket img {
+    height: 160px;
+    max-width: 100%;
   }
 }
