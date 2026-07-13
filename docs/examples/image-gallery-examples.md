@@ -1,6 +1,6 @@
 # 图片画廊与懒加载示例
 
-本页面展示图片的懒加载、画廊模式和错误降级功能。
+本页面展示图片的懒加载、画廊模式（含多种布局样式）、图片灯箱和错误降级功能。
 
 ---
 
@@ -46,20 +46,134 @@
 
 ---
 
-## 2.5 画廊布局样式
+## 3. 画廊布局样式
 
-除了默认的网格布局，还可以通过 `@style` 标记指定更自由的画廊渲染样式，例如扑克牌堆、胶片条、拍立得墙、堆叠覆盖、马赛克等。
+除了默认的网格布局，还可以通过 `@style` 标记指定更自由的画廊渲染样式。
 
-详见 [画廊布局样式](gallery-layouts.md)。
+### 语法
+
+在连续图片之前，用单独一行 `@样式名` 指定该组图片的渲染样式：
+
+```markdown
+@cardstack
+
+![图1](url1)
+![图2](url2)
+![图3](url3)
+```
+
+- `@style` 必须独占一行（单独成段）
+- 标记只作用于紧跟其后的一组连续图片
+- 不写 `@style` 时，连续 2 张及以上图片自动使用默认网格布局
+- 未识别的 `@xxx` 会被当作普通文本输出
+
+### 支持的样式一览
+
+| 样式 | 说明 |
+|------|------|
+| `@grid` | 默认网格，自适应列数（与不写标记相同） |
+| `@cardstack` | 扑克牌堆：中间主图，左右错层露一角，边缘模糊 |
+| `@filmstrip` | 胶片条：横向滚动，上下带胶片穿孔装饰 |
+| `@polaroid` | 拍立得墙：白边相框，轻微旋转错落排布 |
+| `@stack` | 堆叠覆盖：图片相互覆盖，hover 时展开扇形 |
+| `@mosaic` | 马赛克：首张大图占两格，其余小图网格排布 |
+
+### 3.1 `@grid` — 默认网格
+
+显式声明网格布局，与不写标记效果相同。
+
+@grid
+
+![grid-1](https://picsum.photos/400/300?grid1)
+![grid-2](https://picsum.photos/400/300?grid2)
+![grid-3](https://picsum.photos/400/300?grid3)
+![grid-4](https://picsum.photos/400/300?grid4)
+
+### 3.2 `@cardstack` — 扑克牌堆
+
+中间一张主图正中显示，左右各错层露出一张图的一角（5 度斜边），边缘模糊。hover 时整体轻微抬起。
+
+@cardstack
+
+![card-1](https://picsum.photos/400/500?card1)
+![card-2](https://picsum.photos/400/500?card2)
+![card-3](https://picsum.photos/400/500?card3)
+
+> 建议：cardstack 最适合 3 张图，第 4 张及之后会被隐藏。
+
+### 3.3 `@filmstrip` — 胶片条
+
+模拟老式胶卷的横向滚动条，上下带白色穿孔装饰，图片横向排列可滚动浏览。
+
+@filmstrip
+
+![film-1](https://picsum.photos/400/300?film1)
+![film-2](https://picsum.photos/400/300?film2)
+![film-3](https://picsum.photos/400/300?film3)
+![film-4](https://picsum.photos/400/300?film4)
+![film-5](https://picsum.photos/400/300?film5)
+
+### 3.4 `@polaroid` — 拍立得墙
+
+白色相框 + 底部留白，每张图片轻微旋转，像随手贴在墙上的拍立得照片。hover 时拉直放大。
+
+@polaroid
+
+![polaroid-1](https://picsum.photos/300/300?pol1)
+![polaroid-2](https://picsum.photos/300/300?pol2)
+![polaroid-3](https://picsum.photos/300/300?pol3)
+![polaroid-4](https://picsum.photos/300/300?pol4)
+
+### 3.5 `@stack` — 堆叠覆盖
+
+多张图片相互覆盖堆叠，仅露出最顶层的完整图。hover 整个画廊时，图片会展开为扇形。
+
+@stack
+
+![stack-1](https://picsum.photos/400/300?stk1)
+![stack-2](https://picsum.photos/400/300?stk2)
+![stack-3](https://picsum.photos/400/300?stk3)
+![stack-4](https://picsum.photos/400/300?stk4)
+
+### 3.6 `@mosaic` — 马赛克
+
+首张图占据左侧大格（跨两行），其余小图填在右侧网格中。适合「主图 + 配图」的展示场景。
+
+@mosaic
+
+![mosaic-main](https://picsum.photos/600/400?mosmain)
+![mosaic-2](https://picsum.photos/300/200?mos2)
+![mosaic-3](https://picsum.photos/300/200?mos3)
+![mosaic-4](https://picsum.photos/300/200?mos4)
+![mosaic-5](https://picsum.photos/300/200?mos5)
+
+### 自定义样式
+
+所有画廊样式定义在 [iris/css/galleries.css](../../iris/css/galleries.css) 中。如需新增样式：
+
+1. 在 `galleries.css` 中添加 `.image-gallery--{新样式名}` 选择器
+2. 在 [iris/js/markdown.js](../../iris/js/markdown.js) 的 `knownStyles` 数组里加入新样式名
 
 ---
 
-## 3. 图片错误降级
+## 4. 图片灯箱
+
+点击任意图片可打开全屏灯箱，支持：
+
+- 滚轮缩放
+- 左右键翻页（自动收集当前文档所有图片）
+- Esc 关闭
+
+点击上面的任意图片试试看。
+
+---
+
+## 5. 图片错误降级
 
 当图片加载失败时，会显示一个友好的占位符，而不是破碎的图片图标。
 
 占位符会显示：
-- 📷 图标
+- 🖼️ 图标
 - 图片的 alt 文本（如果有）
 - 文件名（从 URL 中提取）
 
@@ -71,7 +185,7 @@
 
 ---
 
-## 4. 语法说明
+## 6. 语法说明
 
 ### 基本图片语法
 
@@ -84,10 +198,6 @@
 ```markdown
 ![图片描述](图片URL "图片标题")
 ```
-
----
-
-## 5. 高级用法
 
 ### 使用占位图服务
 
@@ -105,43 +215,19 @@
 
 ---
 
-## 6. 样式定制
-
-画廊模式的样式：
-- 响应式网格布局
-- 悬停放大效果
-- 圆角边框
-- 淡紫色背景
-
-错误降级样式：
-- 虚线边框
-- 居中图标和文字
-- 清晰的错误信息
-
----
-
-## 7. 性能优化
-
-### 懒加载的好处
-
-1. **减少初始加载时间**：只加载视口内的图片
-2. **节省带宽**：用户可能不会滚动到所有内容
-3. **提升用户体验**：页面加载更快
-
-### 推荐做法
-
-1. 使用适当的图片尺寸
-2. 使用压缩后的图片
-3. 使用 CDN 加速
-4. 添加有意义的 alt 文本
-
----
-
-## 8. 常见问题
+## 7. 常见问题
 
 ### Q: 为什么我的图片没有进入画廊？
 
 **A:** 确保图片之间没有其他内容（如文字、标题等）。画廊只会识别连续的纯图片段落。
+
+### Q: `@style` 标记不生效？
+
+**A:** 检查以下几点：
+- `@style` 必须独占一行（前后空行分隔）
+- 样式名必须是小写字母，支持连字符（如 `@cardstack`、`@filmstrip`）
+- 样式名必须在已注册列表中（见上方表格）
+- 标记与图片之间不能有其他内容
 
 ### Q: 图片加载失败怎么办？
 
@@ -153,13 +239,14 @@
 
 ---
 
-## 9. 技术细节
+## 8. 技术细节
 
 ### 使用的技术
 
 - **原生 lazy loading**：使用 HTML5 `loading="lazy"` 属性
-- **CSS Grid**：画廊布局
-- **DOM 操作**：自动识别连续图片并分组
+- **CSS Grid / Flex / 绝对定位**：多种画廊布局
+- **clip-path + mask-image**：cardstack 的斜边裁切与边缘模糊
+- **DOM 操作**：自动识别连续图片并分组，消费 `@style` 标记
 - **错误处理**：onerror 事件实现降级
 
 ### 浏览器支持
@@ -169,8 +256,8 @@
 - Safari (partial)
 - Edge 79+
 
-现代浏览器都支持原生懒加载。
+现代浏览器都支持原生懒加载。cardstack 的 mask-image 在旧版 Safari 上可能降级为无模糊。
 
 ---
 
-**最后更新**：2026-05-22
+**最后更新**：2026-07-13
