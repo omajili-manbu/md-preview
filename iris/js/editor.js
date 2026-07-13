@@ -186,7 +186,7 @@
     cellDiv.innerHTML = `
       <div class="cell-header">
         <div class="cell-header-left">
-          <span class="cell-drag-handle" title="拖拽排序">⋮⋮</span>
+          <span class="cell-drag-handle" title="拖拽排序"><svg class="ico ico-sm"><use href="#i-grip"/></svg></span>
           <span class="cell-number">
             <span class="cell-status-dot"></span>
             Cell [<span class="cell-num">${id}</span>]
@@ -195,12 +195,12 @@
           <span class="cell-meta cell-lines">0 行</span>
         </div>
         <div class="cell-header-right">
-          <button class="cell-action-btn cell-run-btn" data-cell-id="${id}" title="运行 (Ctrl+Enter)">▶</button>
-          <button class="cell-action-btn cell-collapse-btn" data-cell-id="${id}" title="折叠/展开">▸</button>
-          <button class="cell-action-btn cell-up-btn" data-cell-id="${id}" title="上移">↑</button>
-          <button class="cell-action-btn cell-down-btn" data-cell-id="${id}" title="下移">↓</button>
-          <button class="cell-action-btn cell-duplicate-btn" data-cell-id="${id}" title="复制">⧉</button>
-          <button class="cell-action-btn cell-delete-btn" data-cell-id="${id}" title="删除">✕</button>
+          <button class="cell-action-btn cell-run-btn" data-cell-id="${id}" title="运行 (Ctrl+Enter)"><svg class="ico ico-sm"><use href="#i-play"/></svg></button>
+          <button class="cell-action-btn cell-collapse-btn" data-cell-id="${id}" title="折叠/展开"><svg class="ico ico-sm"><use href="#i-chevron-right"/></svg></button>
+          <button class="cell-action-btn cell-up-btn" data-cell-id="${id}" title="上移"><svg class="ico ico-sm"><use href="#i-arrow-up"/></svg></button>
+          <button class="cell-action-btn cell-down-btn" data-cell-id="${id}" title="下移"><svg class="ico ico-sm"><use href="#i-arrow-down"/></svg></button>
+          <button class="cell-action-btn cell-duplicate-btn" data-cell-id="${id}" title="复制"><svg class="ico ico-sm"><use href="#i-copy"/></svg></button>
+          <button class="cell-action-btn cell-delete-btn" data-cell-id="${id}" title="删除"><svg class="ico ico-sm"><use href="#i-x"/></svg></button>
         </div>
       </div>
       <div class="cell-editor-wrap">
@@ -401,20 +401,22 @@
 
   function toggleCellCollapse(cellData) {
     cellData.div.classList.toggle('cell-collapsed');
-    cellData.collapseBtn.textContent = cellData.div.classList.contains('cell-collapsed') ? '▾' : '▸';
+    cellData.collapseBtn.innerHTML = cellData.div.classList.contains('cell-collapsed')
+      ? '<svg class="ico ico-sm"><use href="#i-chevron-down"/></svg>'
+      : '<svg class="ico ico-sm"><use href="#i-chevron-right"/></svg>';
   }
 
   function collapseAllCells() {
     cells.forEach(c => {
       c.div.classList.add('cell-collapsed');
-      if (c.collapseBtn) c.collapseBtn.textContent = '▾';
+      if (c.collapseBtn) c.collapseBtn.innerHTML = '<svg class="ico ico-sm"><use href="#i-chevron-down"/></svg>';
     });
   }
 
   function expandAllCells() {
     cells.forEach(c => {
       c.div.classList.remove('cell-collapsed');
-      if (c.collapseBtn) c.collapseBtn.textContent = '▸';
+      if (c.collapseBtn) c.collapseBtn.innerHTML = '<svg class="ico ico-sm"><use href="#i-chevron-right"/></svg>';
     });
   }
 
@@ -561,7 +563,14 @@
   // ============== Markdown 渲染 ==============
 
   function processGitHubAlerts(text) {
-    const alertTypes = { NOTE: 'ℹ️', IMPORTANT: '💡', WARNING: '⚠️', TIP: '💡', CAUTION: '⚠️' };
+    const svgWrap = (path) => `<svg class="alert-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+    const alertTypes = {
+      NOTE: svgWrap('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'),
+      IMPORTANT: svgWrap('<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>'),
+      WARNING: svgWrap('<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'),
+      TIP: svgWrap('<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3v1h6v-1c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/>'),
+      CAUTION: svgWrap('<circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/>')
+    };
     const lines = text.split('\n');
     let result = '';
     let i = 0;
@@ -1981,7 +1990,9 @@
   themeToggleBtn?.addEventListener('click', () => {
     document.body.classList.toggle('editor-dark-mode');
     const isDark = document.body.classList.contains('editor-dark-mode');
-    themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+    themeToggleBtn.innerHTML = isDark
+      ? '<svg class="ico"><use href="#i-sun"/></svg>'
+      : '<svg class="ico"><use href="#i-moon"/></svg>';
     try { localStorage.setItem('mdnb_theme', isDark ? 'dark' : 'light'); } catch (e) {}
   });
 
@@ -1990,7 +2001,7 @@
       const t = localStorage.getItem('mdnb_theme');
       if (t === 'dark') {
         document.body.classList.add('editor-dark-mode');
-        if (themeToggleBtn) themeToggleBtn.textContent = '☀️';
+        if (themeToggleBtn) themeToggleBtn.innerHTML = '<svg class="ico"><use href="#i-sun"/></svg>';
       }
     } catch (e) {}
   }

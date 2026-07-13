@@ -1,5 +1,35 @@
 /* ============== 编辑器页面全局 ============== */
 
+/* SVG 图标通用样式 */
+.ico {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.ico-sm { width: 15px; height: 15px; }
+.ico-xs { width: 11px; height: 11px; }
+
+/* 颜色色点（替代 emoji 色块） */
+.color-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Alert 内联 SVG 图标 */
+.alert-svg {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
 .editor-body {
   margin: 0;
   padding: 0;
@@ -69,15 +99,28 @@ body.editor-mode .floating-menu {
 }
 
 .toolbar-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 13px 5px 10px;
   color: var(--color-accent-purple);
-  text-decoration: none;
-  font-size: 14px;
+  background: rgba(212, 165, 201, 0.1);
+  border: 1px solid rgba(212, 165, 201, 0.35);
+  border-radius: 7px;
+  font-size: 13px;
   font-weight: 500;
-  transition: color 0.2s;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s, color 0.2s;
 }
 
 .toolbar-home:hover {
+  background: rgba(212, 165, 201, 0.2);
+  border-color: var(--color-accent-purple);
   color: var(--color-accent-purple-deep);
+}
+
+.toolbar-home:active {
+  transform: scale(0.97);
 }
 
 .toolbar-divider {
@@ -116,6 +159,9 @@ body.editor-mode .floating-menu {
 
 /* 工具栏按钮 */
 .toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 6px 12px;
   font-size: 13px;
   font-family: inherit;
@@ -146,10 +192,16 @@ body.editor-mode .floating-menu {
   background: var(--color-surface);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .toolbar-icon-btn:hover {
+  background: rgba(212, 165, 201, 0.12);
+  color: var(--color-accent-purple);
+  border-color: var(--color-accent-purple);
+}
+
+.toolbar-icon-btn#clearAllBtn:hover {
   background: rgba(231, 76, 60, 0.08);
   color: #e74c3c;
   border-color: #e74c3c;
@@ -157,6 +209,9 @@ body.editor-mode .floating-menu {
 
 /* 运行按钮 */
 .toolbar-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 6px 14px;
   font-size: 13px;
   font-family: inherit;
@@ -236,7 +291,7 @@ body.editor-mode .floating-menu {
 .dropdown-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   width: 100%;
   padding: 7px 14px;
   font-size: 13px;
@@ -254,6 +309,7 @@ body.editor-mode .floating-menu {
 }
 
 .dropdown-item kbd {
+  margin-left: auto;
   padding: 1px 6px;
   font-size: 10px;
   font-family: 'JetBrains Mono', monospace;
@@ -549,6 +605,9 @@ body.editor-mode .floating-menu {
 }
 
 .context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 7px 14px;
   cursor: pointer;
   color: var(--color-text);
@@ -913,10 +972,11 @@ body.editor-mode .floating-menu {
 /* ============== Cell 拖拽 ============== */
 
 .cell-drag-handle {
+  display: flex;
+  align-items: center;
   cursor: grab;
   padding: 0 4px;
   color: var(--color-text-muted);
-  font-size: 12px;
   user-select: none;
 }
 
