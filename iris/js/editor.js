@@ -94,6 +94,7 @@
     { trigger: '@', label: '@[googlemaps](URL)', desc: '嵌入·Google Maps', insert: '@[googlemaps](https://www.google.com/maps/place/Beijing)', replaceLength: 1 },
     { trigger: '@', label: '@[openstreetmap](URL)', desc: '嵌入·OpenStreetMap', insert: '@[openstreetmap](https://www.openstreetmap.org/?mlat=39.9&mlon=116.4#map=12)', replaceLength: 1 },
     { trigger: '@', label: '@[googledocs](URL)', desc: '嵌入·Google Docs', insert: '@[googledocs](https://docs.google.com/document/d/abc/edit)', replaceLength: 1 },
+    { trigger: '@', label: '@[pkt](name)', desc: '嵌入·PT 拓扑', insert: '@[pkt](example)', replaceLength: 1 },
     // ``` 代码块语言
     { trigger: '```', label: '```mermaid', desc: 'Mermaid 流程图', insert: '```mermaid\nflowchart TD\n    A --> B\n```', replaceLength: 3 },
     { trigger: '```', label: '```mermaid 时序图', desc: 'sequenceDiagram', insert: '```mermaid\nsequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi\n```', replaceLength: 3 },

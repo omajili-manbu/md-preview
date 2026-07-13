@@ -35,3 +35,8 @@ desktop.ini
 # 缓存
 .cache/
 .eslintcache
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo

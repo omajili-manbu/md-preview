@@ -83,6 +83,19 @@
               }, 10);
               
               processedContent = processedContent.replace(placeholder, container);
+            } else if (service === 'pkt') {
+              // Packet Tracer 拓扑渲染
+              const pktId = 'pkt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+              const container = `<div id="${pktId}" class="pkt-container"></div>`;
+              
+              setTimeout(() => {
+                const el = document.getElementById(pktId);
+                if (el && window.MarkdownPreview.pkt) {
+                  window.MarkdownPreview.pkt.loadAndRender(el, url);
+                }
+              }, 50);
+              
+              processedContent = processedContent.replace(placeholder, container);
             } else if (service === 'twitter' || service === 'x') {
               const twitterCode = renderTwitterEmbed(service, url, fullMatch);
               processedContent = processedContent.replace(placeholder, twitterCode);
