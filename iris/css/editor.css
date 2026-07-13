@@ -10,6 +10,42 @@
   padding-bottom: 32px;
 }
 
+/* 编辑器模式：覆盖在主站点之上的全屏层 */
+.editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-overlay .editor-toolbar {
+  flex: 0 0 auto;
+}
+
+.editor-overlay .editor-main {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.editor-overlay .editor-statusbar {
+  position: static;
+  flex: 0 0 auto;
+}
+
+/* 编辑器模式时隐藏主站内容 */
+body.editor-mode .app-container,
+body.editor-mode .progress-bar,
+body.editor-mode .floating-menu {
+  display: none !important;
+}
+
 /* ============== 顶部工具栏 ============== */
 
 .editor-toolbar {

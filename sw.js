@@ -1,12 +1,10 @@
-const CACHE_NAME = 'md-preview-v6.4';
-const RUNTIME_CACHE = 'md-preview-runtime-v5';
+const CACHE_NAME = 'md-preview-v6.5';
+const RUNTIME_CACHE = 'md-preview-runtime-v6';
 
 // 预缓存：首屏关键静态资源
 const PRECACHE_URLS = [
   './',
   './index.html',
-  './editor/',
-  './editor/index.html',
   './manifest.json',
   './iris/styles.css',
   './iris/css/base.css',
@@ -81,7 +79,7 @@ async function precache() {
 }
 
 self.addEventListener('install', event => {
-  console.log('[SW] Installing v6.4...');
+  console.log('[SW] Installing v6.5...');
   event.waitUntil(
     precache()
       .then(() => self.skipWaiting())
@@ -93,7 +91,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating v6.4...');
+  console.log('[SW] Activating v6.5...');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(

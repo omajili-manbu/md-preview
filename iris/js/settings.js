@@ -324,8 +324,10 @@
     downloadMdBtn?.addEventListener('click', () => downloadCurrentFile());
     downloadPdfBtn?.addEventListener('click', exportPdf);
     openEditorBtn?.addEventListener('click', () => {
-      window.open('editor/', '_blank');
       closeSettingsPanel();
+      if (window.MarkdownPreview?.enterEditorMode) {
+        window.MarkdownPreview.enterEditorMode();
+      }
     });
   }
 

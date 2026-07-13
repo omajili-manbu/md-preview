@@ -1,6 +1,52 @@
 (function() {
   'use strict';
 
+  window.MarkdownPreview = window.MarkdownPreview || {};
+
+  // ============== 编辑器模式切换 ==============
+  const editorOverlay = document.getElementById('editorOverlay');
+  let editorInitialized = false;
+
+  function enterEditorMode() {
+    if (!editorOverlay) return;
+    editorOverlay.style.display = 'block';
+    document.body.classList.add('editor-mode');
+    // 更新 URL（保留 hash）
+    const url = new URL(window.location.href);
+    url.searchParams.set('mode', 'editor');
+    window.history.replaceState({}, '', url.toString());
+    if (!editorInitialized) {
+      editorInitialized = true;
+      initEditor();
+    }
+  }
+
+  function exitEditorMode() {
+    if (!editorOverlay) return;
+    editorOverlay.style.display = 'none';
+    document.body.classList.remove('editor-mode');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('mode');
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  // 暴露给外部调用
+  window.MarkdownPreview.enterEditorMode = enterEditorMode;
+  window.MarkdownPreview.exitEditorMode = exitEditorMode;
+
+  // 根据 URL 参数自动进入编辑器模式
+  function checkEditorMode() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'editor') {
+      enterEditorMode();
+    }
+  }
+
+  // 退出按钮
+  document.getElementById('exitEditorBtn')?.addEventListener('click', exitEditorMode);
+
+  function initEditor() {
+
   // ============== 状态 ==============
   let cells = [];
   let cellCounter = 0;
@@ -982,7 +1028,7 @@
     const html = cell.output.innerHTML;
     if (!html.trim()) { alert('请先运行当前 Cell'); return; }
     const idx = cells.findIndex(c => c.id === activeCellId) + 1;
-    const fullHtml = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Cell ${idx}</title><link rel="stylesheet" href="../iris/styles.css"><link rel="stylesheet" href="../iris/css/galleries.css"><link rel="stylesheet" href="../iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="../iris/vendor/katex/katex.min.css"></head><body><article class="markdown-body" style="max-width:800px;margin:40px auto;padding:0 20px;">${html}</article></body></html>`;
+    const fullHtml = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Cell ${idx}</title><link rel="stylesheet" href="iris/styles.css"><link rel="stylesheet" href="iris/css/galleries.css"><link rel="stylesheet" href="iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="iris/vendor/katex/katex.min.css"></head><body><article class="markdown-body" style="max-width:800px;margin:40px auto;padding:0 20px;">${html}</article></body></html>`;
     downloadBlob(new Blob([fullHtml], { type: 'text/html;charset=utf-8' }), `cell-${idx}.html`);
   }
 
@@ -993,7 +1039,7 @@
     if (!html.trim()) { alert('请先运行当前 Cell'); return; }
     const idx = cells.findIndex(c => c.id === activeCellId) + 1;
     const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cell ${idx}</title><link rel="stylesheet" href="../iris/styles.css"><link rel="stylesheet" href="../iris/css/galleries.css"><link rel="stylesheet" href="../iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="../iris/vendor/katex/katex.min.css"><style>@media print{body{margin:0;}}</style></head><body><article class="markdown-body" style="max-width:800px;margin:20px auto;padding:0 20px;">${html}</article></body></html>`);
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cell ${idx}</title><link rel="stylesheet" href="iris/styles.css"><link rel="stylesheet" href="iris/css/galleries.css"><link rel="stylesheet" href="iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="iris/vendor/katex/katex.min.css"><style>@media print{body{margin:0;}}</style></head><body><article class="markdown-body" style="max-width:800px;margin:20px auto;padding:0 20px;">${html}</article></body></html>`);
     win.document.close();
     setTimeout(() => { win.print(); }, 500);
   }
@@ -1060,5 +1106,14 @@
   // ============== 初始化 ==============
 
   createCell();
+
+  } // end initEditor()
+
+  // 页面加载后检查是否需要进入编辑器模式
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkEditorMode);
+  } else {
+    checkEditorMode();
+  }
 
 })();
