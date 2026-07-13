@@ -75,6 +75,11 @@
     "preview": "浏览器原生 HTML 元素与 Web API 示例 本页面展示丰富的浏览器原生功能，零 JS、零后端即可使用！ --- 一、语义与排版 1.1 原生模态对话框 <dialog id=\"dialogDemo\"> <h3>欢迎！</h3> <p>这是一个纯 HTML 原生模态对话框。</p> <button onclick=\"document.getElementById('dialogDemo')."
   },
   {
+    "path": "docs/examples/pkt-examples.md",
+    "title": "Packet Tracer 拓扑渲染示例",
+    "preview": "Packet Tracer 拓扑渲染 本站点支持在 Markdown 文档中嵌入 Cisco Packet Tracer 拓扑图。将 .pkt 文件放入 iris/data/pkt/raw/ 目录，构建脚本会自动解密、解压、解析并生成 JSON，前端用 Cytoscape.js 渲染为交互式拓扑图。 基本用法 使用 @pkt 嵌入语法引用预处理好的拓扑 JSON： 渲染效果如下： @pkt 交互功"
+  },
+  {
     "path": "docs/examples/plantuml-examples.md",
     "title": "PlantUML 图表示例",
     "preview": "PlantUML 图表示例 本文档展示了 PlantUML 支持的各类图表及其渲染效果。 --- 1. 类图 (Class Diagram) 基础类图 渲染效果： --- 2. 顺序图 (Sequence Diagram) 基础顺序图 渲染效果： 带循环的顺序图 渲染效果： --- 3. 用例图 (Use Case Diagram) 电商系统用例图 渲染效果： --- 4. 活动图 (Activi"
