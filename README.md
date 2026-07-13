@@ -41,6 +41,20 @@
 - ✏️ **编辑此页** — 悬浮球快速跳转 GitHub 编辑页面
 - 📱 **响应式设计** — 完美适配桌面端和移动端
 
+### 内置编辑器
+
+- 📝 **类 Jupyter Cell 编辑器** — 全屏覆盖层，按 Cell 编写并即时渲染 Markdown
+- ⚡ **运行与预览** — 单 Cell 运行 / 运行全部 / 运行至下方，渲染管线与文档站一致
+- 💾 **自动保存** — localStorage 1.5s 防抖保存，刷新不丢内容
+- 🔍 **搜索替换** — 跨所有 Cell 查找、替换、跳转
+- 🧩 **11 类自动补全** — `@` / ` ``` ` / `#` / `$$` / `![` 等触发字符即弹补全
+- 📋 **7 大工具栏菜单** — Markdown / HTML / 私有语法 / 工具渲染 / 插入 / 下载 / 导入
+- 🖱️ **2 列右键菜单** — 17 项 Cell 操作，视口边界自适应定位
+- 📤 **导入导出** — `.md` / `.html` / `.pdf` / `.mdnb` 笔记本格式
+- 🎨 **字号与主题** — 4 档字号、亮/暗主题独立切换
+
+详见 [编辑器说明](docs/editor.md)。
+
 ## 🚀 快速开始
 
 ### GitHub Pages 部署
@@ -127,14 +141,15 @@ node iris/scripts/build-feed.js
 │   ├── app.js              # 应用入口
 │   ├── config.json         # 用户配置
 │   ├── styles.css          # 样式入口
-│   ├── css/                # 模块化样式
-│   ├── js/                 # 核心功能模块
+│   ├── css/                # 模块化样式（含 editor.css 编辑器样式）
+│   ├── js/                 # 核心功能模块（含 editor.js 编辑器）
 │   ├── vendor/             # 第三方依赖（本地化）
 │   ├── plugins/            # 插件目录
 │   ├── icons/              # 图标资源
 │   ├── data/               # 预构建数据（file-tree/search-index/feed）
 │   └── scripts/            # 构建脚本（file-tree/search-index/feed）
 ├── docs/                   # 文档目录
+│   ├── editor.md           # 编辑器说明
 │   └── examples/           # 功能示例
 └── .github/workflows/      # GitHub Actions
 ```
@@ -143,6 +158,7 @@ node iris/scripts/build-feed.js
 
 - [快速开始](docs/getting-started.md)
 - [功能总览](docs/features.md)
+- [编辑器说明](docs/editor.md)
 - [配置参考](docs/configuration.md)
 - [主题定制](docs/theme-customization.md)
 - [代码高亮主题](docs/code-highlight-theme.md)

@@ -90,6 +90,26 @@ Markdown Preview 是一个极简风格的 Markdown 文档预览站点，专为 G
 
 支持扩展自定义渲染器，插件放入 `iris/plugins/` 目录自动发现注册。详见 [插件开发指南](plugin-development.md)。
 
+## 八.5、内置 Markdown 编辑器
+
+类 Jupyter 的 Cell 化编辑器，全屏覆盖层形式叠加在文档站之上，复用站点渲染管线。详见 [编辑器说明](editor.md)。
+
+| 功能 | 说明 |
+|------|------|
+| 入口 | URL `?mode=editor` / 设置面板「打开编辑器」/ `MarkdownPreview.enterEditorMode()` |
+| Cell 模型 | markdown / plaintext 两种类型，每 Cell 独立编辑 + 渲染输出 |
+| 运行 | 运行当前 (`Ctrl+Enter`) / 运行全部 (`Ctrl+Shift+Enter`) / 运行此 Cell 及下方 |
+| 自动保存 | localStorage `mdnb_autosave_v2`，1.5s 防抖，刷新不丢内容 |
+| 自动补全 | 11 类触发字符（`@` / ` ``` ` / `> [!` / `#` / `-` / `\|` / `---` / `>` / `$$` / `![` / `[`），70+ 条目 |
+| 工具栏菜单 | 7 大下拉：Markdown / HTML / 私有语法 / 工具渲染 / 插入 / 下载 / 导入 |
+| 右键菜单 | 2 列 17 项操作，视口边界自适应定位，窄屏回退单列 |
+| 搜索替换 | 跨所有 Cell 查找 / 替换 / 全部替换，`F3` / `Shift+F3` 导航 |
+| 选中浮动工具栏 | B / I / S / code / H1~H3 / link / quote / ul 快速格式化 |
+| 字号与主题 | 4 档字号（12/14/16/18）、亮/暗主题，独立于文档站持久化 |
+| 导入导出 | `.md` / `.html` / 内联 CSS HTML / `.pdf` / `.mdnb` 笔记本 / 合并 `.md` |
+| 快捷键 | `Ctrl+B/I/K/`` ` 格式化、`Tab` / `Shift+Tab` 缩进、`Esc` 关闭弹层 |
+| 状态栏 | Cell 数 / 运行统计 / 字数 / 行数 / 光标 / 活跃 Cell / 保存状态 |
+
 ## 九、工程能力
 
 | 能力 | 说明 |
@@ -118,6 +138,7 @@ Markdown Preview 是一个极简风格的 Markdown 文档预览站点，专为 G
 ## 相关文档
 
 - [快速开始](getting-started.md)
+- [编辑器说明](editor.md)
 - [配置参考](configuration.md)
 - [主题定制](theme-customization.md)
 - [代码高亮主题](code-highlight-theme.md)

@@ -22,6 +22,7 @@
 | KaTeX | LaTeX 公式 |
 | Leaflet.js | 地理数据地图 |
 | diff2html | Git Diff 可视化 |
+| localStorage | 编辑器自动保存与偏好持久化 |
 
 ## 项目架构
 
@@ -43,6 +44,7 @@
 │   │   ├── markdown.css    # Markdown 渲染样式
 │   │   ├── floating.css    # 悬浮球与浮动元素
 │   │   ├── responsive.css  # 响应式适配
+│   │   ├── editor.css      # 编辑器页面样式（工具栏 / Cell / 右键菜单 / 补全列表）
 │   │   └── themes/
 │   │       └── themes.css  # 7 种内置主题
 │   ├── js/
@@ -54,7 +56,8 @@
 │   │   ├── markdown.js     # Markdown 渲染、代码块复制、灯箱、标题锚点
 │   │   ├── search.js       # FlexSearch 全文搜索（关键词高亮）
 │   │   ├── router.js       # Hash 路由
-│   │   ├── settings.js     # 设置面板、悬浮菜单、PDF 导出、本地 MD
+│   │   ├── settings.js     # 设置面板、悬浮菜单、PDF 导出、本地 MD、编辑器入口
+│   │   ├── editor.js       # 内置 Markdown 编辑器（Cell / 自动保存 / 补全 / 搜索替换）
 │   │   ├── debug.js        # 调试模式
 │   │   ├── themes/
 │   │   │   └── theme-manager.js  # 主题管理器（预设/自定义 CSS/hljs）
@@ -111,7 +114,9 @@ app.js (入口)
   │     ├── renderers/ # 各扩展渲染器
   │     └── plugins/   # 自定义插件
   ├── themes/          # 主题管理（自定义 CSS/hljs）
-  └── settings.js      # 设置面板、悬浮菜单、PDF 导出
+  ├── settings.js      # 设置面板、悬浮菜单、PDF 导出、编辑器入口
+  └── editor.js        # 内置 Markdown 编辑器（按需初始化）
+        └── 复用 markdown.js 渲染管线
 ```
 
 ### 核心模块说明
@@ -190,6 +195,49 @@ app.js (入口)
 7. 设置
 
 导出 PDF：通过 `window.print()` 触发浏览器打印对话框，配合 `@media print` 样式隐藏侧边栏/悬浮球等 UI 元素。
+
+#### `editor.js` — 内置 Markdown 编辑器
+
+类 Jupyter 的 Cell 化编辑器，以全屏覆盖层形式叠加在文档站之上。详细使用说明见 [编辑器说明](docs/editor.md)。
+
+**入口与生命周期**：
+- 通过 URL `?mode=editor`、设置面板「打开编辑器」按钮或 `MarkdownPreview.enterEditorMode()` 进入
+- 首次进入时调用 `initEditor()` 初始化（懒加载，避免影响首屏）
+- `exitEditorMode()` 退出并清理 URL 参数
+- 复用 `markdown.js` 的渲染管线，渲染结果与文档站完全一致
+
+**核心数据结构**：
+```javascript
+cells = [{
+  id, div, textarea, output, outputToolbar, lineNumbers,
+  statusDot, linesLabel, typeBadge, collapseBtn,
+  type,            // 'markdown' | 'plaintext'
+  lastRunContent   // 上次运行内容，用于检测「已修改」状态
+}]
+```
+
+**主要功能模块**：
+- **Cell 管理**：`createCell` / `deleteCell` / `renumberCells` / `rebuildCellDOMOrder`
+- **运行**：`runCell` / `runAllCells` / `runCellBelow`，调用 `MarkdownPreview.renderMarkdown` 渲染到 `.cell-output`
+- **自动补全**：11 类触发字符（`@` / ` ``` ` / `> [!` / `#` / `-` / `|` / `---` / `>` / `$$` / `![` / `[`），70+ 条目
+- **右键菜单**：2 列布局 17 项操作，`showContextMenu` 四方向边界检测定位
+- **搜索替换**：跨所有 Cell textarea 的查找 / 替换 / 全部替换 / F3 导航
+- **格式化**：`applyFormat` 支持粗体 / 斜体 / 删除线 / 行内代码 / H1~H3 / 链接 / 引用 / 列表
+- **导入导出**：`.md` / `.html` / 内联 CSS HTML / `.pdf` / `.mdnb` 笔记本 / 合并 `.md`
+- **自动保存**：localStorage `mdnb_autosave_v2`，1.5s 防抖，序列化所有 Cell 的 id/type/content/output_html
+
+**持久化键**：
+| 键 | 用途 |
+|----|------|
+| `mdnb_autosave_v2` | 笔记本自动保存（cells 数组） |
+| `mdnb_fontsize` | 编辑区字号（12/14/16/18） |
+| `mdnb_theme` | 编辑器主题（light/dark） |
+
+**全局 API**：
+- `MarkdownPreview.enterEditorMode()` — 进入编辑器
+- `MarkdownPreview.exitEditorMode()` — 退出编辑器
+
+**样式**：`iris/css/editor.css`，包含工具栏、Cell、右键菜单、补全列表、搜索面板、选中浮动工具栏、状态栏等全部样式。
 
 ### 插件系统
 
@@ -325,4 +373,4 @@ CSS 采用模块化架构，按功能拆分到 `iris/css/` 目录下的各文件
 
 ---
 
-**文档版本**: 3.1
+**文档版本**: 3.2
