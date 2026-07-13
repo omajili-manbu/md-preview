@@ -37,9 +37,12 @@
 | `@frame` | 画框装裱：精致金属画框，居中纵列展示（克制） | 任意 |
 | `@arch` | 拱形画廊：顶部裁切为拱形，罗马建筑感（克制） | 任意 |
 | `@masonry` | 瀑布流：CSS columns 错落排布，保持原始宽高比（实用） | 任意（≥4 张效果更佳） |
-| `@stamp` | 邮票：齿孔白边 + 邮戳装饰，邮票造型（克制） | 任意 |
-| `@slider` | 幻灯片：scroll-snap 横向轮播，一次看一张（实用） | 任意（≥3 张） |
+| `@slider` | 幻灯片：自动轮播，循环切换，hover 暂停（实用） | 任意（≥3 张） |
 | `@ticket` | 票根：撕边虚线 + 半圆缺口，票根造型（克制） | 任意 |
+| `@panorama` | 全景横幅：超宽横向滚动拼接，沉浸式浏览（实用） | 任意（≥3 张） |
+| `@circle` | 圆形相册：圆形裁切，居中错落排布（美观） | 任意 |
+| `@diamond` | 菱形宝石：菱形裁切，错位排列（艺术） | 任意 |
+| `@wave` | 波浪：正弦曲线高低错落，流动韵律感（艺术） | 任意（4 的倍数效果更佳） |
 
 ## 效果演示
 
@@ -176,15 +179,6 @@
 ![mas-5](https://picsum.photos/400/700?mas5)
 ![mas-6](https://picsum.photos/400/350?mas6)
 
-### `@stamp` — 邮票
-
-@stamp
-
-![stamp-1](https://picsum.photos/300/300?stm1)
-![stamp-2](https://picsum.photos/300/300?stm2)
-![stamp-3](https://picsum.photos/300/300?stm3)
-![stamp-4](https://picsum.photos/300/300?stm4)
-
 ### `@slider` — 幻灯片
 
 @slider
@@ -201,6 +195,49 @@
 ![ticket-1](https://picsum.photos/600/300?tkt1)
 ![ticket-2](https://picsum.photos/600/300?tkt2)
 ![ticket-3](https://picsum.photos/600/300?tkt3)
+
+### `@panorama` — 全景横幅
+
+@panorama
+
+![pano-1](https://picsum.photos/800/400?pan1)
+![pano-2](https://picsum.photos/800/400?pan2)
+![pano-3](https://picsum.photos/800/400?pan3)
+![pano-4](https://picsum.photos/800/400?pan4)
+
+### `@circle` — 圆形相册
+
+@circle
+
+![cir-1](https://picsum.photos/300/300?cir1)
+![cir-2](https://picsum.photos/300/300?cir2)
+![cir-3](https://picsum.photos/300/300?cir3)
+![cir-4](https://picsum.photos/300/300?cir4)
+![cir-5](https://picsum.photos/300/300?cir5)
+
+### `@diamond` — 菱形宝石
+
+@diamond
+
+![dia-1](https://picsum.photos/300/300?dia1)
+![dia-2](https://picsum.photos/300/300?dia2)
+![dia-3](https://picsum.photos/300/300?dia3)
+![dia-4](https://picsum.photos/300/300?dia4)
+![dia-5](https://picsum.photos/300/300?dia5)
+![dia-6](https://picsum.photos/300/300?dia6)
+
+### `@wave` — 波浪
+
+@wave
+
+![wav-1](https://picsum.photos/400/280?wav1)
+![wav-2](https://picsum.photos/400/280?wav2)
+![wav-3](https://picsum.photos/400/280?wav3)
+![wav-4](https://picsum.photos/400/280?wav4)
+![wav-5](https://picsum.photos/400/280?wav5)
+![wav-6](https://picsum.photos/400/280?wav6)
+![wav-7](https://picsum.photos/400/280?wav7)
+![wav-8](https://picsum.photos/400/280?wav8)
 
 ## 自定义样式
 

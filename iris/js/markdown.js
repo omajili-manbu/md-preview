@@ -324,6 +324,61 @@
     container.innerHTML = tempDiv.innerHTML;
   }
 
+  // 幻灯片自动轮播：为每个 .image-gallery--slider 创建 track + 指示点，
+  // 定时切换并循环，hover 暂停
+  function initSliders(container) {
+    const sliders = container.querySelectorAll('.image-gallery--slider');
+    sliders.forEach(slider => {
+      const imgs = Array.from(slider.querySelectorAll('img'));
+      if (imgs.length < 2) return;
+
+      // 将图片包裹进 track 容器
+      const track = document.createElement('div');
+      track.className = 'slider-track';
+      imgs.forEach(img => track.appendChild(img));
+      slider.appendChild(track);
+
+      // 创建指示点
+      const dots = document.createElement('div');
+      dots.className = 'slider-dots';
+      imgs.forEach((_, i) => {
+        const dot = document.createElement('span');
+        if (i === 0) dot.classList.add('active');
+        dots.appendChild(dot);
+      });
+      slider.appendChild(dots);
+
+      const count = imgs.length;
+      const INTERVAL = 4000;
+      let index = 0;
+      let timer = null;
+
+      function go(i) {
+        index = ((i % count) + count) % count;
+        track.style.transform = `translateX(-${index * 100}%)`;
+        dots.querySelectorAll('span').forEach((d, di) => {
+          d.classList.toggle('active', di === index);
+        });
+      }
+
+      function start() {
+        stop();
+        timer = setInterval(() => go(index + 1), INTERVAL);
+      }
+
+      function stop() {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }
+
+      slider.addEventListener('mouseenter', stop);
+      slider.addEventListener('mouseleave', start);
+      start();
+    });
+  }
+
   function wrapTables(container) {
     const tables = container.querySelectorAll('table');
     tables.forEach(table => {
@@ -376,7 +431,7 @@
       if (markerMatch) {
         const style = markerMatch[1].toLowerCase();
         // 仅识别已注册的画廊样式，未知的原样输出
-        const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic', 'scattered', 'hexagon', 'coverflow', 'tape', 'duotone', 'frame', 'arch', 'masonry', 'stamp', 'slider', 'ticket'];
+        const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic', 'scattered', 'hexagon', 'coverflow', 'tape', 'duotone', 'frame', 'arch', 'masonry', 'slider', 'ticket', 'panorama', 'circle', 'diamond', 'wave'];
         if (knownStyles.includes(style)) {
           return `<p class="gallery-style-marker" data-style="${style}"></p>`;
         }
@@ -430,7 +485,9 @@
     interceptLinks(currentPath);
     
     processImages(dom.markdownContent, currentPath);
-    
+
+    initSliders(dom.markdownContent);
+
     wrapTables(dom.markdownContent);
     
     setTimeout(async () => {
