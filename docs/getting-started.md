@@ -56,14 +56,26 @@ cd <repo-name>
 # 构建文件树（可选）
 node iris/scripts/build-file-tree.js
 
+# 构建搜索索引（可选）
+node iris/scripts/build-search-index.js
+
+# 构建 RSS feed（可选）
+node iris/scripts/build-feed.js
+
 # 直接用浏览器打开
 open index.html
 ```
 
 > **注意**：直接打开 `index.html` 时，如果预构建文件不存在，会通过 GitHub API 加载文件树，可能受 API 限流影响。建议先构建文件树再预览。
+>
+> 在 GitHub Pages 部署后，搜索索引与 RSS feed 会通过 GitHub Actions 在 `docs/**` 变更时自动重建。
 
 ## 下一步
 
+- 查看 [功能总览](features.md) 了解所有能力
 - 查看 [配置参考](configuration.md) 了解所有可配置项
 - 查看 [主题定制](theme-customization.md) 自定义外观
+- 查看 [代码高亮主题](code-highlight-theme.md) 自定义代码配色
+- 查看 [RSS 订阅](rss.md) 了解如何让他人订阅你的文档更新
+- 查看 [插件开发指南](plugin-development.md) 扩展渲染能力
 - 浏览 [examples/](examples/) 目录查看所有支持的渲染功能

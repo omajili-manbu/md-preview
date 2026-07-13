@@ -21,16 +21,34 @@ Markdown Preview 使用 [highlight.js](https://highlightjs.org/) 进行代码语
 
 在悬浮球菜单 → 设置 → 外观 → 代码高亮主题 中切换。
 
-## 使用自定义主题
+## 代码块增强
 
-### 方法：加载外部 CSS 文件
+每个代码块除语法高亮外，还有以下交互：
+
+| 特性 | 说明 |
+|------|------|
+| 复制按钮 | 代码块右上角，点击复制全部代码到剪贴板 |
+| 语言标签 | 顶部显示代码语言标识（如 `javascript`、`python`） |
+| 横向滚动 | 长行代码横向滚动，不换行 |
+| `data-lang` 属性 | `<pre>` 元素附带 `data-lang` 属性，便于插件扩展 |
+
+复制按钮使用 Clipboard API，老浏览器降级到 `execCommand('copy')`。
+
+## 使用自定义主题
 
 highlight.js 有上百种社区主题，你可以加载任意主题 CSS 文件。
 
-1. 找到你喜欢的主题 CSS（例如从 [highlight.js demo](https://highlightjs.org/demo) 或 CDN 获取）
-2. 在设置面板的「自定义 CSS」中填入主题 CSS 的 URL
+### 方法：加载外部 highlight.js 主题 CSS
 
-> **注意**：「自定义 CSS」会加载额外的 CSS 文件，会覆盖内置主题。如需切换回内置主题，清空自定义 CSS 输入框即可。
+1. 找到你喜欢的主题 CSS（例如从 [highlight.js demo](https://highlightjs.org/demo) 或 CDN 获取）
+2. 在设置面板的 **外观 → 高级 → 自定义高亮 JS** 输入框中填入主题 CSS 的 URL
+3. 回车应用
+
+自定义 hljs CSS 会插入到内置 `#hljs-theme` 之后，确保覆盖内置主题。
+
+> **注意**：自定义高亮 JS 优先级高于「代码高亮主题」下拉框的选择。如需切换回内置主题，清空自定义高亮 JS 输入框回车即可。
+>
+> 「自定义 CSS」与「自定义高亮 JS」是两个独立输入框：前者用于覆盖整站样式（布局、字体等），后者仅用于代码块语法颜色。
 
 ## 开发自定义主题
 

@@ -4,18 +4,42 @@
 
 ## ✨ 特性
 
-- 📂 **自动发现** — 自动扫描仓库中所有 `.md` 文件，构建文档目录树
-- 🔍 **全文搜索** — 基于 FlexSearch 的快速全文检索
-- 📱 **响应式设计** — 完美适配桌面端和移动端
-- 🎨 **7 种内置主题** — 默认 / GitHub Light / GitHub Dark / Notion / Arc Dark / Dracula / Nord
-- 🖼️ **图片增强** — 懒加载、画廊模式、错误降级
-- 📢 **GitHub 风格 Alerts** — 支持 `[!NOTE]` `[!WARNING]` 等提示语法
-- ⏱️ **阅读时间估算** — 自动计算预计阅读时长
-- 🔌 **插件系统** — 支持扩展自定义渲染器
-- 📲 **PWA 支持** — 可安装到桌面，离线访问
+### 文档浏览
+
+- 📂 **自动发现** — 自动扫描仓库中所有 `.md` 文件，构建文档目录树（含字数统计）
+- 🔍 **全文搜索** — 基于 FlexSearch 的中文分词全文检索，结果关键词高亮
 - 🔗 **Hash 路由** — 每个文档有独立 URL，支持分享和书签
+- 🧭 **上一篇 / 下一篇** — 悬浮球快速翻阅相邻文档
+- 📂 **打开本地 MD** — 临时预览本地 Markdown 文件，无需入库
+- ⏱️ **阅读时间估算** — 自动计算预计阅读时长
 - 📝 **Frontmatter** — 支持 YAML 元数据解析
+
+### 渲染能力
+
+- 🎨 **7 种内置主题** — 默认 / GitHub Light / GitHub Dark / Notion / Arc Dark / Dracula / Nord
+- 🖼️ **图片灯箱** — 点击放大、缩放、键盘左右键翻页
+- 📢 **GitHub 风格 Alerts** — 支持 `[!NOTE]` `[!WARNING]` 等提示语法
+- 📋 **代码块增强** — 一键复制按钮、语言标签、横向滚动优化
+- 📊 **长表格优化** — 自动包裹支持横向滚动
+- 🔗 **标题锚点分享** — 标题悬浮出现复制链接按钮，直达章节
+
+### 主题与外观
+
+- 🎨 **可视化配色取色器** — 强调色 / 中性色独立调整，支持自定义亮色或暗色主题
+- 💻 **代码高亮主题** — 10 种内置方案 + 自定义 highlight.js 主题 URL
+- ✏️ **自定义 CSS** — 加载外部 CSS 文件进一步定制
+
+### 输出与订阅
+
+- 📄 **导出 PDF** — 通过浏览器打印对话框导出为 PDF
+- 📡 **RSS 源** — 自动生成 `feed.xml`，支持 RSS 阅读器订阅
+- 📲 **PWA 支持** — 可安装到桌面，离线访问已访问文档，更新时提示刷新
+
+### 工程与开发
+
+- 🔌 **插件系统** — 支持扩展自定义渲染器
 - ✏️ **编辑此页** — 悬浮球快速跳转 GitHub 编辑页面
+- 📱 **响应式设计** — 完美适配桌面端和移动端
 
 ## 🚀 快速开始
 
@@ -37,12 +61,18 @@ cd <repo-name>
 # 构建文件树（可选，不构建则使用 GitHub API 回退）
 node iris/scripts/build-file-tree.js
 
+# 构建搜索索引
+node iris/scripts/build-search-index.js
+
+# 构建 RSS feed
+node iris/scripts/build-feed.js
+
 # 用浏览器打开 index.html
 ```
 
 ## ⚙️ 配置
 
-修改 `iris/config.json` 自定义配置：
+修改 `iris/config.json` 自定义基础配置：
 
 ```json
 {
@@ -50,6 +80,8 @@ node iris/scripts/build-file-tree.js
   "repo": "your-repo-name"
 }
 ```
+
+更多运行时配置（主题、配色、代码高亮、显示选项等）在站点右上角悬浮球 → 设置 中调整，详见 [配置参考](docs/configuration.md)。
 
 ## 📁 文档放置
 
@@ -100,12 +132,23 @@ node iris/scripts/build-file-tree.js
 │   ├── vendor/             # 第三方依赖（本地化）
 │   ├── plugins/            # 插件目录
 │   ├── icons/              # 图标资源
-│   ├── data/               # 预构建数据
-│   └── scripts/            # 构建脚本
+│   ├── data/               # 预构建数据（file-tree/search-index/feed）
+│   └── scripts/            # 构建脚本（file-tree/search-index/feed）
 ├── docs/                   # 文档目录
 │   └── examples/           # 功能示例
 └── .github/workflows/      # GitHub Actions
 ```
+
+## 📚 文档
+
+- [快速开始](docs/getting-started.md)
+- [功能总览](docs/features.md)
+- [配置参考](docs/configuration.md)
+- [主题定制](docs/theme-customization.md)
+- [代码高亮主题](docs/code-highlight-theme.md)
+- [插件开发指南](docs/plugin-development.md)
+- [RSS 订阅](docs/rss.md)
+- [开发者文档](readme-dev.md)
 
 ## 📄 License
 

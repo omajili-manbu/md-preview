@@ -5,8 +5,22 @@
     <link>https://theforeveriris.github.io/md-preview/</link>
     <description>一个简洁优雅的 Markdown 文档预览站点，支持多种渲染功能</description>
     <language>zh-CN</language>
-    <lastBuildDate>Mon, 13 Jul 2026 01:18:01 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 13 Jul 2026 01:54:15 GMT</lastBuildDate>
     <atom:link href="https://theforeveriris.github.io/md-preview/iris/data/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>功能总览</title>
+      <link>https://theforeveriris.github.io/md-preview/#/docs/features.md</link>
+      <guid isPermaLink="true">https://theforeveriris.github.io/md-preview/#/docs/features.md</guid>
+      <pubDate>Mon, 13 Jul 2026 01:53:58 GMT</pubDate>
+      <description>Markdown Preview 是一个极简风格的 Markdown 文档预览站点，专为 GitHub Pages 设计，完全静态，无需后端。 --- | 功能 | 说明 | |------|------| | 自动发现 | 扫描仓库所有 文件，构建嵌套目录树 | | 字数统计 | 每个文件旁显示字数（可在设置中关闭） | | 文件名截断 | 长文件名截断/展开切换（展开时区域可横向滚动，隐藏滚动</description>
+    </item>
+    <item>
+      <title>RSS 订阅</title>
+      <link>https://theforeveriris.github.io/md-preview/#/docs/rss.md</link>
+      <guid isPermaLink="true">https://theforeveriris.github.io/md-preview/#/docs/rss.md</guid>
+      <pubDate>Mon, 13 Jul 2026 01:53:19 GMT</pubDate>
+      <description>Markdown Preview 自动为 目录下的所有 Markdown 文档生成 RSS 2.0 feed，方便他人通过 RSS 阅读器订阅你的文档更新。 --- 部署后，RSS feed 位于： 例如本站： &gt; feed.xml 不放在仓库根目录，而是放在 下，与 、 等预构建数据并列。 中已添加： 主流浏览器和 RSS 阅读器扩展会自动发现并提示订阅。 每篇文档对应一个 ，包含： | 字段 </description>
+    </item>
     <item>
       <title>代码高亮主题开发指南</title>
       <link>https://theforeveriris.github.io/md-preview/#/docs/code-highlight-theme.md</link>
@@ -19,7 +33,7 @@
       <link>https://theforeveriris.github.io/md-preview/#/docs/configuration.md</link>
       <guid isPermaLink="true">https://theforeveriris.github.io/md-preview/#/docs/configuration.md</guid>
       <pubDate>Sat, 11 Jul 2026 08:49:57 GMT</pubDate>
-      <description>所有配置都通过 文件进行管理，无需修改 JavaScript 代码。 | 字段 | 类型 | 默认值 | 说明 | |------|------|--------|------| | | string | - | GitHub 用户名或组织名 | | | string | - | 仓库名 | 以下是所有支持的配置项及其默认值： | 字段 | 类型 | 默认值 | 说明 | |------|----</description>
+      <description>Markdown Preview 的配置分为两层： 1. 构建/部署配置 — （仓库级，所有访客共享） 2. 运行时设置 — 浏览器 localStorage（用户级，仅当前浏览器生效） --- 修改此文件后需推送代码触发重新部署。 | 字段 | 类型 | 默认值 | 说明 | |------|------|--------|------| | | string | - | GitHub 用户名或</description>
     </item>
     <item>
       <title>ApexCharts 交互式图表示例</title>
@@ -141,11 +155,11 @@
       <description>本页面展示如何使用 Markdown 预览器嵌入 Twitter/X 推文和时间线。 --- 源码： 渲染效果： --- 源码： 渲染效果： --- 源码： 渲染效果： 说明： - 显示该用户最近的推文 - 自动刷新显示最新内容 - 高度可自定义 --- 源码： 渲染效果： --- 源码： 渲染效果： --- 源码： 渲染效果： --- 线程是一系列相关的推文，可以完整嵌入： 源码： 渲染效果： </description>
     </item>
     <item>
-      <title>feat.md — 未来优化方向</title>
+      <title>feat.md — 优化路线图</title>
       <link>https://theforeveriris.github.io/md-preview/#/docs/feat.md</link>
       <guid isPermaLink="true">https://theforeveriris.github.io/md-preview/#/docs/feat.md</guid>
       <pubDate>Sat, 11 Jul 2026 08:49:57 GMT</pubDate>
-      <description>&gt; 基于当前代码现状整理的优化路线图，按类别分组，标注优先级（P0 高 / P1 中 / P2 低）与用户决策。 &gt; 每条均说明现状、问题与建议改动。 --- - 现状：search.js 虽引入了 ，但实际使用的是 的 子串匹配，未做分词与模糊匹配，中文长查询命中差。 - 改动：用 FlexSearch 构建标题+正文+路径的复合索引，支持中文分词与模糊匹配，结果更准。 - 现状：结果只显示纯文</description>
+      <description>&gt; 基于代码现状整理的优化路线图，按类别分组，标注优先级（P0 高 / P1 中 / P2 低）与实施状态。 &gt; ✅ 已完成 / ❌ 不做 / ⏳ 待办 --- - 现状：search.js 使用 FlexSearch 构建标题 + 正文 + 路径复合索引，自定义 CJK 编码器支持中文分词与模糊匹配。 - 现状：结果 title/preview 中匹配片段用 标签包裹高亮。 - 决策：用户反馈「</description>
     </item>
     <item>
       <title>快速开始</title>
@@ -166,7 +180,7 @@
       <link>https://theforeveriris.github.io/md-preview/#/docs/theme-customization.md</link>
       <guid isPermaLink="true">https://theforeveriris.github.io/md-preview/#/docs/theme-customization.md</guid>
       <pubDate>Sat, 11 Jul 2026 08:49:57 GMT</pubDate>
-      <description>| ID | 名称 | 说明 | |----|------|------| | | 默认 | 浅紫浅粉渐变风格 | | | GitHub Light | GitHub 明亮风格 | | | GitHub Dark | GitHub 深色风格 | | | Notion | Notion 暖灰风格 | | | Arc Dark | Arc 浏览器彩虹紫风格 | | | Dracula | Dracul</description>
+      <description>Markdown Preview 提供三种层级的外观定制方式，由易到难： 1. 预设主题 — 内置 7 套配色，一键切换 2. 可视化取色器 — 拖动色块即可调整主题色，无需写 CSS 3. 自定义 CSS — 加载外部 CSS 文件，完全控制样式 --- | ID | 名称 | 说明 | |----|------|------| | | 默认 | 浅紫浅粉渐变风格 | | | GitHub Li</description>
     </item>
   </channel>
 </rss>
