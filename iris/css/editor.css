@@ -60,6 +60,8 @@
 
 .editor-overlay .editor-main {
   flex: 1 1 auto;
+  /* 关键：覆盖 flex item 默认 min-height:auto，否则内容会撑高容器而无法滚动 */
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
