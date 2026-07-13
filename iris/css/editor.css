@@ -705,3 +705,307 @@ body.editor-mode .floating-menu {
     display: none;
   }
 }
+
+/* ============== 搜索/替换面板 ============== */
+
+.search-panel {
+  display: none;
+  position: fixed;
+  top: 48px;
+  right: 16px;
+  z-index: 300;
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  padding: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.search-panel.visible {
+  display: block;
+  animation: dropdownFade 0.15s ease;
+}
+
+.search-panel-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--color-accent-purple);
+}
+
+.search-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.search-btn:hover {
+  background: rgba(212, 165, 201, 0.14);
+  border-color: var(--color-accent-purple);
+}
+
+.search-btn.primary {
+  background: var(--color-accent-purple);
+  color: #fff;
+  border-color: var(--color-accent-purple);
+}
+
+.search-btn.primary:hover {
+  background: var(--color-accent-purple-deep);
+}
+
+.search-panel-info {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* ============== 字号下拉菜单 ============== */
+
+.font-size-menu {
+  display: none;
+  position: fixed;
+  z-index: 300;
+  min-width: 140px;
+  padding: 4px 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  font-size: 13px;
+}
+
+.font-size-menu.visible {
+  display: block;
+}
+
+.font-size-item {
+  padding: 7px 14px;
+  cursor: pointer;
+  color: var(--color-text);
+  transition: background 0.12s;
+}
+
+.font-size-item:hover {
+  background: rgba(212, 165, 201, 0.14);
+}
+
+.font-size-item.active {
+  color: var(--color-accent-purple);
+  font-weight: 600;
+}
+
+/* ============== Cell 折叠状态 ============== */
+
+.cell.cell-editor-collapsed .cell-editor {
+  display: none;
+}
+
+.cell.cell-output-collapsed .cell-output {
+  display: none;
+}
+
+.cell.cell-collapsed .cell-header {
+  border-bottom: none;
+}
+
+.cell.cell-collapsed .cell-editor,
+.cell.cell-collapsed .cell-output {
+  display: none;
+}
+
+.cell.cell-collapsed .cell-output-toolbar {
+  display: none;
+}
+
+.cell-header .collapse-indicator {
+  display: inline-block;
+  width: 12px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+
+/* ============== Cell 输出工具栏 ============== */
+
+.cell-output-toolbar {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-top: 1px solid var(--color-border);
+  background: rgba(212, 165, 201, 0.04);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.cell-output.visible + .cell-output-toolbar,
+.cell-output-toolbar.visible {
+  display: flex;
+}
+
+.cell-output-toolbar-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.cell-output-toolbar-btn:hover {
+  background: rgba(212, 165, 201, 0.14);
+  color: var(--color-accent-purple);
+}
+
+/* ============== Cell 类型标识 ============== */
+
+.cell-type-badge {
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-accent-purple);
+  background: rgba(212, 165, 201, 0.14);
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cell.cell-type-plaintext .cell-type-badge {
+  color: var(--color-text-muted);
+  background: rgba(150, 150, 150, 0.12);
+}
+
+.cell.cell-type-plaintext .cell-output {
+  white-space: pre-wrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+/* ============== Cell 拖拽 ============== */
+
+.cell-drag-handle {
+  cursor: grab;
+  padding: 0 4px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  user-select: none;
+}
+
+.cell-drag-handle:active {
+  cursor: grabbing;
+}
+
+.cell.cell-dragging {
+  opacity: 0.5;
+}
+
+.cell.cell-drag-over {
+  border-top: 3px solid var(--color-accent-purple);
+}
+
+/* ============== 新建 Cell 提示按钮 ============== */
+
+.post-run-newcell {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--color-accent-purple);
+  background: rgba(212, 165, 201, 0.12);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.post-run-newcell:hover {
+  background: rgba(212, 165, 201, 0.24);
+}
+
+/* ============== 行号侧边栏 ============== */
+
+.cell-editor-wrap {
+  position: relative;
+  display: flex;
+  background: var(--color-bg);
+}
+
+.cell-line-numbers {
+  flex: 0 0 auto;
+  padding: 14px 8px 14px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  text-align: right;
+  user-select: none;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  overflow: hidden;
+  white-space: pre;
+}
+
+.cell-editor-wrap .cell-editor {
+  border-left: none;
+}
+
+/* ============== 编辑器暗色主题 ============== */
+
+body.editor-dark-mode {
+  --color-bg: #1e1e2e;
+  --color-surface: #2a2a3c;
+  --color-text: #e0e0e8;
+  --color-text-muted: #9999aa;
+  --color-border: #3a3a4e;
+}
+
+body.editor-dark-mode .cell {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ============== 响应式补充 ============== */
+
+@media (max-width: 768px) {
+  .search-panel {
+    width: calc(100vw - 16px);
+    right: 8px;
+    top: auto;
+    bottom: 30px;
+  }
+
+  .search-panel-row {
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1 1 100%;
+  }
+}

@@ -156,36 +156,64 @@
   const statusLines = document.getElementById('statusLines');
   const statusCursor = document.getElementById('statusCursor');
   const statusActive = document.getElementById('statusActive');
+  const statusRunStats = document.getElementById('statusRunStats');
+  const statusCurCellWords = document.getElementById('statusCurCellWords');
+  const statusSave = document.getElementById('statusSave');
+  const searchPanel = document.getElementById('searchPanel');
+  const searchInput = document.getElementById('searchInput');
+  const replaceInput = document.getElementById('replaceInput');
+  const searchInfo = document.getElementById('searchInfo');
+  const fontSizeMenu = document.getElementById('fontSizeMenu');
+  const fontSizeBtn = document.getElementById('fontSizeBtn');
+  const searchBtn = document.getElementById('searchBtn');
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const fileInput = document.getElementById('fileInput');
 
   // ============== Cell 管理 ==============
 
-  function createCell(afterCellId, initialContent) {
+  function createCell(afterCellId, initialContent, opts) {
+    opts = opts || {};
     cellCounter++;
     const id = cellCounter;
+    const cellType = opts.type || 'markdown'; // 'markdown' | 'plaintext'
 
     const cellDiv = document.createElement('div');
-    cellDiv.className = 'cell';
+    cellDiv.className = 'cell cell-type-' + cellType;
     cellDiv.dataset.cellId = id;
+    cellDiv.dataset.cellType = cellType;
+    cellDiv.draggable = true;
 
     cellDiv.innerHTML = `
       <div class="cell-header">
         <div class="cell-header-left">
+          <span class="cell-drag-handle" title="拖拽排序">⋮⋮</span>
           <span class="cell-number">
             <span class="cell-status-dot"></span>
             Cell [<span class="cell-num">${id}</span>]
           </span>
+          <span class="cell-type-badge">${cellType === 'plaintext' ? 'TXT' : 'MD'}</span>
           <span class="cell-meta cell-lines">0 行</span>
         </div>
         <div class="cell-header-right">
           <button class="cell-action-btn cell-run-btn" data-cell-id="${id}" title="运行 (Ctrl+Enter)">▶</button>
+          <button class="cell-action-btn cell-collapse-btn" data-cell-id="${id}" title="折叠/展开">▸</button>
           <button class="cell-action-btn cell-up-btn" data-cell-id="${id}" title="上移">↑</button>
           <button class="cell-action-btn cell-down-btn" data-cell-id="${id}" title="下移">↓</button>
           <button class="cell-action-btn cell-duplicate-btn" data-cell-id="${id}" title="复制">⧉</button>
           <button class="cell-action-btn cell-delete-btn" data-cell-id="${id}" title="删除">✕</button>
         </div>
       </div>
-      <textarea class="cell-editor" data-cell-id="${id}" placeholder="输入 Markdown..."></textarea>
+      <div class="cell-editor-wrap">
+        <div class="cell-line-numbers" data-cell-id="${id}">1</div>
+        <textarea class="cell-editor" data-cell-id="${id}" placeholder="${cellType === 'plaintext' ? '输入纯文本（不渲染）...' : '输入 Markdown...'}"></textarea>
+      </div>
       <div class="cell-output markdown-body" data-cell-id="${id}"></div>
+      <div class="cell-output-toolbar" data-cell-id="${id}">
+        <button class="cell-output-toolbar-btn" data-out-action="copy-html">复制 HTML</button>
+        <button class="cell-output-toolbar-btn" data-out-action="clear">清空输出</button>
+        <button class="cell-output-toolbar-btn" data-out-action="collapse">折叠输出</button>
+        <button class="cell-output-toolbar-btn" data-out-action="export">导出此 Cell</button>
+      </div>
     `;
 
     const addBtn = document.createElement('button');
@@ -199,8 +227,13 @@
       addBtn,
       textarea: cellDiv.querySelector('.cell-editor'),
       output: cellDiv.querySelector('.cell-output'),
+      outputToolbar: cellDiv.querySelector('.cell-output-toolbar'),
+      lineNumbers: cellDiv.querySelector('.cell-line-numbers'),
       statusDot: cellDiv.querySelector('.cell-status-dot'),
       linesLabel: cellDiv.querySelector('.cell-lines'),
+      typeBadge: cellDiv.querySelector('.cell-type-badge'),
+      collapseBtn: cellDiv.querySelector('.cell-collapse-btn'),
+      type: cellType,
       lastRunContent: ''
     };
     cells.push(cellData);
@@ -233,7 +266,7 @@
   }
 
   function bindCellEvents(cellData) {
-    const { id, textarea, div } = cellData;
+    const { id, textarea, div, lineNumbers, outputToolbar, collapseBtn } = cellData;
 
     textarea.addEventListener('focus', () => {
       activeCellId = id;
@@ -245,9 +278,13 @@
     textarea.addEventListener('input', () => {
       onTextareaInput({ target: textarea });
       updateCellMeta(cellData);
+      updateLineNumbers(cellData);
       markModified(cellData);
+      markUnsaved();
       updateStatusbar();
     });
+
+    textarea.addEventListener('scroll', () => syncLineNumbersScroll(cellData));
 
     textarea.addEventListener('keydown', onTextareaKeydown);
     textarea.addEventListener('keyup', () => updateStatusbar());
@@ -264,6 +301,25 @@
     div.querySelector('.cell-up-btn').addEventListener('click', () => moveCell(id, -1));
     div.querySelector('.cell-down-btn').addEventListener('click', () => moveCell(id, 1));
     div.querySelector('.cell-duplicate-btn').addEventListener('click', () => duplicateCell(id));
+    collapseBtn.addEventListener('click', () => toggleCellCollapse(cellData));
+
+    // 输出工具栏
+    outputToolbar.querySelectorAll('.cell-output-toolbar-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.outAction;
+        if (action === 'copy-html') copyOutputHtml(cellData);
+        else if (action === 'clear') clearOutput(cellData);
+        else if (action === 'collapse') cellData.div.classList.toggle('cell-output-collapsed');
+        else if (action === 'export') exportCellStandalone(cellData);
+      });
+    });
+
+    // 拖拽排序
+    div.addEventListener('dragstart', (e) => onCellDragStart(e, cellData));
+    div.addEventListener('dragover', (e) => onCellDragOver(e, cellData));
+    div.addEventListener('dragleave', (e) => onCellDragLeave(e, cellData));
+    div.addEventListener('drop', (e) => onCellDrop(e, cellData));
+    div.addEventListener('dragend', (e) => onCellDragEnd(e, cellData));
 
     // 右键菜单
     div.addEventListener('contextmenu', (e) => {
@@ -273,6 +329,149 @@
     });
 
     cellData.addBtn.addEventListener('click', () => createCell(id));
+  }
+
+  // ============== 行号 ==============
+
+  function updateLineNumbers(cellData) {
+    if (!cellData.lineNumbers) return;
+    const lines = cellData.textarea.value.split('\n').length;
+    let nums = '';
+    for (let i = 1; i <= lines; i++) nums += i + '\n';
+    cellData.lineNumbers.textContent = nums.slice(0, -1) || '1';
+  }
+
+  function syncLineNumbersScroll(cellData) {
+    if (!cellData.lineNumbers) return;
+    cellData.lineNumbers.scrollTop = cellData.textarea.scrollTop;
+  }
+
+  // ============== Cell 输出操作 ==============
+
+  function copyOutputHtml(cellData) {
+    const html = cellData.output.innerHTML;
+    if (!html.trim()) { alert('请先运行此 Cell'); return; }
+    navigator.clipboard.writeText(html).then(() => {
+      showToast('已复制 HTML');
+    }).catch(() => {
+      // 兜底
+      const ta = document.createElement('textarea');
+      ta.value = html;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('已复制 HTML');
+    });
+  }
+
+  function clearOutput(cellData) {
+    cellData.output.innerHTML = '';
+    cellData.output.classList.remove('visible');
+    cellData.statusDot.classList.remove('run');
+    updateStatusbar();
+  }
+
+  function exportCellStandalone(cellData) {
+    const idx = cells.findIndex(c => c.id === cellData.id) + 1;
+    const html = cellData.output.innerHTML;
+    if (!html.trim()) { alert('请先运行此 Cell'); return; }
+    const fullHtml = buildStandaloneHtml(html, `Cell ${idx}`);
+    downloadBlob(new Blob([fullHtml], { type: 'text/html;charset=utf-8' }), `cell-${idx}.html`);
+  }
+
+  // ============== Toast 提示 ==============
+
+  let toastTimer = null;
+  function showToast(msg) {
+    let toast = document.getElementById('editorToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'editorToast';
+      toast.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);padding:8px 16px;background:rgba(0,0,0,0.8);color:#fff;border-radius:6px;font-size:13px;z-index:9999;opacity:0;transition:opacity 0.2s;pointer-events:none;';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 1500);
+  }
+
+  // ============== Cell 折叠 ==============
+
+  function toggleCellCollapse(cellData) {
+    cellData.div.classList.toggle('cell-collapsed');
+    cellData.collapseBtn.textContent = cellData.div.classList.contains('cell-collapsed') ? '▾' : '▸';
+  }
+
+  function collapseAllCells() {
+    cells.forEach(c => {
+      c.div.classList.add('cell-collapsed');
+      if (c.collapseBtn) c.collapseBtn.textContent = '▾';
+    });
+  }
+
+  function expandAllCells() {
+    cells.forEach(c => {
+      c.div.classList.remove('cell-collapsed');
+      if (c.collapseBtn) c.collapseBtn.textContent = '▸';
+    });
+  }
+
+  // ============== Cell 类型切换 ==============
+
+  function toggleCellType(cellData) {
+    cellData.type = cellData.type === 'markdown' ? 'plaintext' : 'markdown';
+    cellData.div.dataset.cellType = cellData.type;
+    cellData.div.classList.remove('cell-type-markdown', 'cell-type-plaintext');
+    cellData.div.classList.add('cell-type-' + cellData.type);
+    if (cellData.typeBadge) cellData.typeBadge.textContent = cellData.type === 'plaintext' ? 'TXT' : 'MD';
+    cellData.textarea.placeholder = cellData.type === 'plaintext' ? '输入纯文本（不渲染）...' : '输入 Markdown...';
+    updateStatusbar();
+  }
+
+  // ============== Cell 拖拽 ==============
+
+  let dragSourceCell = null;
+
+  function onCellDragStart(e, cellData) {
+    // 避免从 textarea 触发拖拽
+    if (e.target === cellData.textarea) { e.preventDefault(); return; }
+    dragSourceCell = cellData;
+    cellData.div.classList.add('cell-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(cellData.id)); } catch (_) {}
+  }
+
+  function onCellDragOver(e, cellData) {
+    if (!dragSourceCell || dragSourceCell.id === cellData.id) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    cellData.div.classList.add('cell-drag-over');
+  }
+
+  function onCellDragLeave(e, cellData) {
+    cellData.div.classList.remove('cell-drag-over');
+  }
+
+  function onCellDrop(e, cellData) {
+    e.preventDefault();
+    cellData.div.classList.remove('cell-drag-over');
+    if (!dragSourceCell || dragSourceCell.id === cellData.id) return;
+    // 把 dragSource 移到 cellData 之前
+    const fromIdx = cells.findIndex(c => c.id === dragSourceCell.id);
+    const toIdx = cells.findIndex(c => c.id === cellData.id);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const [moved] = cells.splice(fromIdx, 1);
+    cells.splice(toIdx, 0, moved);
+    rebuildCellDOMOrder();
+    renumberCells();
+  }
+
+  function onCellDragEnd(e, cellData) {
+    cellData.div.classList.remove('cell-dragging');
+    document.querySelectorAll('.cell-drag-over').forEach(c => c.classList.remove('cell-drag-over'));
+    dragSourceCell = null;
   }
 
   function getCell(id) {
@@ -561,10 +760,38 @@
     cell.div.classList.add('cell-running');
     setTimeout(() => cell.div.classList.remove('cell-running'), 600);
 
-    renderCellMarkdown(content, cell.output);
+    // 纯文本 Cell：直接显示文本不渲染
+    if (cell.type === 'plaintext') {
+      cell.output.innerHTML = '';
+      const pre = document.createElement('pre');
+      pre.textContent = content;
+      cell.output.appendChild(pre);
+      cell.output.classList.add('visible');
+    } else {
+      renderCellMarkdown(content, cell.output);
+    }
+
     markRun(cell);
     activeCellId = id;
+    // 显示输出工具栏
+    if (cell.outputToolbar) cell.outputToolbar.classList.add('visible');
+    // 滚动到输出
+    setTimeout(() => {
+      cell.output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+    // 显示"新建 Cell"提示
+    showPostRunNewCellPrompt(cell);
     updateStatusbar();
+  }
+
+  function showPostRunNewCellPrompt(cell) {
+    // 移除已存在的提示
+    cell.output.querySelectorAll('.post-run-newcell').forEach(n => n.remove());
+    const prompt = document.createElement('span');
+    prompt.className = 'post-run-newcell';
+    prompt.textContent = '+ 下方新建 Cell';
+    prompt.addEventListener('click', () => createCell(cell.id));
+    cell.output.appendChild(prompt);
   }
 
   function runAllCells() {
@@ -632,9 +859,13 @@
       const action = item.dataset.action;
       if (action === 'download-md') downloadCurrentMd();
       else if (action === 'download-html') downloadCurrentHtml();
+      else if (action === 'download-html-inline') downloadCurrentHtmlInline();
       else if (action === 'download-pdf') downloadCurrentPdf();
       else if (action === 'download-notebook') downloadNotebook();
       else if (action === 'download-all-md') downloadAllMd();
+      else if (action === 'import-mdnb') triggerImport('import-mdnb');
+      else if (action === 'import-md-cells') triggerImport('import-md-cells');
+      else if (action === 'import-md-current') triggerImport('import-md-current');
       else if (action.startsWith('insert-')) handleDynamicInsert(action);
       closeAllDropdowns();
     });
@@ -849,13 +1080,36 @@
         case 'ctx-move-up': moveCell(id, -1); break;
         case 'ctx-move-down': moveCell(id, 1); break;
         case 'ctx-duplicate': duplicateCell(id); break;
+        case 'ctx-toggle-type': {
+          const cell = getCell(id);
+          if (cell) toggleCellType(cell);
+          break;
+        }
+        case 'ctx-collapse-editor': {
+          const cell = getCell(id);
+          if (cell) cell.div.classList.toggle('cell-editor-collapsed');
+          break;
+        }
+        case 'ctx-collapse-output': {
+          const cell = getCell(id);
+          if (cell) cell.div.classList.toggle('cell-output-collapsed');
+          break;
+        }
+        case 'ctx-copy-html': {
+          const cell = getCell(id);
+          if (cell) copyOutputHtml(cell);
+          break;
+        }
+        case 'ctx-export-cell': {
+          const cell = getCell(id);
+          if (cell) exportCellStandalone(cell);
+          break;
+        }
+        case 'ctx-collapse-all': collapseAllCells(); break;
+        case 'ctx-expand-all': expandAllCells(); break;
         case 'ctx-clear-output': {
           const cell = getCell(id);
-          if (cell) {
-            cell.output.innerHTML = '';
-            cell.output.classList.remove('visible');
-            cell.statusDot.classList.remove('run');
-          }
+          if (cell) clearOutput(cell);
           break;
         }
         case 'ctx-clear-content': {
@@ -866,6 +1120,7 @@
             cell.output.classList.remove('visible');
             cell.statusDot.classList.remove('run', 'modified');
             updateCellMeta(cell);
+            updateLineNumbers(cell);
             cell.textarea.focus();
           }
           break;
@@ -1076,6 +1331,29 @@
       return;
     }
 
+    // Ctrl/Cmd + Shift + N: 下方新建 Cell
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'n' || e.key === 'N')) {
+      e.preventDefault();
+      const cellId = parseInt(textarea.dataset.cellId);
+      createCell(cellId);
+      return;
+    }
+
+    // Ctrl/Cmd + F: 全局搜索（仅在编辑器内）
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
+      e.preventDefault();
+      openSearchPanel();
+      return;
+    }
+
+    // Ctrl/Cmd + H: 替换
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'h' || e.key === 'H')) {
+      e.preventDefault();
+      openSearchPanel();
+      setTimeout(() => replaceInput.focus(), 50);
+      return;
+    }
+
     // 格式快捷键
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 'b' || e.key === 'B') {
@@ -1125,6 +1403,12 @@
 
   // ============== 状态栏 ==============
 
+  function countWords(text) {
+    const chineseChars = text.match(/[\u4e00-\u9fa5]/g) || [];
+    const englishWords = text.match(/[a-zA-Z]+/g) || [];
+    return chineseChars.length + englishWords.length;
+  }
+
   function updateStatusbar() {
     // Cell 数量
     statusCellCount.textContent = `${cells.length} Cell`;
@@ -1138,19 +1422,28 @@
       statusActive.textContent = '无活跃 Cell';
     }
 
+    // 运行统计：已运行 / 总数
+    const runCount = cells.filter(c => c.output.classList.contains('visible')).length;
+    if (statusRunStats) statusRunStats.textContent = `运行 ${runCount}/${cells.length}`;
+
     // 字数与行数（全部 Cell 汇总）
     let totalWords = 0;
     let totalLines = 0;
     cells.forEach(c => {
       const val = c.textarea.value;
       totalLines += val.split('\n').length;
-      // 中文字数 + 英文单词数
-      const chineseChars = val.match(/[\u4e00-\u9fa5]/g) || [];
-      const englishWords = val.match(/[a-zA-Z]+/g) || [];
-      totalWords += chineseChars.length + englishWords.length;
+      totalWords += countWords(val);
     });
     statusWords.textContent = `${totalWords} 字`;
     statusLines.textContent = `${totalLines} 行`;
+
+    // 当前 Cell 字数
+    const activeCell = getActiveCell();
+    if (activeCell && statusCurCellWords) {
+      statusCurCellWords.textContent = `当前 ${countWords(activeCell.textarea.value)} 字`;
+    } else if (statusCurCellWords) {
+      statusCurCellWords.textContent = '当前 0 字';
+    }
 
     // 光标位置
     const cell = getActiveCell();
@@ -1192,8 +1485,65 @@
     const html = cell.output.innerHTML;
     if (!html.trim()) { alert('请先运行当前 Cell'); return; }
     const idx = cells.findIndex(c => c.id === activeCellId) + 1;
-    const fullHtml = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Cell ${idx}</title><link rel="stylesheet" href="iris/styles.css"><link rel="stylesheet" href="iris/css/galleries.css"><link rel="stylesheet" href="iris/vendor/highlight.js/styles/github.css"><link rel="stylesheet" href="iris/vendor/katex/katex.min.css"></head><body><article class="markdown-body" style="max-width:800px;margin:40px auto;padding:0 20px;">${html}</article></body></html>`;
+    const fullHtml = buildStandaloneHtml(html, `Cell ${idx}`, false);
     downloadBlob(new Blob([fullHtml], { type: 'text/html;charset=utf-8' }), `cell-${idx}.html`);
+  }
+
+  function downloadCurrentHtmlInline() {
+    const cell = getActiveCell();
+    if (!cell) return;
+    const html = cell.output.innerHTML;
+    if (!html.trim()) { alert('请先运行当前 Cell'); return; }
+    const idx = cells.findIndex(c => c.id === activeCellId) + 1;
+    const fullHtml = buildStandaloneHtml(html, `Cell ${idx}`, true);
+    downloadBlob(new Blob([fullHtml], { type: 'text/html;charset=utf-8' }), `cell-${idx}-offline.html`);
+  }
+
+  // 构建独立 HTML（离线可用时内联 CSS）
+  function buildStandaloneHtml(bodyHtml, title, inlineCss) {
+    const styleHrefs = [
+      'iris/styles.css',
+      'iris/css/galleries.css',
+      'iris/vendor/highlight.js/styles/github.css',
+      'iris/vendor/katex/katex.min.css'
+    ];
+    let headExtra = '';
+    if (inlineCss) {
+      // 尝试内联当前页面已加载的样式表
+      const collected = [];
+      document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href) return;
+        // 仅内联 iris/ 开头的本地样式（避免抓取跨域 CDN）
+        if (!href.startsWith('iris/') && !href.startsWith('/iris/')) return;
+        const cssText = tryReadLoadedStylesheet(link);
+        if (cssText) collected.push(cssText);
+      });
+      // 编辑器暗色模式
+      if (document.body.classList.contains('editor-dark-mode')) {
+        collected.push('body{background:#1e1e2e;color:#e0e0e8;}');
+      }
+      headExtra = `<style>\n${collected.join('\n')}\n</style>`;
+    } else {
+      headExtra = styleHrefs.map(h => `<link rel="stylesheet" href="${h}">`).join('\n');
+    }
+    return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${title}</title>${headExtra}</head><body><article class="markdown-body" style="max-width:800px;margin:40px auto;padding:0 20px;">${bodyHtml}</article></body></html>`;
+  }
+
+  function tryReadLoadedStylesheet(linkEl) {
+    // 尝试从已加载的 StyleSheet.cssRules 提取文本
+    try {
+      const sheets = Array.from(document.styleSheets);
+      const href = linkEl.href;
+      const sheet = sheets.find(s => s.href === href);
+      if (!sheet) return '';
+      let css = '';
+      for (const rule of sheet.cssRules) css += rule.cssText + '\n';
+      return css;
+    } catch (e) {
+      // 跨域样式表会抛错，这里直接返回空
+      return '';
+    }
   }
 
   function downloadCurrentPdf() {
@@ -1210,11 +1560,12 @@
 
   function downloadNotebook() {
     const data = {
-      version: 1,
+      version: 2,
       type: 'mdnb',
       created: new Date().toISOString(),
       cells: cells.map(c => ({
         id: c.id,
+        type: c.type || 'markdown',
         content: c.textarea.value,
         output_html: c.output.classList.contains('visible') ? c.output.innerHTML : ''
       }))
@@ -1223,8 +1574,100 @@
   }
 
   function downloadAllMd() {
-    const content = cells.map(c => c.textarea.value).join('\n\n---\n\n');
+    const content = cells.map(c => {
+      const typeTag = c.type === 'plaintext' ? '<!-- cell: plaintext -->\n' : '';
+      return typeTag + c.textarea.value;
+    }).join('\n\n---\n\n');
     downloadBlob(new Blob([content], { type: 'text/markdown;charset=utf-8' }), 'all-cells.md');
+  }
+
+  // ============== 导入功能 ==============
+
+  function triggerImport(mode) {
+    if (!fileInput) return;
+    fileInput.dataset.mode = mode;
+    fileInput.value = '';
+    fileInput.click();
+  }
+
+  fileInput?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const mode = fileInput.dataset.mode || 'import-md-current';
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = String(ev.target.result || '');
+      if (mode === 'import-mdnb') importMdnb(text);
+      else if (mode === 'import-md-cells') importMdCells(text);
+      else if (mode === 'import-md-current') importMdCurrent(text);
+      markUnsaved();
+    };
+    reader.readAsText(file);
+  });
+
+  function importMdnb(text) {
+    let data;
+    try { data = JSON.parse(text); } catch (e) { alert('无效的 .mdnb 文件'); return; }
+    if (!data || !Array.isArray(data.cells)) { alert('文件格式不正确'); return; }
+    // 确认清空现有
+    if (cells.length > 0 && cells.some(c => c.textarea.value.trim())) {
+      if (!confirm('导入将替换当前所有 Cell，是否继续？')) return;
+    }
+    // 清空现有 Cell
+    cells.slice().forEach(c => { c.div.remove(); c.addBtn.remove(); });
+    cells.length = 0;
+    cellCounter = 0;
+    // 创建新 Cell
+    data.cells.forEach(s => {
+      const newCell = createCell(null, s.content || '', { type: s.type === 'plaintext' ? 'plaintext' : 'markdown' });
+      if (s.output_html) {
+        newCell.output.innerHTML = s.output_html;
+        newCell.output.classList.add('visible');
+        if (newCell.outputToolbar) newCell.outputToolbar.classList.add('visible');
+        markRun(newCell);
+      }
+      updateLineNumbers(newCell);
+    });
+    if (cells.length === 0) createCell();
+    renumberCells();
+    updateStatusbar();
+    showToast('已导入 ' + data.cells.length + ' 个 Cell');
+  }
+
+  function importMdCells(text) {
+    // 按 --- 分隔符切分为多个 Cell
+    const parts = text.split(/\n\s*---\s*\n/);
+    if (cells.some(c => c.textarea.value.trim())) {
+      if (!confirm('导入将替换当前所有 Cell，是否继续？')) return;
+    }
+    cells.slice().forEach(c => { c.div.remove(); c.addBtn.remove(); });
+    cells.length = 0;
+    cellCounter = 0;
+    parts.forEach(part => {
+      const trimmed = part.trim();
+      if (!trimmed) return;
+      // 检测纯文本标记
+      const isPlaintext = trimmed.startsWith('<!-- cell: plaintext -->');
+      const content = isPlaintext ? trimmed.replace(/^<!-- cell: plaintext -->\n?/, '') : trimmed;
+      const newCell = createCell(null, content, { type: isPlaintext ? 'plaintext' : 'markdown' });
+      updateLineNumbers(newCell);
+    });
+    if (cells.length === 0) createCell();
+    renumberCells();
+    updateStatusbar();
+    showToast('已导入 ' + cells.length + ' 个 Cell');
+  }
+
+  function importMdCurrent(text) {
+    const cell = getActiveCell();
+    if (!cell) { alert('没有活跃 Cell'); return; }
+    cell.textarea.value = text;
+    updateCellMeta(cell);
+    updateLineNumbers(cell);
+    markModified(cell);
+    markUnsaved();
+    updateStatusbar();
+    showToast('已导入到当前 Cell');
   }
 
   // ============== 清空所有 Cell ==============
@@ -1235,11 +1678,14 @@
       c.textarea.value = '';
       c.output.innerHTML = '';
       c.output.classList.remove('visible');
+      if (c.outputToolbar) c.outputToolbar.classList.remove('visible');
       c.statusDot.classList.remove('run', 'modified');
       c.lastRunContent = '';
       updateCellMeta(c);
+      updateLineNumbers(c);
     });
     updateStatusbar();
+    markUnsaved();
     cells[0]?.textarea.focus();
   });
 
@@ -1257,19 +1703,316 @@
       e.preventDefault();
       if (activeCellId) runCell(activeCellId);
     }
+    // 全局 F3 / Shift+F3 搜索导航
+    if (e.key === 'F3' && searchPanel && searchPanel.classList.contains('visible')) {
+      e.preventDefault();
+      if (e.shiftKey) searchNavigate(-1);
+      else searchNavigate(1);
+    }
     if (e.key === 'Escape') {
       hideContextMenu();
       hideAutocomplete();
       hideSelectionToolbar();
+      if (searchPanel && searchPanel.classList.contains('visible')) closeSearchPanel();
     }
   });
 
   // 滚动时隐藏浮动工具栏（位置会错位）
   window.addEventListener('scroll', hideSelectionToolbar, true);
 
+  // ============== localStorage 自动保存 ==============
+
+  const STORAGE_KEY = 'mdnb_autosave_v2';
+  let saveTimer = null;
+  let isUnsaved = false;
+
+  function markUnsaved() {
+    isUnsaved = true;
+    if (statusSave) {
+      statusSave.textContent = '未保存 *';
+      statusSave.style.color = '#f39c12';
+    }
+    scheduleAutosave();
+  }
+
+  function markSaved() {
+    isUnsaved = false;
+    if (statusSave) {
+      statusSave.textContent = '已保存 ✓';
+      statusSave.style.color = '#27ae60';
+    }
+  }
+
+  function scheduleAutosave() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(autosave, 1500);
+  }
+
+  function serializeNotebook() {
+    return {
+      version: 2,
+      type: 'mdnb-autosave',
+      saved: new Date().toISOString(),
+      cells: cells.map(c => ({
+        id: c.id,
+        type: c.type || 'markdown',
+        content: c.textarea.value,
+        output_html: c.output.classList.contains('visible') ? c.output.innerHTML : ''
+      }))
+    };
+  }
+
+  function autosave() {
+    try {
+      const data = serializeNotebook();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      markSaved();
+    } catch (e) {
+      if (statusSave) {
+        statusSave.textContent = '保存失败';
+        statusSave.style.color = '#e74c3c';
+      }
+    }
+  }
+
+  function loadAutosave() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.cells) || data.cells.length === 0) return false;
+      // 清空现有
+      cells.slice().forEach(c => { c.div.remove(); c.addBtn.remove(); });
+      cells.length = 0;
+      cellCounter = 0;
+      data.cells.forEach(s => {
+        const newCell = createCell(null, s.content || '', { type: s.type === 'plaintext' ? 'plaintext' : 'markdown' });
+        if (s.output_html) {
+          newCell.output.innerHTML = s.output_html;
+          newCell.output.classList.add('visible');
+          if (newCell.outputToolbar) newCell.outputToolbar.classList.add('visible');
+          markRun(newCell);
+        }
+        updateLineNumbers(newCell);
+      });
+      if (cells.length === 0) createCell();
+      renumberCells();
+      updateStatusbar();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 页面卸载前同步保存
+  window.addEventListener('beforeunload', () => {
+    if (isUnsaved) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeNotebook())); } catch (e) {}
+    }
+  });
+
+  // ============== 搜索/替换 ==============
+
+  let searchMatches = []; // [{cellId, start, end}]
+  let searchIdx = -1;
+
+  function openSearchPanel() {
+    if (!searchPanel) return;
+    searchPanel.classList.add('visible');
+    setTimeout(() => searchInput.focus(), 50);
+  }
+
+  function closeSearchPanel() {
+    if (!searchPanel) return;
+    searchPanel.classList.remove('visible');
+    searchMatches = [];
+    searchIdx = -1;
+    if (searchInfo) searchInfo.textContent = '未搜索';
+    // 清除高亮（textarea 无法真正高亮，仅清除选中）
+    const cell = getActiveCell();
+    if (cell) cell.textarea.blur();
+  }
+
+  function doSearch() {
+    const query = searchInput.value;
+    searchMatches = [];
+    searchIdx = -1;
+    if (!query) {
+      if (searchInfo) searchInfo.textContent = '请输入查找内容';
+      return;
+    }
+    const lowerQuery = query.toLowerCase();
+    cells.forEach(c => {
+      const val = c.textarea.value.toLowerCase();
+      let pos = 0;
+      while (true) {
+        const idx = val.indexOf(lowerQuery, pos);
+        if (idx === -1) break;
+        searchMatches.push({ cellId: c.id, start: idx, end: idx + query.length });
+        pos = idx + 1;
+      }
+    });
+    if (searchMatches.length === 0) {
+      if (searchInfo) searchInfo.textContent = '未找到匹配';
+    } else {
+      searchIdx = 0;
+      highlightMatch(searchMatches[0]);
+      if (searchInfo) searchInfo.textContent = `1 / ${searchMatches.length} 个匹配`;
+    }
+  }
+
+  function highlightMatch(m) {
+    const cell = getCell(m.cellId);
+    if (!cell) return;
+    activeCellId = m.cellId;
+    cell.textarea.focus();
+    cell.textarea.selectionStart = m.start;
+    cell.textarea.selectionEnd = m.end;
+    // 滚动到选区
+    const lineHeight = parseInt(getComputedStyle(cell.textarea).lineHeight) || 22;
+    const beforeText = cell.textarea.value.substring(0, m.start);
+    const line = beforeText.split('\n').length;
+    cell.textarea.scrollTop = Math.max(0, (line - 3) * lineHeight);
+  }
+
+  function searchNavigate(dir) {
+    if (searchMatches.length === 0) return;
+    searchIdx = (searchIdx + dir + searchMatches.length) % searchMatches.length;
+    highlightMatch(searchMatches[searchIdx]);
+    if (searchInfo) searchInfo.textContent = `${searchIdx + 1} / ${searchMatches.length} 个匹配`;
+  }
+
+  function replaceOne() {
+    if (searchIdx < 0 || searchIdx >= searchMatches.length) return;
+    const m = searchMatches[searchIdx];
+    const cell = getCell(m.cellId);
+    if (!cell) return;
+    const replaceText = replaceInput.value;
+    const val = cell.textarea.value;
+    cell.textarea.value = val.substring(0, m.start) + replaceText + val.substring(m.end);
+    updateCellMeta(cell);
+    updateLineNumbers(cell);
+    markModified(cell);
+    markUnsaved();
+    // 重新搜索
+    doSearch();
+  }
+
+  function replaceAll() {
+    if (!searchInput.value) return;
+    const replaceText = replaceInput.value;
+    let count = 0;
+    cells.forEach(c => {
+      const val = c.textarea.value;
+      if (val.toLowerCase().indexOf(searchInput.value.toLowerCase()) !== -1) {
+        const regex = new RegExp(escapeRegExp(searchInput.value), 'gi');
+        const before = val;
+        c.textarea.value = val.replace(regex, () => { count++; return replaceText; });
+        if (c.textarea.value !== before) {
+          updateCellMeta(c);
+          updateLineNumbers(c);
+          markModified(c);
+        }
+      }
+    });
+    markUnsaved();
+    if (searchInfo) searchInfo.textContent = `已替换 ${count} 处`;
+    searchMatches = [];
+    searchIdx = -1;
+  }
+
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // 搜索面板事件
+  if (searchBtn) searchBtn.addEventListener('click', () => {
+    if (searchPanel.classList.contains('visible')) closeSearchPanel();
+    else openSearchPanel();
+  });
+  if (searchInput) {
+    searchInput.addEventListener('input', doSearch);
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); e.shiftKey ? searchNavigate(-1) : searchNavigate(1); }
+    });
+  }
+  document.getElementById('searchPrevBtn')?.addEventListener('click', () => searchNavigate(-1));
+  document.getElementById('searchNextBtn')?.addEventListener('click', () => searchNavigate(1));
+  document.getElementById('replaceOneBtn')?.addEventListener('click', replaceOne);
+  document.getElementById('replaceAllBtn')?.addEventListener('click', replaceAll);
+  document.getElementById('searchCloseBtn')?.addEventListener('click', closeSearchPanel);
+
+  // ============== 字号调节 ==============
+
+  function applyFontSize(size) {
+    document.querySelectorAll('.cell-editor, .cell-line-numbers').forEach(el => {
+      el.style.fontSize = size + 'px';
+    });
+    try { localStorage.setItem('mdnb_fontsize', String(size)); } catch (e) {}
+    // 更新激活态
+    document.querySelectorAll('.font-size-item').forEach(it => {
+      it.classList.toggle('active', parseInt(it.dataset.size) === size);
+    });
+  }
+
+  fontSizeBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const rect = fontSizeBtn.getBoundingClientRect();
+    fontSizeMenu.style.top = (rect.bottom + 4) + 'px';
+    fontSizeMenu.style.left = rect.left + 'px';
+    fontSizeMenu.classList.toggle('visible');
+  });
+
+  document.querySelectorAll('.font-size-item').forEach(item => {
+    item.addEventListener('click', () => {
+      applyFontSize(parseInt(item.dataset.size));
+      fontSizeMenu.classList.remove('visible');
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (fontSizeMenu && !fontSizeMenu.contains(e.target) && e.target !== fontSizeBtn) {
+      fontSizeMenu.classList.remove('visible');
+    }
+  });
+
+  // ============== 主题切换 ==============
+
+  themeToggleBtn?.addEventListener('click', () => {
+    document.body.classList.toggle('editor-dark-mode');
+    const isDark = document.body.classList.contains('editor-dark-mode');
+    themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+    try { localStorage.setItem('mdnb_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+  });
+
+  function loadTheme() {
+    try {
+      const t = localStorage.getItem('mdnb_theme');
+      if (t === 'dark') {
+        document.body.classList.add('editor-dark-mode');
+        if (themeToggleBtn) themeToggleBtn.textContent = '☀️';
+      }
+    } catch (e) {}
+  }
+
   // ============== 初始化 ==============
 
-  createCell();
+  loadTheme();
+
+  // 恢复字号
+  try {
+    const savedSize = parseInt(localStorage.getItem('mdnb_fontsize'));
+    if (savedSize) applyFontSize(savedSize);
+  } catch (e) {}
+
+  // 尝试恢复自动保存
+  const restored = loadAutosave();
+  if (!restored) {
+    createCell();
+  } else {
+    showToast('已恢复上次会话');
+  }
+  markSaved();
 
   } // end initEditor()
 
