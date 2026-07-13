@@ -29,6 +29,11 @@
 | `@polaroid` | 拍立得墙：白边相框，轻微旋转错落排布 | 任意 |
 | `@stack` | 堆叠覆盖：图片相互覆盖，hover 时展开扇形 | 3-5 张 |
 | `@mosaic` | 马赛克：首张大图占两格，其余小图网格排布 | 5 张 |
+| `@carousel` | 3D 旋转木马：图片围成弧形，中间正中两侧 3D 倾斜后退 | 5 张 |
+| `@scattered` | 散落明信片：图片随机散落画布，hover 置顶拉直放大 | 6 张以内 |
+| `@hexagon` | 蜂巢六边形：图片裁切为六边形，错位蜂巢排列 | 任意 |
+| `@coverflow` | Cover Flow：中间正中放大，两侧 3D 倾斜后退，hover 整体滑动 | 5 张 |
+| `@tape` | 胶带粘贴：每张图用半透明胶带斜贴在木板上，hover 胶带绷直 | 任意 |
 
 ## 效果演示
 
@@ -86,6 +91,57 @@
 ![mosaic-3](https://picsum.photos/300/200?mos3)
 ![mosaic-4](https://picsum.photos/300/200?mos4)
 ![mosaic-5](https://picsum.photos/300/200?mos5)
+
+### `@carousel` — 3D 旋转木马
+
+@carousel
+
+![carousel-1](https://picsum.photos/400/500?car1)
+![carousel-2](https://picsum.photos/400/500?car2)
+![carousel-3](https://picsum.photos/400/500?car3)
+![carousel-4](https://picsum.photos/400/500?car4)
+![carousel-5](https://picsum.photos/400/500?car5)
+
+### `@scattered` — 散落明信片
+
+@scattered
+
+![scatter-1](https://picsum.photos/400/300?sct1)
+![scatter-2](https://picsum.photos/400/300?sct2)
+![scatter-3](https://picsum.photos/400/300?sct3)
+![scatter-4](https://picsum.photos/400/300?sct4)
+![scatter-5](https://picsum.photos/400/300?sct5)
+![scatter-6](https://picsum.photos/400/300?sct6)
+
+### `@hexagon` — 蜂巢六边形
+
+@hexagon
+
+![hex-1](https://picsum.photos/300/400?hex1)
+![hex-2](https://picsum.photos/300/400?hex2)
+![hex-3](https://picsum.photos/300/400?hex3)
+![hex-4](https://picsum.photos/300/400?hex4)
+![hex-5](https://picsum.photos/300/400?hex5)
+![hex-6](https://picsum.photos/300/400?hex6)
+
+### `@coverflow` — Cover Flow
+
+@coverflow
+
+![cov-1](https://picsum.photos/400/500?cov1)
+![cov-2](https://picsum.photos/400/500?cov2)
+![cov-3](https://picsum.photos/400/500?cov3)
+![cov-4](https://picsum.photos/400/500?cov4)
+![cov-5](https://picsum.photos/400/500?cov5)
+
+### `@tape` — 胶带粘贴
+
+@tape
+
+![tape-1](https://picsum.photos/400/300?tap1)
+![tape-2](https://picsum.photos/400/300?tap2)
+![tape-3](https://picsum.photos/400/300?tap3)
+![tape-4](https://picsum.photos/400/300?tap4)
 
 ## 自定义样式
 

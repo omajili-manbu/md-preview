@@ -9,6 +9,11 @@
  *   - polaroid   拍立得墙：白边相框，轻微旋转错落排布
  *   - stack      堆叠覆盖：图片相互覆盖，hover 时展开扇形
  *   - mosaic     马赛克：首张大图占两格，其余小图网格排布
+ *   - carousel   3D 旋转木马：图片围成弧形，中间正中两侧 3D 倾斜后退
+ *   - scattered  散落明信片：图片随机散落在画布上，hover 置顶拉直放大
+ *   - hexagon    蜂巢六边形：图片裁切为六边形，错位蜂巢排列
+ *   - coverflow  Cover Flow：中间正中放大，两侧 3D 倾斜后退，hover 整体滑动
+ *   - tape       胶带粘贴：每张图用半透明胶带斜贴在木板上，hover 胶带绷直
  *
  * 注意：所有画廊容器的基础类仍为 .image-gallery，这里通过附加
  * .image-gallery--{style} 修饰类来切换布局。
@@ -444,5 +449,513 @@
     grid-row: 2;
     grid-column: 2;
     height: 120px;
+  }
+}
+
+/* ============== @carousel — 3D 旋转木马 ============== */
+/* 图片围成圆环，整组可点击旋转方向移动一张 */
+
+.image-gallery--carousel {
+  display: block;
+  position: relative;
+  height: 360px;
+  padding: 0;
+  margin: 24px 0;
+  background: radial-gradient(ellipse at center, rgba(212, 165, 201, 0.12), transparent 70%);
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  perspective: 1200px;
+}
+
+.image-gallery--carousel img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 220px;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.6s ease,
+              filter 0.6s ease;
+  transform-origin: center center;
+  cursor: pointer;
+  --i: 0;
+  --total: 1;
+}
+
+/* 默认排列：相对中心偏移角度 = i * (360 / total) */
+.image-gallery--carousel img:nth-child(1) {
+  transform: translateX(-50%) translateX(-260px) rotateY(35deg) scale(0.85);
+  opacity: 0.55;
+  filter: brightness(0.7);
+  z-index: 1;
+}
+
+.image-gallery--carousel img:nth-child(2) {
+  transform: translateX(-50%) translateX(-130px) rotateY(20deg) scale(0.92);
+  opacity: 0.8;
+  filter: brightness(0.85);
+  z-index: 2;
+}
+
+.image-gallery--carousel img:nth-child(3) {
+  transform: translateX(-50%) rotateY(0deg) scale(1);
+  opacity: 1;
+  filter: brightness(1);
+  z-index: 5;
+}
+
+.image-gallery--carousel img:nth-child(4) {
+  transform: translateX(-50%) translateX(130px) rotateY(-20deg) scale(0.92);
+  opacity: 0.8;
+  filter: brightness(0.85);
+  z-index: 2;
+}
+
+.image-gallery--carousel img:nth-child(5) {
+  transform: translateX(-50%) translateX(260px) rotateY(-35deg) scale(0.85);
+  opacity: 0.55;
+  filter: brightness(0.7);
+  z-index: 1;
+}
+
+.image-gallery--carousel img:nth-child(n + 6) {
+  transform: translateX(-50%) scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* hover 整体时，侧边图轻微前推 */
+.image-gallery--carousel:hover img:nth-child(1) {
+  transform: translateX(-50%) translateX(-280px) rotateY(40deg) scale(0.88);
+}
+
+.image-gallery--carousel:hover img:nth-child(5) {
+  transform: translateX(-50%) translateX(280px) rotateY(-40deg) scale(0.88);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--carousel {
+    height: 280px;
+  }
+  .image-gallery--carousel img {
+    width: 160px;
+    height: 220px;
+  }
+  .image-gallery--carousel img:nth-child(1) {
+    transform: translateX(-50%) translateX(-190px) rotateY(35deg) scale(0.85);
+  }
+  .image-gallery--carousel img:nth-child(2) {
+    transform: translateX(-50%) translateX(-95px) rotateY(20deg) scale(0.92);
+  }
+  .image-gallery--carousel img:nth-child(4) {
+    transform: translateX(-50%) translateX(95px) rotateY(-20deg) scale(0.92);
+  }
+  .image-gallery--carousel img:nth-child(5) {
+    transform: translateX(-50%) translateX(190px) rotateY(-35deg) scale(0.85);
+  }
+}
+
+/* ============== @scattered — 散落明信片 ============== */
+/* 图片随机散落在画布上，每张不同角度，hover 置顶拉直放大 */
+
+.image-gallery--scattered {
+  display: block;
+  position: relative;
+  min-height: 420px;
+  padding: 24px;
+  margin: 16px 0;
+  background: linear-gradient(135deg, rgba(242, 196, 206, 0.08), rgba(212, 165, 201, 0.05));
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.image-gallery--scattered img {
+  position: absolute;
+  width: 200px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.45s ease,
+              z-index 0s;
+  cursor: pointer;
+}
+
+/* 6 张以内手动定位，营造散落感 */
+.image-gallery--scattered img:nth-child(1) {
+  top: 8%;
+  left: 6%;
+  transform: rotate(-8deg);
+}
+
+.image-gallery--scattered img:nth-child(2) {
+  top: 4%;
+  left: 38%;
+  transform: rotate(4deg);
+}
+
+.image-gallery--scattered img:nth-child(3) {
+  top: 12%;
+  left: 68%;
+  transform: rotate(-3deg);
+}
+
+.image-gallery--scattered img:nth-child(4) {
+  top: 48%;
+  left: 14%;
+  transform: rotate(6deg);
+}
+
+.image-gallery--scattered img:nth-child(5) {
+  top: 52%;
+  left: 44%;
+  transform: rotate(-5deg);
+}
+
+.image-gallery--scattered img:nth-child(6) {
+  top: 46%;
+  left: 72%;
+  transform: rotate(9deg);
+}
+
+/* 第 7 张及之后：自动流到右侧，避免重叠 */
+.image-gallery--scattered img:nth-child(n + 7) {
+  position: relative;
+  top: auto;
+  left: auto;
+  margin: 8px;
+  display: inline-block;
+  transform: rotate(0deg);
+}
+
+.image-gallery--scattered img:hover {
+  transform: rotate(0deg) scale(1.12) translateY(-12px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .image-gallery--scattered {
+    min-height: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+  }
+  .image-gallery--scattered img {
+    position: relative;
+    top: auto !important;
+    left: auto !important;
+    width: 140px;
+    height: 110px;
+  }
+  .image-gallery--scattered img:nth-child(n) {
+    transform: rotate(0deg);
+  }
+}
+
+/* ============== @hexagon — 蜂巢六边形 ============== */
+/* 图片裁切为六边形，紧密蜂巢排列 */
+
+.image-gallery--hexagon {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 4px;
+  padding: 24px;
+  margin: 16px 0;
+  background: radial-gradient(ellipse at center, rgba(212, 165, 201, 0.1), transparent 75%);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.image-gallery--hexagon img {
+  width: 180px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 0;
+  /* 六边形裁切 */
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.4s ease;
+  cursor: pointer;
+  filter: saturate(0.95);
+}
+
+/* 错位：偶数列下移半格，形成蜂巢 */
+.image-gallery--hexagon img:nth-child(even) {
+  transform: translateY(50px);
+}
+
+.image-gallery--hexagon img:hover {
+  transform: scale(1.08);
+  filter: saturate(1.2) brightness(1.05);
+  z-index: 2;
+  position: relative;
+}
+
+/* 偶数列 hover 时保持偏移 */
+.image-gallery--hexagon img:nth-child(even):hover {
+  transform: translateY(50px) scale(1.08);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--hexagon {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 2px;
+    padding: 16px;
+  }
+  .image-gallery--hexagon img {
+    width: 140px;
+    height: 155px;
+  }
+  .image-gallery--hexagon img:nth-child(even) {
+    transform: translateY(40px);
+  }
+  .image-gallery--hexagon img:nth-child(even):hover {
+    transform: translateY(40px) scale(1.08);
+  }
+}
+
+/* ============== @coverflow — Cover Flow ============== */
+/* 中间一张正中放大，两侧 3D 倾斜后退，hover 整体滑动 */
+
+.image-gallery--coverflow {
+  display: block;
+  position: relative;
+  height: 340px;
+  padding: 0;
+  margin: 24px 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(212, 165, 201, 0.06) 50%, transparent 100%);
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  perspective: 1500px;
+}
+
+.image-gallery--coverflow img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 260px;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.55s ease,
+              filter 0.55s ease;
+  transform-origin: center bottom;
+  cursor: pointer;
+}
+
+.image-gallery--coverflow img:nth-child(1) {
+  transform: translate(-50%, -50%) translateX(-360px) rotateY(45deg) scale(0.7);
+  opacity: 0.4;
+  filter: brightness(0.6) blur(1px);
+  z-index: 1;
+}
+
+.image-gallery--coverflow img:nth-child(2) {
+  transform: translate(-50%, -50%) translateX(-200px) rotateY(35deg) scale(0.82);
+  opacity: 0.65;
+  filter: brightness(0.75) blur(0.5px);
+  z-index: 2;
+}
+
+.image-gallery--coverflow img:nth-child(3) {
+  transform: translate(-50%, -50%) rotateY(0deg) scale(1.05);
+  opacity: 1;
+  filter: brightness(1);
+  z-index: 5;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.image-gallery--coverflow img:nth-child(4) {
+  transform: translate(-50%, -50%) translateX(200px) rotateY(-35deg) scale(0.82);
+  opacity: 0.65;
+  filter: brightness(0.75) blur(0.5px);
+  z-index: 2;
+}
+
+.image-gallery--coverflow img:nth-child(5) {
+  transform: translate(-50%, -50%) translateX(360px) rotateY(-45deg) scale(0.7);
+  opacity: 0.4;
+  filter: brightness(0.6) blur(1px);
+  z-index: 1;
+}
+
+.image-gallery--coverflow img:nth-child(n + 6) {
+  transform: translate(-50%, -50%) scale(0.4);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* hover 时整体向左滑动一张（露出右侧更多） */
+.image-gallery--coverflow:hover img:nth-child(1) {
+  transform: translate(-50%, -50%) translateX(-460px) rotateY(50deg) scale(0.6);
+  opacity: 0.2;
+}
+
+.image-gallery--coverflow:hover img:nth-child(2) {
+  transform: translate(-50%, -50%) translateX(-300px) rotateY(42deg) scale(0.7);
+  opacity: 0.45;
+}
+
+.image-gallery--coverflow:hover img:nth-child(3) {
+  transform: translate(-50%, -50%) translateX(-140px) rotateY(30deg) scale(0.9);
+  opacity: 0.85;
+  filter: brightness(0.9);
+}
+
+.image-gallery--coverflow:hover img:nth-child(4) {
+  transform: translate(-50%, -50%) rotateY(0deg) scale(1.05);
+  opacity: 1;
+  filter: brightness(1);
+  z-index: 5;
+}
+
+.image-gallery--coverflow:hover img:nth-child(5) {
+  transform: translate(-50%, -50%) translateX(200px) rotateY(-35deg) scale(0.82);
+  opacity: 0.65;
+  filter: brightness(0.75);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--coverflow {
+    height: 260px;
+  }
+  .image-gallery--coverflow img {
+    width: 180px;
+    height: 220px;
+  }
+  .image-gallery--coverflow img:nth-child(1) {
+    transform: translate(-50%, -50%) translateX(-250px) rotateY(45deg) scale(0.7);
+  }
+  .image-gallery--coverflow img:nth-child(2) {
+    transform: translate(-50%, -50%) translateX(-140px) rotateY(35deg) scale(0.82);
+  }
+  .image-gallery--coverflow img:nth-child(3) {
+    transform: translate(-50%, -50%) rotateY(0deg) scale(1.05);
+  }
+  .image-gallery--coverflow img:nth-child(4) {
+    transform: translate(-50%, -50%) translateX(140px) rotateY(-35deg) scale(0.82);
+  }
+  .image-gallery--coverflow img:nth-child(5) {
+    transform: translate(-50%, -50%) translateX(250px) rotateY(-45deg) scale(0.7);
+  }
+}
+
+/* ============== @tape — 胶带粘贴 ============== */
+/* 每张图片用半透明胶带斜贴在木板上，hover 胶带绷直 */
+
+.image-gallery--tape {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px 40px;
+  padding: 40px 20px;
+  margin: 16px 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(180, 140, 100, 0.04) 0,
+      rgba(180, 140, 100, 0.04) 2px,
+      transparent 2px,
+      transparent 40px
+    ),
+    linear-gradient(135deg, rgba(212, 165, 201, 0.06), rgba(242, 196, 206, 0.04));
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.image-gallery--tape img {
+  position: relative;
+  width: 220px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 2px;
+  padding: 8px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+
+/* 胶带：用伪元素覆盖在图片上方，半透明带锯齿边 */
+.image-gallery--tape img::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 80px;
+  height: 28px;
+  transform: translateX(-50%) rotate(-3deg);
+  background: rgba(255, 235, 150, 0.55);
+  /* 锯齿边缘：用 mask 渐变模拟撕边 */
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%),
+    radial-gradient(circle 2px at 50% 0, transparent 98%, #000 100%);
+  mask-image:
+    linear-gradient(90deg, transparent 0, #000 4px, #000 calc(100% - 4px), transparent 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+/* 每张图不同角度 + 胶带角度微调 */
+.image-gallery--tape img:nth-child(odd) {
+  transform: rotate(-2deg);
+}
+
+.image-gallery--tape img:nth-child(odd)::before {
+  transform: translateX(-50%) rotate(-6deg);
+}
+
+.image-gallery--tape img:nth-child(even) {
+  transform: rotate(3deg);
+}
+
+.image-gallery--tape img:nth-child(even)::before {
+  transform: translateX(-50%) rotate(5deg);
+}
+
+.image-gallery--tape img:nth-child(3n) {
+  transform: rotate(-4deg) translateY(6px);
+}
+
+.image-gallery--tape img:nth-child(3n)::before {
+  transform: translateX(-50%) rotate(8deg);
+}
+
+.image-gallery--tape img:hover {
+  transform: rotate(0deg) scale(1.06) translateY(-6px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  z-index: 5;
+}
+
+.image-gallery--tape img:hover::before {
+  transform: translateX(-50%) rotate(0deg);
+  background: rgba(255, 220, 120, 0.7);
+}
+
+@media (max-width: 768px) {
+  .image-gallery--tape {
+    gap: 24px 20px;
+    padding: 28px 12px;
+  }
+  .image-gallery--tape img {
+    width: 150px;
+    height: 110px;
+    padding: 6px;
+  }
+  .image-gallery--tape img::before {
+    width: 56px;
+    height: 20px;
+    top: -8px;
   }
 }

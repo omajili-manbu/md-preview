@@ -376,7 +376,7 @@
       if (markerMatch) {
         const style = markerMatch[1].toLowerCase();
         // 仅识别已注册的画廊样式，未知的原样输出
-        const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic'];
+        const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic', 'carousel', 'scattered', 'hexagon', 'coverflow', 'tape'];
         if (knownStyles.includes(style)) {
           return `<p class="gallery-style-marker" data-style="${style}"></p>`;
         }
