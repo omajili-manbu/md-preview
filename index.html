@@ -464,25 +464,46 @@
               <button class="dropdown-item" data-insert="## ">H2 标题</button>
               <button class="dropdown-item" data-insert="### ">H3 标题</button>
               <button class="dropdown-item" data-insert="#### ">H4 标题</button>
+              <button class="dropdown-item" data-insert="##### ">H5 标题</button>
+              <button class="dropdown-item" data-insert="###### ">H6 标题</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">格式</div>
               <button class="dropdown-item" data-insert="**粗体**" data-cursor="-4">粗体 <kbd>Ctrl+B</kbd></button>
               <button class="dropdown-item" data-insert="*斜体*" data-cursor="-2">斜体 <kbd>Ctrl+I</kbd></button>
+              <button class="dropdown-item" data-insert="***粗斜体***" data-cursor="-6">粗斜体</button>
               <button class="dropdown-item" data-insert="~~删除线~~" data-cursor="-4">删除线</button>
               <button class="dropdown-item" data-insert="`行内代码`" data-cursor="-2">行内代码 <kbd>Ctrl+`</kbd></button>
+              <button class="dropdown-item" data-insert="==高亮==" data-cursor="-4">高亮标记</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">列表</div>
+              <button class="dropdown-item" data-insert="- ">无序列表</button>
+              <button class="dropdown-item" data-insert="1. ">有序列表</button>
+              <button class="dropdown-item" data-insert="- [ ] ">任务列表</button>
+              <button class="dropdown-item" data-insert="- [x] ">已完成任务</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">插入</div>
-              <button class="dropdown-item" data-insert="[链接文字](url)">链接 <kbd>Ctrl+K</kbd></button>
+              <button class="dropdown-item" data-insert="[链接文字](url)" data-cursor="-4">链接 <kbd>Ctrl+K</kbd></button>
+              <button class="dropdown-item" data-insert="[链接文字](url &quot;提示标题&quot;)" data-cursor="-16">带标题链接</button>
               <button class="dropdown-item" data-insert="![图片描述](url)">图片</button>
+              <button class="dropdown-item" data-insert="![图片描述](url &quot;宽 600&quot;)">带尺寸图片</button>
               <button class="dropdown-item" data-insert="\n```\n\n```\n" data-cursor="-5">代码块</button>
-              <button class="dropdown-item" data-insert="\n| 列1 | 列2 | 列3 |\n|------|------|------|\n| 内容 | 内容 | 内容 |\n">表格</button>
               <button class="dropdown-item" data-insert="> ">引用</button>
-              <button class="dropdown-item" data-insert="- ">无序列表</button>
-              <button class="dropdown-item" data-insert="1. ">有序列表</button>
-              <button class="dropdown-item" data-insert="> [ ] 任务项">任务列表</button>
               <button class="dropdown-item" data-insert="---\n">分隔线</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">表格</div>
+              <button class="dropdown-item" data-insert="\n| 列1 | 列2 |\n|------|------|\n| 内容 | 内容 |\n">2 列表格</button>
+              <button class="dropdown-item" data-insert="\n| 列1 | 列2 | 列3 |\n|------|------|------|\n| 内容 | 内容 | 内容 |\n">3 列表格</button>
+              <button class="dropdown-item" data-insert="\n| 列1 | 列2 | 列3 | 列4 |\n|------|------|------|------|\n| 内容 | 内容 | 内容 | 内容 |\n">4 列表格</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">脚注 / 引用</div>
+              <button class="dropdown-item" data-insert="[^1]: 脚注内容" data-cursor="-5">脚注定义</button>
+              <button class="dropdown-item" data-insert="文字[^1]" data-cursor="-1">脚注引用</button>
+              <button class="dropdown-item" data-insert="[1]: https://">引用式链接定义</button>
             </div>
           </div>
         </div>
@@ -491,12 +512,32 @@
         <div class="toolbar-dropdown" data-dropdown="html">
           <button class="toolbar-btn" title="HTML 原生标签">HTML ▾</button>
           <div class="dropdown-menu" id="dropdownHtml">
-            <button class="dropdown-item" data-insert="<details>\n<summary>点击展开</summary>\n\n内容\n\n</details>" data-cursor="-15">折叠面板</button>
-            <button class="dropdown-item" data-insert="<mark>高亮文字</mark>" data-cursor="-8">高亮 mark</button>
-            <button class="dropdown-item" data-insert="H<sub>2</sub>O">下标 sub</button>
-            <button class="dropdown-item" data-insert="x<sup>2</sup>" >上标 sup</button>
-            <button class="dropdown-item" data-insert="<abbr title=\"全称\">缩写</abbr>">缩写 abbr</button>
-            <button class="dropdown-item" data-insert="<kbd>Ctrl+C</kbd>">键盘键位 kbd</button>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">文本样式</div>
+              <button class="dropdown-item" data-insert="<mark>高亮文字</mark>" data-cursor="-8">高亮 mark</button>
+              <button class="dropdown-item" data-insert="<u>下划线</u>" data-cursor="-5">下划线 u</button>
+              <button class="dropdown-item" data-insert="<small>小号文字</small>" data-cursor="-8">小号 small</button>
+              <button class="dropdown-item" data-insert="H<sub>2</sub>O">下标 sub</button>
+              <button class="dropdown-item" data-insert="x<sup>2</sup>">上标 sup</button>
+              <button class="dropdown-item" data-insert="<kbd>Ctrl+C</kbd>" data-cursor="-7">键盘键位 kbd</button>
+              <button class="dropdown-item" data-insert="<abbr title=&quot;全称&quot;>缩写</abbr>" data-cursor="-8">缩写 abbr</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">结构与布局</div>
+              <button class="dropdown-item" data-insert="<details>\n<summary>点击展开</summary>\n\n内容\n\n</details>" data-cursor="-15">折叠面板 details</button>
+              <button class="dropdown-item" data-insert="<div align=&quot;center&quot;>\n居中内容\n</div>" data-cursor="-7">居中对齐</button>
+              <button class="dropdown-item" data-insert="<dl>\n<dt>术语</dt>\n<dd>定义内容</dd>\n</dl>" data-cursor="-6">定义列表 dl</button>
+              <button class="dropdown-item" data-insert="<br>">换行 br</button>
+              <button class="dropdown-item" data-insert="<hr>">水平线 hr</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">颜色与注释</div>
+              <button class="dropdown-item" data-insert="<span style=&quot;color: #e74c3c&quot;>红色文字</span>" data-cursor="-8">红色文字</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color: #3498db&quot;>蓝色文字</span>" data-cursor="-8">蓝色文字</button>
+              <button class="dropdown-item" data-insert="<span style=&quot;color: #2ecc71&quot;>绿色文字</span>" data-cursor="-8">绿色文字</button>
+              <button class="dropdown-item" data-insert="<font color=&quot;#9b59b6&quot;>紫色文字</font>" data-cursor="-8">紫色文字</button>
+              <button class="dropdown-item" data-insert="<!-- 这是一条注释 -->" data-cursor="-4">HTML 注释</button>
+            </div>
           </div>
         </div>
 
@@ -533,8 +574,9 @@
               <button class="dropdown-item" data-insert="> [!CAUTION]\n> ">[!CAUTION] 谨慎</button>
             </div>
             <div class="dropdown-group">
-              <div class="dropdown-group-title">其他</div>
-              <button class="dropdown-item" data-insert="---\ntitle: \ndate: \n---\n">Frontmatter 头信息</button>
+              <div class="dropdown-group-title">文档结构</div>
+              <button class="dropdown-item" data-insert="---\ntitle: \ndate: \ntags: []\n---\n" data-cursor="-5">Frontmatter 头信息</button>
+              <button class="dropdown-item" data-insert="<!-- TOC -->\n- [标题1](#标题1)\n- [标题2](#标题2)\n<!-- /TOC -->\n" data-cursor="-1">目录 TOC</button>
             </div>
           </div>
         </div>
@@ -544,22 +586,84 @@
           <button class="toolbar-btn" title="集成的工具渲染语法">工具渲染 ▾</button>
           <div class="dropdown-menu" id="dropdownTools">
             <div class="dropdown-group">
-              <div class="dropdown-group-title">图表</div>
-              <button class="dropdown-item" data-insert="```mermaid\ngraph TD\n    A --> B\n```" data-cursor="-6">Mermaid 流程图</button>
-              <button class="dropdown-item" data-insert="```mermaid\nsequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi\n```" data-cursor="-6">Mermaid 时序图</button>
-              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nAlice -> Bob: Hello\n@enduml\n```" data-cursor="-6">PlantUML 时序图</button>
-              <button class="dropdown-item" data-insert="```apexcharts\n{\"chart\":{\"type\":\"bar\"},\"series\":[{\"data\":[30,40,35]}],\"xaxis\":{\"categories\":[\"A\",\"B\",\"C\"]}}\n```" data-cursor="-6">ApexCharts 柱状图</button>
-              <button class="dropdown-item" data-insert="```apexcharts\n{\"chart\":{\"type\":\"line\"},\"series\":[{\"data\":[10,20,15,30]}],\"xaxis\":{\"categories\":[\"1\",\"2\",\"3\",\"4\"]}}\n```" data-cursor="-6">ApexCharts 折线图</button>
+              <div class="dropdown-group-title">Mermaid 图表</div>
+              <button class="dropdown-item" data-insert="```mermaid\ngraph TD\n    A --> B\n```" data-cursor="-6">流程图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nsequenceDiagram\n    Alice->>Bob: Hello\n    Bob-->>Alice: Hi\n```" data-cursor="-6">时序图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nclassDiagram\n    class Animal {\n        +String name\n        +makeSound()\n    }\n    class Dog {\n        +fetch()\n    }\n    Animal <|-- Dog\n```" data-cursor="-6">类图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nstateDiagram-v2\n    [*] --> 待机\n    待机 --> 运行: 启动\n    运行 --> [*]: 停止\n```" data-cursor="-6">状态图</button>
+              <button class="dropdown-item" data-insert="```mermaid\ngantt\n    title 项目计划\n    dateFormat YYYY-MM-DD\n    section 阶段一\n    任务1 :a1, 2024-01-01, 7d\n    任务2 :after a1, 5d\n```" data-cursor="-6">甘特图</button>
+              <button class="dropdown-item" data-insert="```mermaid\npie title 占比\n    &quot;A&quot; : 40\n    &quot;B&quot; : 35\n    &quot;C&quot; : 25\n```" data-cursor="-6">饼图</button>
+              <button class="dropdown-item" data-insert="```mermaid\nerDiagram\n    CUSTOMER ||--o{ ORDER : places\n    ORDER ||--|{ LINE-ITEM : contains\n```" data-cursor="-6">ER 关系图</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">PlantUML</div>
+              <button class="dropdown-item" data-insert="```plantuml\n@startuml\nAlice -> Bob: Hello\nBob --> Alice: Hi\n@enduml\n```" data-cursor="-6">PlantUML 时序图</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">ApexCharts</div>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;bar&quot;},&quot;series&quot;:[{&quot;data&quot;:[30,40,35]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;]}}\n```" data-cursor="-6">柱状图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;line&quot;},&quot;series&quot;:[{&quot;data&quot;:[10,20,15,30]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;]}}\n```" data-cursor="-6">折线图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;pie&quot;},&quot;series&quot;:[30,40,30],&quot;labels&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;]}\n```" data-cursor="-6">饼图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;area&quot;},&quot;series&quot;:[{&quot;data&quot;:[10,20,15,30,25]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,&quot;5&quot;]}}\n```" data-cursor="-6">面积图</button>
+              <button class="dropdown-item" data-insert="```apexcharts\n{&quot;chart&quot;:{&quot;type&quot;:&quot;radar&quot;},&quot;series&quot;:[{&quot;data&quot;:[80,50,90,70,60]}],&quot;xaxis&quot;:{&quot;categories&quot;:[&quot;速度&quot;,&quot;力量&quot;,&quot;技巧&quot;,&quot;耐力&quot;,&quot;智力&quot;]}}\n```" data-cursor="-6">雷达图</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">代码与数学</div>
               <button class="dropdown-item" data-insert="```diff\n+ 新增行\n- 删除行\n```" data-cursor="-6">Diff 差异</button>
-              <button class="dropdown-item" data-insert="$$\nE = mc^2\n$$" data-cursor="-4">KaTeX 数学公式块</button>
+              <button class="dropdown-item" data-insert="$$\nE = mc^2\n$$" data-cursor="-4">KaTeX 公式块</button>
               <button class="dropdown-item" data-insert="$E = mc^2$" data-cursor="-1">KaTeX 行内公式</button>
             </div>
             <div class="dropdown-group">
               <div class="dropdown-group-title">地理</div>
-              <button class="dropdown-item" data-insert="```geo\n{\"lat\":39.9042,\"lng\":116.4074,\"zoom\":12}\n```" data-cursor="-6">Geo 地图</button>
+              <button class="dropdown-item" data-insert="```geo\n{&quot;lat&quot;:39.9042,&quot;lng&quot;:116.4074,&quot;zoom&quot;:12}\n```" data-cursor="-6">Geo 地图 (北京)</button>
+              <button class="dropdown-item" data-insert="```geo\n{&quot;lat&quot;:31.2304,&quot;lng&quot;:121.4737,&quot;zoom&quot;:12}\n```" data-cursor="-6">Geo 地图 (上海)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 插入（动态内容） -->
+        <div class="toolbar-dropdown" data-dropdown="insert">
+          <button class="toolbar-btn" title="插入动态内容">插入 ▾</button>
+          <div class="dropdown-menu" id="dropdownInsert">
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">日期时间</div>
+              <button class="dropdown-item" data-action="insert-date">当前日期 (YYYY-MM-DD)</button>
+              <button class="dropdown-item" data-action="insert-time">当前时间 (HH:MM:SS)</button>
+              <button class="dropdown-item" data-action="insert-datetime">日期时间</button>
+              <button class="dropdown-item" data-action="insert-timestamp">Unix 时间戳</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">占位图片</div>
+              <button class="dropdown-item" data-action="insert-placeholder-300">300×200 占位图</button>
+              <button class="dropdown-item" data-action="insert-placeholder-600">600×400 占位图</button>
+              <button class="dropdown-item" data-action="insert-placeholder-1200">1200×600 横幅</button>
+              <button class="dropdown-item" data-action="insert-placeholder-square">500×500 方图</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">颜色色块</div>
+              <button class="dropdown-item" data-insert="🟥 红色标记">🟥 红色</button>
+              <button class="dropdown-item" data-insert="🟧 橙色标记">🟧 橙色</button>
+              <button class="dropdown-item" data-insert="🟨 黄色标记">🟨 黄色</button>
+              <button class="dropdown-item" data-insert="🟩 绿色标记">🟩 绿色</button>
+              <button class="dropdown-item" data-insert="🟦 蓝色标记">🟦 蓝色</button>
+              <button class="dropdown-item" data-insert="🟪 紫色标记">🟪 紫色</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">常用 Emoji</div>
+              <button class="dropdown-item" data-insert="✅ ">✅ 完成</button>
+              <button class="dropdown-item" data-insert="❌ ">❌ 失败</button>
+              <button class="dropdown-item" data-insert="⚠️ ">⚠️ 警告</button>
+              <button class="dropdown-item" data-insert="💡 ">💡 提示</button>
+              <button class="dropdown-item" data-insert="🔥 ">🔥 热门</button>
+              <button class="dropdown-item" data-insert="📌 ">📌 置顶</button>
+              <button class="dropdown-item" data-insert="📝 ">📝 笔记</button>
+              <button class="dropdown-item" data-insert="🚀 ">🚀 发布</button>
+            </div>
+            <div class="dropdown-group">
+              <div class="dropdown-group-title">分隔线样式</div>
+              <button class="dropdown-item" data-insert="---\n">--- 水平线</button>
+              <button class="dropdown-item" data-insert="***\n">*** 星号线</button>
+              <button class="dropdown-item" data-insert="___\n">___ 下划线</button>
             </div>
           </div>
         </div>

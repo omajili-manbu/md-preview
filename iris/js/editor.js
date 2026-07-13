@@ -56,25 +56,90 @@
   // ============== 画廊样式注册 ==============
   const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic', 'scattered', 'hexagon', 'coverflow', 'tape', 'duotone', 'frame', 'arch', 'masonry', 'slider', 'ticket', 'panorama'];
 
-  // 自动补全条目
+  // ============== 自动补全：多触发器条目库 ==============
+  // 每个条目：{ trigger: 触发前缀, label, desc, insert, replaceLength: 替换前缀长度 }
   const autocompleteItems = [
-    { label: '@grid', desc: '默认网格', insert: '@grid\n' },
-    { label: '@cardstack', desc: '扑克牌堆', insert: '@cardstack\n' },
-    { label: '@filmstrip', desc: '胶片条', insert: '@filmstrip\n' },
-    { label: '@polaroid', desc: '拍立得墙', insert: '@polaroid\n' },
-    { label: '@stack', desc: '堆叠覆盖', insert: '@stack\n' },
-    { label: '@mosaic', desc: '马赛克', insert: '@mosaic\n' },
-    { label: '@scattered', desc: '散落明信片', insert: '@scattered\n' },
-    { label: '@hexagon', desc: '蜂巢六边形', insert: '@hexagon\n' },
-    { label: '@coverflow', desc: 'Cover Flow', insert: '@coverflow\n' },
-    { label: '@tape', desc: '软木板留言墙', insert: '@tape\n' },
-    { label: '@duotone', desc: '双色调', insert: '@duotone\n' },
-    { label: '@frame', desc: '画框装裱', insert: '@frame\n' },
-    { label: '@arch', desc: '拱形画廊', insert: '@arch\n' },
-    { label: '@masonry', desc: '瀑布流', insert: '@masonry\n' },
-    { label: '@slider', desc: '幻灯片', insert: '@slider\n' },
-    { label: '@ticket', desc: '票根', insert: '@ticket\n' },
-    { label: '@panorama', desc: '全景横幅', insert: '@panorama\n' },
+    // @ 画廊样式
+    { trigger: '@', label: '@grid', desc: '默认网格', insert: '@grid\n', replaceLength: 1 },
+    { trigger: '@', label: '@cardstack', desc: '扑克牌堆', insert: '@cardstack\n', replaceLength: 1 },
+    { trigger: '@', label: '@filmstrip', desc: '胶片条', insert: '@filmstrip\n', replaceLength: 1 },
+    { trigger: '@', label: '@polaroid', desc: '拍立得墙', insert: '@polaroid\n', replaceLength: 1 },
+    { trigger: '@', label: '@stack', desc: '堆叠覆盖', insert: '@stack\n', replaceLength: 1 },
+    { trigger: '@', label: '@mosaic', desc: '马赛克', insert: '@mosaic\n', replaceLength: 1 },
+    { trigger: '@', label: '@scattered', desc: '散落明信片', insert: '@scattered\n', replaceLength: 1 },
+    { trigger: '@', label: '@hexagon', desc: '蜂巢六边形', insert: '@hexagon\n', replaceLength: 1 },
+    { trigger: '@', label: '@coverflow', desc: 'Cover Flow', insert: '@coverflow\n', replaceLength: 1 },
+    { trigger: '@', label: '@tape', desc: '软木板留言墙', insert: '@tape\n', replaceLength: 1 },
+    { trigger: '@', label: '@duotone', desc: '双色调', insert: '@duotone\n', replaceLength: 1 },
+    { trigger: '@', label: '@frame', desc: '画框装裱', insert: '@frame\n', replaceLength: 1 },
+    { trigger: '@', label: '@arch', desc: '拱形画廊', insert: '@arch\n', replaceLength: 1 },
+    { trigger: '@', label: '@masonry', desc: '瀑布流', insert: '@masonry\n', replaceLength: 1 },
+    { trigger: '@', label: '@slider', desc: '幻灯片', insert: '@slider\n', replaceLength: 1 },
+    { trigger: '@', label: '@ticket', desc: '票根', insert: '@ticket\n', replaceLength: 1 },
+    { trigger: '@', label: '@panorama', desc: '全景横幅', insert: '@panorama\n', replaceLength: 1 },
+    // ``` 代码块语言
+    { trigger: '```', label: '```mermaid', desc: 'Mermaid 图表', insert: '```mermaid\ngraph TD\n    A --> B\n```', replaceLength: 3 },
+    { trigger: '```', label: '```plantuml', desc: 'PlantUML 时序图', insert: '```plantuml\n@startuml\nAlice -> Bob: Hello\n@enduml\n```', replaceLength: 3 },
+    { trigger: '```', label: '```apexcharts', desc: 'ApexCharts 图表', insert: '```apexcharts\n{"chart":{"type":"bar"},"series":[{"data":[30,40,35]}]}\n```', replaceLength: 3 },
+    { trigger: '```', label: '```diff', desc: 'Diff 差异', insert: '```diff\n+ 新增\n- 删除\n```', replaceLength: 3 },
+    { trigger: '```', label: '```geo', desc: 'Geo 地图', insert: '```geo\n{"lat":39.9042,"lng":116.4074,"zoom":12}\n```', replaceLength: 3 },
+    { trigger: '```', label: '```javascript', desc: 'JavaScript', insert: '```javascript\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```python', desc: 'Python', insert: '```python\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```bash', desc: 'Shell', insert: '```bash\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```json', desc: 'JSON', insert: '```json\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```html', desc: 'HTML', insert: '```html\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```css', desc: 'CSS', insert: '```css\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```sql', desc: 'SQL', insert: '```sql\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```yaml', desc: 'YAML', insert: '```yaml\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```typescript', desc: 'TypeScript', insert: '```typescript\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```go', desc: 'Go', insert: '```go\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```rust', desc: 'Rust', insert: '```rust\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```java', desc: 'Java', insert: '```java\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```c', desc: 'C', insert: '```c\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```cpp', desc: 'C++', insert: '```cpp\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```ruby', desc: 'Ruby', insert: '```ruby\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```php', desc: 'PHP', insert: '```php\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```swift', desc: 'Swift', insert: '```swift\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```kotlin', desc: 'Kotlin', insert: '```kotlin\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```dockerfile', desc: 'Dockerfile', insert: '```dockerfile\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```nginx', desc: 'Nginx', insert: '```nginx\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```ini', desc: 'INI', insert: '```ini\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```xml', desc: 'XML', insert: '```xml\n\n```', replaceLength: 3 },
+    { trigger: '```', label: '```markdown', desc: 'Markdown', insert: '```markdown\n\n```', replaceLength: 3 },
+    // > [! GitHub Alert
+    { trigger: '> [!', label: '> [!NOTE]', desc: '提示', insert: '> [!NOTE]\n> ', replaceLength: 4 },
+    { trigger: '> [!', label: '> [!IMPORTANT]', desc: '重要', insert: '> [!IMPORTANT]\n> ', replaceLength: 4 },
+    { trigger: '> [!', label: '> [!WARNING]', desc: '警告', insert: '> [!WARNING]\n> ', replaceLength: 4 },
+    { trigger: '> [!', label: '> [!TIP]', desc: '建议', insert: '> [!TIP]\n> ', replaceLength: 4 },
+    { trigger: '> [!', label: '> [!CAUTION]', desc: '谨慎', insert: '> [!CAUTION]\n> ', replaceLength: 4 },
+    // # 标题
+    { trigger: '#', label: '# 一级标题', desc: 'H1', insert: '# ', replaceLength: 1 },
+    { trigger: '#', label: '## 二级标题', desc: 'H2', insert: '## ', replaceLength: 1 },
+    { trigger: '#', label: '### 三级标题', desc: 'H3', insert: '### ', replaceLength: 1 },
+    { trigger: '#', label: '#### 四级标题', desc: 'H4', insert: '#### ', replaceLength: 1 },
+    { trigger: '#', label: '##### 五级标题', desc: 'H5', insert: '##### ', replaceLength: 1 },
+    { trigger: '#', label: '###### 六级标题', desc: 'H6', insert: '###### ', replaceLength: 1 },
+    // - 列表
+    { trigger: '-', label: '- 无序列表', desc: 'Bullet list', insert: '- ', replaceLength: 1 },
+    { trigger: '-', label: '- [ ] 任务列表', desc: 'Task list', insert: '- [ ] ', replaceLength: 1 },
+    // | 表格
+    { trigger: '|', label: '| 表格 (2 列)', desc: '2 列表格', insert: '| 列1 | 列2 |\n| --- | --- |\n|  |  |\n', replaceLength: 1 },
+    { trigger: '|', label: '| 表格 (3 列)', desc: '3 列表格', insert: '| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n|  |  |  |\n', replaceLength: 1 },
+    { trigger: '|', label: '| 表格 (4 列)', desc: '4 列表格', insert: '| 列1 | 列2 | 列3 | 列4 |\n| --- | --- | --- | --- |\n|  |  |  |  |\n', replaceLength: 1 },
+    // --- 水平线 / Frontmatter
+    { trigger: '---', label: '--- 水平分割线', desc: 'Horizontal rule', insert: '---\n', replaceLength: 3 },
+    { trigger: '---', label: '--- Frontmatter', desc: 'YAML 文档头', insert: '---\ntitle: \ndate: \n---\n', replaceLength: 3 },
+    // > 普通引用
+    { trigger: '>', label: '> 引用', desc: 'Blockquote', insert: '> ', replaceLength: 1 },
+    // $$ KaTeX 公式块
+    { trigger: '$$', label: '$$ 公式块', desc: 'KaTeX block', insert: '$$\n\n$$', replaceLength: 2 },
+    // ![ 图片
+    { trigger: '![', label: '![alt](url) 图片', desc: '图片', insert: '![](https://)', replaceLength: 2 },
+    { trigger: '![', label: '![alt](url "标题") 带标题图片', desc: '带标题', insert: '![](https:// "标题")', replaceLength: 2 },
+    // [ 链接
+    { trigger: '[', label: '[text](url) 链接', desc: '超链接', insert: '[](https://)', replaceLength: 1 },
+    { trigger: '[', label: '[text](url "标题") 带标题链接', desc: '带标题', insert: '[](https:// "标题")', replaceLength: 1 },
+    { trigger: '[', label: '[ref]: url 引用链接', desc: '引用式', insert: '[1]: https://', replaceLength: 1 },
   ];
 
   // ============== DOM 引用 ==============
@@ -560,7 +625,7 @@
     });
   });
 
-  // 下载按钮点击
+  // 下载 / 动态插入按钮点击
   document.querySelectorAll('.dropdown-item[data-action]').forEach(item => {
     item.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -570,9 +635,42 @@
       else if (action === 'download-pdf') downloadCurrentPdf();
       else if (action === 'download-notebook') downloadNotebook();
       else if (action === 'download-all-md') downloadAllMd();
+      else if (action.startsWith('insert-')) handleDynamicInsert(action);
       closeAllDropdowns();
     });
   });
+
+  // ============== 动态内容插入 ==============
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function handleDynamicInsert(action) {
+    const cell = getActiveCell();
+    if (!cell) return;
+    const now = new Date();
+    let text = '';
+
+    if (action === 'insert-date') {
+      text = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+    } else if (action === 'insert-time') {
+      text = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+    } else if (action === 'insert-datetime') {
+      text = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    } else if (action === 'insert-timestamp') {
+      text = String(Math.floor(now.getTime() / 1000));
+    } else if (action.startsWith('insert-placeholder')) {
+      const sizes = {
+        'insert-placeholder-300': '300/200',
+        'insert-placeholder-600': '600/400',
+        'insert-placeholder-1200': '1200/600',
+        'insert-placeholder-square': '500/500',
+      };
+      const size = sizes[action] || '300/200';
+      text = `![占位图](https://placehold.co/${size})`;
+    }
+
+    if (text) insertAtCursor(cell.textarea, text, 0);
+  }
 
   // ============== 选中文字浮动工具栏 ==============
 
@@ -789,21 +887,33 @@
 
   let acIndex = -1;
   let acVisible = false;
+  let acTextarea = null;
+  let acLineStart = 0;
+  let acReplaceLength = 0;
 
-  function showAutocomplete(textarea, filter) {
-    const filtered = filter
-      ? autocompleteItems.filter(it => it.label.toLowerCase().includes(filter.toLowerCase()))
-      : autocompleteItems;
-    if (filtered.length === 0) { hideAutocomplete(); return; }
+  function showAutocomplete(textarea, filter, trigger, lineStart, replaceLength) {
+    // 1. 按 trigger 类别筛选
+    let candidates = autocompleteItems.filter(it => it.trigger === trigger);
+    // 2. 按 filter 字符串筛选（label 包含 filter，忽略大小写）
+    if (filter) {
+      const f = filter.toLowerCase();
+      candidates = candidates.filter(it => it.label.toLowerCase().includes(f));
+    }
+    if (candidates.length === 0) { hideAutocomplete(); return; }
+
+    // 记录上下文供键盘导航使用
+    acTextarea = textarea;
+    acLineStart = lineStart;
+    acReplaceLength = replaceLength;
 
     autocompleteList.innerHTML = '';
-    filtered.forEach((it, i) => {
+    candidates.forEach((it, i) => {
       const div = document.createElement('div');
       div.className = 'autocomplete-item' + (i === 0 ? ' active' : '');
       div.innerHTML = `<span class="autocomplete-item-label">${it.label}</span><span class="autocomplete-item-desc">${it.desc}</span>`;
       div.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        applyAutocomplete(textarea, it);
+        applyAutocomplete(textarea, it, lineStart, replaceLength);
       });
       autocompleteList.appendChild(div);
     });
@@ -827,20 +937,24 @@
     autocompleteList.classList.remove('visible');
     acVisible = false;
     acIndex = -1;
+    acTextarea = null;
   }
 
-  function applyAutocomplete(textarea, item) {
+  function applyAutocomplete(textarea, item, lineStart, replaceLength) {
     const val = textarea.value;
-    const pos = textarea.selectionStart;
-    const lineStart = val.lastIndexOf('\n', pos - 1) + 1;
-    const atPos = val.indexOf('@', lineStart);
-    if (atPos >= 0 && atPos < pos) {
-      textarea.value = val.substring(0, atPos) + item.insert + val.substring(pos);
-      textarea.selectionStart = textarea.selectionEnd = atPos + item.insert.length;
-    }
+    // 从 lineStart 开始替换 replaceLength 个字符为 item.insert
+    const before = val.substring(0, lineStart);
+    const after = val.substring(lineStart + replaceLength);
+    textarea.value = before + item.insert + after;
+    // 光标放在插入内容末尾
+    const newPos = lineStart + item.insert.length;
+    textarea.selectionStart = textarea.selectionEnd = newPos;
+    textarea.scrollTop = textarea.scrollTop; // 保持滚动位置
     hideAutocomplete();
     textarea.focus();
     updateCellMeta(getCell(parseInt(textarea.dataset.cellId)));
+    // 触发 input 以便重新计算状态
+    updateStatusbar();
   }
 
   function onTextareaInput(e) {
@@ -850,10 +964,55 @@
     const lineStart = val.lastIndexOf('\n', pos - 1) + 1;
     const lineBeforeCursor = val.substring(lineStart, pos);
 
-    if (lineBeforeCursor.match(/^@\w*$/)) {
+    // ``` 代码块语言触发（先检查多字符前缀）
+    if (lineBeforeCursor.match(/^```[\w-]*$/)) {
+      const filter = lineBeforeCursor.substring(3);
+      showAutocomplete(textarea, filter, '```', lineStart, 3);
+    }
+    // > [! GitHub Alert 触发（比 > 更具体，先检查）
+    else if (lineBeforeCursor.match(/^> \[!?[\w]*$/)) {
+      const m = lineBeforeCursor.match(/^> \[!?([\w]*)$/);
+      const filter = m ? m[1] : '';
+      showAutocomplete(textarea, filter, '> [!', lineStart, lineBeforeCursor.length);
+    }
+    // > 普通引用触发（仅 > 或 > 后跟空格，且不是 > [）
+    else if (lineBeforeCursor.match(/^>\s?$/) && !lineBeforeCursor.includes('[')) {
+      showAutocomplete(textarea, '', '>', lineStart, lineBeforeCursor.length);
+    }
+    // --- 水平线 / Frontmatter 触发（3 个以上 -）
+    else if (lineBeforeCursor.match(/^-{3,}$/)) {
+      showAutocomplete(textarea, '', '---', lineStart, lineBeforeCursor.length);
+    }
+    // - 列表触发（单个 - 或 - 后跟空格）
+    else if (lineBeforeCursor.match(/^-\s?$/)) {
+      showAutocomplete(textarea, '', '-', lineStart, lineBeforeCursor.length);
+    }
+    // # 标题触发（1-6 个 #）
+    else if (lineBeforeCursor.match(/^#{1,6}$/)) {
+      showAutocomplete(textarea, lineBeforeCursor, '#', lineStart, lineBeforeCursor.length);
+    }
+    // | 表格触发（单个 |）
+    else if (lineBeforeCursor.match(/^\|$/)) {
+      showAutocomplete(textarea, '', '|', lineStart, 1);
+    }
+    // $$ KaTeX 公式块触发
+    else if (lineBeforeCursor.match(/^\$\$$/)) {
+      showAutocomplete(textarea, '', '$$', lineStart, 2);
+    }
+    // ![ 图片触发
+    else if (lineBeforeCursor.match(/^!\[?$/)) {
+      showAutocomplete(textarea, '', '![', lineStart, lineBeforeCursor.length);
+    }
+    // [ 链接触发（单个 [）
+    else if (lineBeforeCursor.match(/^\[$/)) {
+      showAutocomplete(textarea, '', '[', lineStart, 1);
+    }
+    // @ 画廊样式触发
+    else if (lineBeforeCursor.match(/^@\w*$/)) {
       const filter = lineBeforeCursor.substring(1);
-      showAutocomplete(textarea, filter);
-    } else {
+      showAutocomplete(textarea, filter, '@', lineStart, 1);
+    }
+    else {
       hideAutocomplete();
     }
   }
@@ -886,14 +1045,19 @@
         const items = autocompleteList.querySelectorAll('.autocomplete-item');
         if (items[acIndex]) {
           const label = items[acIndex].querySelector('.autocomplete-item-label').textContent;
+          // 使用当前 trigger 类别 + label 精确匹配条目
           const item = autocompleteItems.find(it => it.label === label);
-          if (item) applyAutocomplete(textarea, item);
+          if (item) applyAutocomplete(textarea, item, acLineStart, acReplaceLength);
         }
         return;
       }
       if (e.key === 'Escape') {
         hideAutocomplete();
         return;
+      }
+      // 方向键左右移动光标时关闭补全（避免上下文失效）
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') {
+        hideAutocomplete();
       }
     }
 
