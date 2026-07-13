@@ -133,7 +133,6 @@ body.editor-mode .floating-menu {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
 }
 
 .toolbar-home {
@@ -184,63 +183,15 @@ body.editor-mode .floating-menu {
 }
 
 .toolbar-center {
-  /* 占据工具栏中间剩余空间，允许横向滚动 */
-  flex: 1 1 auto;
-  min-width: 0;
   display: flex;
   align-items: center;
   gap: 4px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* 隐藏默认滚动条，用更精致的样式替代 */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(212, 165, 201, 0.4) transparent;
-  /* 左右渐变遮罩，提示还有更多内容可滚动 */
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 12px,
-    #000 calc(100% - 12px),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 12px,
-    #000 calc(100% - 12px),
-    transparent 100%
-  );
-  scroll-behavior: smooth;
-}
-
-/* Webkit 滚动条美化（横向） */
-.toolbar-center::-webkit-scrollbar {
-  height: 6px;
-}
-
-.toolbar-center::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.toolbar-center::-webkit-scrollbar-thumb {
-  background: rgba(212, 165, 201, 0.4);
-  border-radius: 3px;
-}
-
-.toolbar-center::-webkit-scrollbar-thumb:hover {
-  background: rgba(184, 138, 173, 0.7);
-}
-
-/* 工具栏菜单按钮不收缩，保持完整可读 */
-.toolbar-center .toolbar-dropdown {
-  flex-shrink: 0;
 }
 
 .toolbar-right {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
 }
 
 /* 工具栏按钮 */
@@ -833,7 +784,7 @@ body.editor-mode .floating-menu {
   .toolbar-center {
     order: 3;
     width: 100%;
-    flex-basis: 100%;
+    overflow-x: auto;
     gap: 2px;
   }
 
