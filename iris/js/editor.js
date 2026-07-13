@@ -9,7 +9,9 @@
 
   function enterEditorMode() {
     if (!editorOverlay) return;
-    editorOverlay.style.display = 'block';
+    // 必须用 flex 而非 block，否则 .editor-overlay 的 flex 布局失效，
+    // .editor-main 无法获得剩余高度，导致无法滚动
+    editorOverlay.style.display = 'flex';
     document.body.classList.add('editor-mode');
     // 更新 URL（保留 hash）
     const url = new URL(window.location.href);

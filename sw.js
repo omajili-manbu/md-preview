@@ -1,5 +1,5 @@
-const CACHE_NAME = 'md-preview-v6.9';
-const RUNTIME_CACHE = 'md-preview-runtime-v6.9';
+const CACHE_NAME = 'md-preview-v6.10';
+const RUNTIME_CACHE = 'md-preview-runtime-v6.10';
 
 // 预缓存：首屏关键静态资源
 const PRECACHE_URLS = [

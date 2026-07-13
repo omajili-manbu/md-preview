@@ -64,6 +64,38 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Firefox 滚动条 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 165, 201, 0.5) transparent;
+}
+
+/* Webkit (Chrome / Safari / Edge) 滚动条美化 */
+.editor-overlay .editor-main::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.editor-overlay .editor-main::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.editor-overlay .editor-main::-webkit-scrollbar-thumb {
+  background: rgba(212, 165, 201, 0.5);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s;
+}
+
+.editor-overlay .editor-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 138, 173, 0.85);
+  background-clip: padding-box;
+}
+
+.editor-overlay .editor-main::-webkit-scrollbar-thumb:active {
+  background: var(--color-accent-purple-deep);
+  background-clip: padding-box;
 }
 
 .editor-overlay .editor-statusbar {
