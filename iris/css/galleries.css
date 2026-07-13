@@ -20,9 +20,6 @@
  *   - slider     幻灯片：自动轮播，循环切换，hover 暂停（实用，需 JS 驱动）
  *   - ticket     票根：撕边虚线 + 半圆缺口，票根造型（克制）
  *   - panorama   全景横幅：超宽横向滚动拼接，沉浸式浏览（实用）
- *   - circle     圆形相册：图片裁切为圆形，居中错落排布（美观）
- *   - diamond    菱形宝石：图片裁切为菱形，错位排列（艺术）
- *   - wave       波浪：图片沿正弦曲线高低错落，流动韵律感（艺术）
  *
  * 注意：所有画廊容器的基础类仍为 .image-gallery，这里通过附加
  * .image-gallery--{style} 修饰类来切换布局。
@@ -452,12 +449,27 @@
   .image-gallery--mosaic img:nth-child(2) {
     grid-row: 2;
     grid-column: 1;
-    height: 120px;
+    height: 140px;
   }
   .image-gallery--mosaic img:nth-child(3) {
     grid-row: 2;
     grid-column: 2;
-    height: 120px;
+    height: 140px;
+  }
+  .image-gallery--mosaic img:nth-child(4) {
+    grid-row: 3;
+    grid-column: 1;
+    height: 140px;
+  }
+  .image-gallery--mosaic img:nth-child(5) {
+    grid-row: 3;
+    grid-column: 2;
+    height: 140px;
+  }
+  .image-gallery--mosaic img:nth-child(n + 6) {
+    grid-row: auto;
+    grid-column: auto;
+    height: 140px;
   }
 }
 
@@ -550,16 +562,35 @@
     justify-content: center;
     gap: 12px;
     padding: 16px;
+    overflow: visible;
   }
   .image-gallery--scattered img {
-    position: relative;
+    position: relative !important;
     top: auto !important;
     left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
     width: 140px;
     height: 110px;
+    clip-path: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+    opacity: 1;
+    pointer-events: auto;
   }
-  .image-gallery--scattered img:nth-child(n) {
+  .image-gallery--scattered img:nth-child(1),
+  .image-gallery--scattered img:nth-child(2),
+  .image-gallery--scattered img:nth-child(3),
+  .image-gallery--scattered img:nth-child(4),
+  .image-gallery--scattered img:nth-child(5),
+  .image-gallery--scattered img:nth-child(6),
+  .image-gallery--scattered img:nth-child(n + 7) {
     transform: rotate(0deg);
+    position: relative;
+    top: auto;
+    left: auto;
+    margin: 0;
+    display: block;
   }
 }
 
@@ -1175,8 +1206,8 @@
 
 @media (max-width: 540px) {
   .image-gallery--masonry {
-    column-count: 1;
-    column-gap: 0;
+    column-count: 2;
+    column-gap: 8px;
   }
   .image-gallery--masonry img {
     margin-bottom: 12px;
@@ -1380,165 +1411,5 @@
   .image-gallery--panorama img {
     width: 90%;
     height: 220px;
-  }
-}
-
-/* ============== @circle — 圆形相册 ============== */
-/* 图片裁切为圆形，居中错落排布，头像/徽章式展示。美观+实用 */
-
-.image-gallery--circle {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 32px 24px;
-  padding: 32px 16px;
-  margin: 16px 0;
-  background: radial-gradient(circle at 50% 50%, rgba(212, 165, 201, 0.1), transparent 70%);
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-}
-
-.image-gallery--circle img {
-  width: 160px;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 50%;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-  border: 4px solid #fff;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
-}
-
-/* 上下错落，营造节奏 */
-.image-gallery--circle img:nth-child(odd) {
-  transform: translateY(12px);
-}
-
-.image-gallery--circle img:nth-child(even) {
-  transform: translateY(-12px);
-}
-
-.image-gallery--circle img:hover {
-  transform: translateY(0) scale(1.12);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-  z-index: 2;
-  position: relative;
-}
-
-@media (max-width: 768px) {
-  .image-gallery--circle img {
-    width: 120px;
-    height: 120px;
-  }
-}
-
-/* ============== @diamond — 菱形宝石 ============== */
-/* 图片裁切为菱形，错位排列，宝石感。艺术 */
-
-.image-gallery--diamond {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 4px;
-  padding: 40px 16px;
-  margin: 16px 0;
-  background: linear-gradient(135deg, rgba(212, 165, 201, 0.08), rgba(242, 196, 206, 0.04));
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-}
-
-.image-gallery--diamond img {
-  width: 160px;
-  height: 160px;
-  object-fit: cover;
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease;
-  /* drop-shadow 模拟菱形边缘投影（clip-path 裁切后 box-shadow 失效） */
-  filter: saturate(0.95) brightness(0.98) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
-}
-
-/* 奇数张下移，形成交错蜂巢感 */
-.image-gallery--diamond img:nth-child(odd) {
-  margin-top: 28px;
-}
-
-.image-gallery--diamond img:hover {
-  transform: scale(1.18);
-  filter: saturate(1.1) brightness(1.05) drop-shadow(0 12px 24px rgba(0, 0, 0, 0.35));
-  z-index: 2;
-  position: relative;
-}
-
-@media (max-width: 768px) {
-  .image-gallery--diamond img {
-    width: 120px;
-    height: 120px;
-  }
-}
-
-/* ============== @wave — 波浪 ============== */
-/* 图片沿正弦曲线高低错落排列，流动韵律感。艺术 */
-
-.image-gallery--wave {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  padding: 48px 16px;
-  margin: 16px 0;
-  background: linear-gradient(180deg, rgba(212, 165, 201, 0.06), rgba(242, 196, 206, 0.03));
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-}
-
-.image-gallery--wave img {
-  width: 200px;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
-}
-
-/* 用 4n 周期模拟正弦波：高→次高→次低→低 */
-.image-gallery--wave img:nth-child(4n+1) {
-  transform: translateY(-32px);
-}
-
-.image-gallery--wave img:nth-child(4n+2) {
-  transform: translateY(-16px);
-}
-
-.image-gallery--wave img:nth-child(4n+3) {
-  transform: translateY(16px);
-}
-
-.image-gallery--wave img:nth-child(4n+4) {
-  transform: translateY(32px);
-}
-
-.image-gallery--wave img:hover {
-  transform: translateY(0) scale(1.1);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
-  z-index: 5;
-  position: relative;
-}
-
-@media (max-width: 768px) {
-  .image-gallery--wave img {
-    width: 150px;
-    height: 100px;
-  }
-  .image-gallery--wave img:nth-child(4n+1) {
-    transform: translateY(-20px);
-  }
-  .image-gallery--wave img:nth-child(4n+2) {
-    transform: translateY(-10px);
-  }
-  .image-gallery--wave img:nth-child(4n+3) {
-    transform: translateY(10px);
-  }
-  .image-gallery--wave img:nth-child(4n+4) {
-    transform: translateY(20px);
   }
 }
