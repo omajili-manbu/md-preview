@@ -135,6 +135,28 @@
   color: var(--color-text, #333);
 }
 
+/* 链路常驻标签样式（接口名 / 网段）
+   注：Cytoscape 通过 canvas 渲染标签，实际样式在 pkt-renderer.js 的
+   source-label-* / target-label-* / text-background-* 属性中设置；
+   以下规则作为样式规范参考，并兼容可能的 HTML 覆盖层。 */
+.pkt-canvas .pkt-edge-label,
+.pkt-canvas source-label,
+.pkt-canvas target-label {
+  font-size: 9px;
+  color: #666;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.pkt-edge-subnet {
+  font-size: 9px;
+  color: #666;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
 /* 底部状态栏 */
 .pkt-statusbar {
   display: flex;
@@ -261,20 +283,21 @@
   height: 18px;
 }
 
-/* 设备元信息卡片 */
+/* 设备元信息卡片：每项一行，标签 + 值 */
 .pkt-drawer-meta {
   padding: 12px 18px;
   border-bottom: 1px solid var(--color-border, #e0e0e0);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   font-size: 12px;
 }
 
 .pkt-meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 10px;
+  align-items: center;
 }
 
 .pkt-meta-label {
@@ -289,6 +312,7 @@
   font-weight: 500;
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
+  word-break: break-all;
 }
 
 /* Tab 导航 */
@@ -348,11 +372,28 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* 表格横向滚动容器（字段增多后需要横向滚动） */
+.pkt-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pkt-table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pkt-table-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border, #ccc);
+  border-radius: 3px;
+}
+
 /* 接口表 */
 .pkt-interface-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .pkt-interface-table th {
@@ -364,6 +405,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .pkt-interface-table td {
@@ -372,6 +414,7 @@
   color: var(--color-text, #333);
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
+  white-space: nowrap;
 }
 
 .pkt-interface-table tr:hover td {
@@ -479,6 +522,7 @@
   text-transform: uppercase;
   color: var(--color-text-muted, #888);
   border-bottom: 1px solid var(--color-border, #e0e0e0);
+  white-space: nowrap;
 }
 
 .pkt-route-table td {
@@ -486,6 +530,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   border-bottom: 1px solid var(--color-border, #e0e0e0);
+  white-space: nowrap;
 }
 
 .pkt-route-type {
@@ -510,6 +555,43 @@
 .pkt-route-type.ospf {
   background: rgba(230, 126, 34, 0.15);
   color: #e67e22;
+}
+
+/* BGP 路由：紫色 */
+.pkt-route-type.bgp {
+  background: rgba(111, 66, 193, 0.15);
+  color: #6f42c1;
+}
+
+/* RIP 路由：橙色 */
+.pkt-route-type.rip {
+  background: rgba(253, 126, 20, 0.15);
+  color: #fd7e14;
+}
+
+/* 默认路由：红色加粗 */
+.pkt-route-type.default {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+  font-weight: 700;
+}
+
+/* 默认路由整行高亮 */
+.pkt-route-table tr.pkt-route-row-default td {
+  background: rgba(220, 53, 69, 0.06);
+}
+
+.pkt-route-table tr.pkt-route-row-default:hover td {
+  background: rgba(220, 53, 69, 0.12);
+}
+
+/* BGP 邻居信息（下一跳单元格内的副文本） */
+.pkt-route-nbr {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--color-text-muted, #888);
+  font-style: italic;
 }
 
 /* 配置文本（高亮 + 折叠） */
@@ -586,6 +668,12 @@
 
 .pkt-config-body .ios-shutdown {
   color: #e74c3c;
+  font-weight: 600;
+}
+
+/* PC 专有命令：ip default-gateway / ip name-server */
+.pkt-config-body .ios-gateway {
+  color: #16a085;
   font-weight: 600;
 }
 
@@ -675,8 +763,10 @@
     transform: translateY(0);
   }
 
-  .pkt-drawer-meta {
-    grid-template-columns: repeat(2, 1fr);
+  /* 元数据每项一行，移动端缩小标签列宽 */
+  .pkt-meta-item {
+    grid-template-columns: 60px 1fr;
+    gap: 8px;
   }
 
   .pkt-toolbar {

@@ -77,6 +77,10 @@
     html = html.replace(/^(\s*)(shutdown)$/gm, (m, indent, s) =>
       `${indent}<span class="ios-shutdown">${s}</span>`);
 
+    // PC 专有：ip default-gateway / ip name-server 命令高亮
+    html = html.replace(/^(\s*)(ip\s+(?:default-gateway|name-server))(?=\s)/gm, (m, indent, cmd) =>
+      `${indent}<span class="ios-gateway">${cmd}</span>`);
+
     // IP 地址
     html = html.replace(/(\d+\.\d+\.\d+\.\d+)/g, '<span class="ios-ip">$1</span>');
 
@@ -190,6 +194,10 @@
           primaryIp: dev.primaryIp || '',
           model: dev.model || '',
           rawType: dev.rawType || '',
+          // 新增字段（旧 JSON 没有时为空字符串，向后兼容）
+          gateway: dev.gateway || '',
+          dns: dev.dns || '',
+          mac: dev.mac || '',
         },
         position: { x: dev.x || 0, y: dev.y || 0 },
       });
@@ -198,6 +206,9 @@
     // 链路边
     (jsonData.links || []).forEach(link => {
       if (link.source && link.target) {
+        const srcIf = link.sourceInterface || '';
+        const dstIf = link.targetInterface || '';
+        const subnet = link.subnet || '';
         elements.push({
           group: 'edges',
           data: {
@@ -206,9 +217,18 @@
             target: link.target,
             cableType: link.cableType,
             cableRawType: link.cableRawType || '',
-            sourceInterface: link.sourceInterface || '',
-            targetInterface: link.targetInterface || '',
+            sourceInterface: srcIf,
+            targetInterface: dstIf,
+            // 简化后的接口名，用于常驻标注（source-label / target-label）
+            'source-text': shortIfName(srcIf),
+            'target-text': shortIfName(dstIf),
             bandwidth: link.bandwidth,
+            // 新增字段（旧 JSON 没有时为空，向后兼容）
+            subnet: subnet,
+            srcIp: link.srcIp || '',
+            dstIp: link.dstIp || '',
+            // 中间网段标签：用 label 字段，空时不显示
+            label: subnet,
           },
         });
       }
@@ -306,7 +326,26 @@
             'target-arrow-shape': 'none',
             'arrow-scale': 0.8,
             'opacity': 0.7,
-            'label': '',
+            // 中间网段标签（如 172.16.1.0/24），用 label 数据字段
+            // 注意：Cytoscape 3.x 中 source/target 标签共享主标签的
+            // color/font-size/text-background-* 样式，无法单独设置颜色
+            'label': 'data(label)',
+            'font-size': '9px',
+            'color': '#666',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'text-background-color': 'rgba(255,255,255,0.8)',
+            'text-background-opacity': 1,
+            'text-background-padding': '2px',
+            'text-background-shape': 'round-rectangle',
+            // 源端接口名常驻标注（简化后，如 Fa0/0）
+            'source-label': 'data(source-text)',
+            'source-text-offset': 20,
+            'source-text-margin-y': 8,
+            // 目的端接口名常驻标注
+            'target-label': 'data(target-text)',
+            'target-text-offset': 20,
+            'target-text-margin-y': 8,
           },
         },
         {
@@ -386,13 +425,20 @@
       const edge = evt.target;
       edge.style('width', parseFloat(edge.style('width')) + 2);
       edge.style('opacity', 1);
-      // 显示 tooltip
+      // 显示 tooltip（含接口 IP 和网段）
       const cableType = edge.data('cableType') || 'unknown';
       const srcIf = edge.data('sourceInterface');
       const dstIf = edge.data('targetInterface');
+      const srcIp = edge.data('srcIp');
+      const dstIp = edge.data('dstIp');
+      const subnet = edge.data('subnet');
       const bw = edge.data('bandwidth');
       let tooltip = `${cableType}`;
-      if (srcIf || dstIf) tooltip += `\n${srcIf || '?'} ↔ ${dstIf || '?'}`;
+      // 接口行：带 IP 显示，如 "Fa0/0 (172.16.1.1) ↔ Fa0/0 (172.16.1.2)"
+      const srcPart = srcIf ? (srcIp ? `${srcIf} (${srcIp})` : srcIf) : '?';
+      const dstPart = dstIf ? (dstIp ? `${dstIf} (${dstIp})` : dstIf) : '?';
+      tooltip += `\n${srcPart} ↔ ${dstPart}`;
+      if (subnet) tooltip += `\n网段: ${subnet}`;
       if (bw) tooltip += `\n带宽: ${bw} Kbps`;
       showTooltip(evt.originalEvent, tooltip);
     });
@@ -483,6 +529,32 @@
   function getCSSVar(name, fallback) {
     const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return val || fallback;
+  }
+
+  // 接口名简化：FastEthernet0/0 → Fa0/0, GigabitEthernet0/0 → Gi0/0
+  // 支持 FastEthernet, GigabitEthernet, Serial, Ethernet, Vlan, Loopback
+  // 旧数据或未识别类型原样返回
+  const IF_NAME_ABBR = [
+    [/^FastEthernet/i, 'Fa'],
+    [/^GigabitEthernet/i, 'Gi'],
+    [/^TenGigabitEthernet/i, 'Ten'],
+    [/^Serial/i, 'Se'],
+    [/^Ethernet/i, 'Eth'],
+    [/^Vlan/i, 'Vl'],
+    [/^Loopback/i, 'Lo'],
+    [/^Port-channel/i, 'Po'],
+  ];
+
+  function shortIfName(name) {
+    if (!name) return '';
+    let result = name;
+    for (const [re, abbr] of IF_NAME_ABBR) {
+      if (re.test(result)) {
+        result = result.replace(re, abbr);
+        break;
+      }
+    }
+    return result;
   }
 
   // 计算 fit 时应包含的元素：排除坐标离群点
@@ -593,6 +665,10 @@
     const primaryIp = node.data('primaryIp') || '';
     const model = node.data('model') || '';
     const rawType = node.data('rawType') || '';
+    // 新增字段（旧 JSON 没有时为空字符串，向后兼容）
+    const devMac = node.data('mac') || '';
+    const devGateway = node.data('gateway') || '';
+    const devDns = node.data('dns') || '';
 
     const config = (jsonData.configs || []).find(c => c.deviceId === devId);
     const interfaces = jsonData.interfaces?.[devId] || [];
@@ -601,6 +677,23 @@
     const routes = jsonData.routes?.[devId] || [];
 
     const iconId = DEVICE_ICONS[devType] || DEVICE_ICONS['unknown'];
+
+    // 构建元数据项（条件显示：MAC/DNS 仅在有值时显示，网关仅 PC 显示）
+    const metaItems = [
+      { label: '类型', value: devType },
+      { label: '型号', value: model || rawType || '-' },
+      { label: '主 IP', value: primaryIp || '-' },
+    ];
+    if (devMac) metaItems.push({ label: 'MAC', value: devMac });
+    if (devType === 'pc') metaItems.push({ label: '网关', value: devGateway || '-' });
+    if (devDns) metaItems.push({ label: 'DNS', value: devDns });
+
+    const metaHtml = metaItems.map(m => `
+      <div class="pkt-meta-item">
+        <span class="pkt-meta-label">${m.label}</span>
+        <span class="pkt-meta-value">${m.value}</span>
+      </div>
+    `).join('');
 
     // 创建遮罩
     drawerOverlayEl = document.createElement('div');
@@ -625,20 +718,7 @@
           </svg>
         </button>
       </div>
-      <div class="pkt-drawer-meta">
-        <div class="pkt-meta-item">
-          <span class="pkt-meta-label">类型</span>
-          <span class="pkt-meta-value">${devType}</span>
-        </div>
-        <div class="pkt-meta-item">
-          <span class="pkt-meta-label">主 IP</span>
-          <span class="pkt-meta-value">${primaryIp || '-'}</span>
-        </div>
-        <div class="pkt-meta-item">
-          <span class="pkt-meta-label">型号</span>
-          <span class="pkt-meta-value">${model || rawType || '-'}</span>
-        </div>
-      </div>
+      <div class="pkt-drawer-meta">${metaHtml}</div>
       <div class="pkt-drawer-tabs">
         <button class="pkt-tab active" data-tab="interfaces">接口 (${interfaces.length})</button>
         <button class="pkt-tab" data-tab="config">配置</button>
@@ -711,18 +791,23 @@
         <td>${iface.duplex || '-'}</td>
         <td>${iface.speed || '-'}</td>
         <td>${iface.description || '-'}</td>
+        <td>${iface.mac || '-'}</td>
+        <td>${iface.gateway || '-'}</td>
+        <td>${iface.dhcp === true ? '是' : (iface.dhcp === false ? '否' : '-')}</td>
       </tr>
     `).join('');
     return `
       <div class="pkt-tab-content active" data-tab="interfaces">
-        <table class="pkt-interface-table">
-          <thead>
-            <tr>
-              <th>接口</th><th>IP</th><th>掩码</th><th>状态</th><th>双工</th><th>速率</th><th>描述</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
+        <div class="pkt-table-scroll">
+          <table class="pkt-interface-table">
+            <thead>
+              <tr>
+                <th>接口</th><th>IP</th><th>掩码</th><th>状态</th><th>双工</th><th>速率</th><th>描述</th><th>MAC</th><th>网关</th><th>DHCP</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
       </div>
     `;
   }
@@ -803,23 +888,48 @@
     if (!routes.length) {
       return `<div class="pkt-tab-content" data-tab="routes"><p style="color:var(--color-text-muted,#888);font-size:13px;text-align:center;padding:20px;">无路由信息</p></div>`;
     }
-    const rows = routes.map(r => `
-      <tr>
-        <td><span class="pkt-route-type ${r.type}">${r.type}</span></td>
-        <td>${r.network}</td>
-        <td>${r.mask}</td>
-        <td>${r.nextHop}</td>
-        <td>${r.interface || '-'}</td>
-      </tr>
-    `).join('');
+    const rows = routes.map(r => {
+      // 构建 CIDR 网段，如 172.16.1.0/24；无 cidr 时只显示 network
+      let subnet = r.network || '-';
+      if (r.cidr !== undefined && r.cidr !== null && r.cidr !== '') {
+        subnet = `${r.network}/${r.cidr}`;
+      }
+      // 下一跳：BGP 显示 AS 号和邻居信息
+      let nextHopHtml = r.nextHop || '-';
+      if (r.type === 'bgp') {
+        const parts = [];
+        if (r.processId) parts.push(`AS ${r.processId}`);
+        if (Array.isArray(r.neighbors) && r.neighbors.length) {
+          const nbStr = r.neighbors.map(n => `${n.ip || '?'}(AS${n.remoteAs || '?'})`).join(', ');
+          parts.push(`邻居: ${nbStr}`);
+        }
+        if (parts.length) {
+          nextHopHtml = `${r.nextHop || 'BGP'}<br><span class="pkt-route-nbr">${parts.join(' · ')}</span>`;
+        }
+      }
+      // 默认路由行特殊高亮
+      const rowCls = r.type === 'default' ? ' class="pkt-route-row-default"' : '';
+      return `
+        <tr${rowCls}>
+          <td><span class="pkt-route-type ${r.type}">${r.type}</span></td>
+          <td>${r.network}</td>
+          <td>${r.mask}</td>
+          <td>${subnet}</td>
+          <td>${nextHopHtml}</td>
+          <td>${r.interface || '-'}</td>
+        </tr>
+      `;
+    }).join('');
     return `
       <div class="pkt-tab-content" data-tab="routes">
-        <table class="pkt-route-table">
-          <thead>
-            <tr><th>类型</th><th>网络</th><th>掩码</th><th>下一跳</th><th>接口</th></tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
+        <div class="pkt-table-scroll">
+          <table class="pkt-route-table">
+            <thead>
+              <tr><th>类型</th><th>网络</th><th>掩码</th><th>网段</th><th>下一跳</th><th>接口</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
       </div>
     `;
   }

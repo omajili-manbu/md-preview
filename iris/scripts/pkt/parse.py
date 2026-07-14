@@ -13,6 +13,7 @@ PT 的 XML schema 没有官方文档，结构随版本变化。
 本模块兼容 PT 5.x / 6.x / 7.x / 8.x 的主要节点命名。
 """
 
+import ipaddress
 import re
 import xml.etree.ElementTree as ET
 from typing import Any
@@ -123,6 +124,54 @@ def _normalize_cable_type(raw_type: str) -> str:
         if keyword.lower() in lower:
             return normalized
     return 'unknown'
+
+
+# ============== PORT 结构化字段识别 ==============
+
+# PT 中 PORT TYPE 到接口名前缀的映射
+PORT_TYPE_PREFIX = {
+    'eCopperFastEthernet': 'FastEthernet',
+    'eCopperGigabitEthernet': 'GigabitEthernet',
+    'eFiber': 'Fiber',
+    'eSerial': 'Serial',
+    'eConsole': 'Console',
+    'eWireless': 'Wireless',
+}
+
+
+def _iter_port_nodes(engine_node: ET.Element) -> list:
+    """递归遍历 ENGINE 下 MODULE 子树中的所有 PORT 节点
+
+    PC/路由器的网络端口位于 ENGINE/MODULE/SLOT/MODULE/PORT 结构中，
+    而 BLUETOOTH_PORT 等非网络端口直接挂载在 ENGINE 下，需要排除。
+    """
+    if engine_node is None:
+        return []
+    ports = []
+    # 仅在 MODULE 子树中查找 PORT，排除 BLUETOOTH_PORT 等
+    for module in engine_node.findall('MODULE'):
+        ports.extend(module.findall('.//PORT'))
+    return ports
+
+
+def _classful_mask(ip: str) -> str:
+    """根据 IP 主类推算默认掩码
+
+    A 类(1-126) → 255.0.0.0
+    B 类(128-191) → 255.255.0.0
+    C 类(192-223) → 255.255.255.0
+    """
+    try:
+        first = int(ip.split('.')[0])
+        if 1 <= first <= 126:
+            return '255.0.0.0'
+        elif 128 <= first <= 191:
+            return '255.255.0.0'
+        elif 192 <= first <= 223:
+            return '255.255.255.0'
+        return '255.255.255.0'
+    except (ValueError, IndexError):
+        return '255.255.255.0'
 
 
 # ============== 设备解析 ==============
@@ -559,6 +608,10 @@ def parse_interfaces_from_config(config: str) -> list:
             'speed': speed,
             'shutdown': is_shutdown,
             'status': 'down' if is_shutdown else ('up' if ip else 'no-ip'),
+            'mac': '',  # MAC 地址，由 PORT 结构补充
+            'gateway': '',  # 网关，由 PORT 结构补充
+            'dns': '',  # DNS，由 PORT 结构补充
+            'dhcp': False,  # DHCP 是否启用，由 PORT 结构补充
         })
 
     return interfaces
@@ -703,6 +756,36 @@ OSPF_NETWORK_DETAIL = re.compile(
     r'network\s+(\S+)\s+(\S+)\s+area\s+(\S+)'
 )
 
+# BGP 路由：匹配整个 router bgp 块（到下一个 ! 或 router/ip 命令为止）
+BGP_BLOCK_PATTERN = re.compile(
+    r'^router bgp\s+(\d+)\s*\n(.*?)(?=^!|^router\s|^ip\s|\Z)',
+    re.MULTILINE | re.DOTALL
+)
+
+# BGP network 命令（mask 可选，无 mask 时按主类推算）
+BGP_NETWORK_PATTERN = re.compile(
+    r'^\s*network\s+(\d+\.\d+\.\d+\.\d+)(?:\s+mask\s+(\d+\.\d+\.\d+\.\d+))?',
+    re.MULTILINE
+)
+
+# BGP neighbor 命令
+BGP_NEIGHBOR_PATTERN = re.compile(
+    r'^\s*neighbor\s+(\d+\.\d+\.\d+\.\d+)\s+remote-as\s+(\d+)',
+    re.MULTILINE
+)
+
+# RIP 路由：匹配整个 router rip 块
+RIP_BLOCK_PATTERN = re.compile(
+    r'^router rip\s*\n(.*?)(?=^!|^router\s|^ip\s|\Z)',
+    re.MULTILINE | re.DOTALL
+)
+
+# RIP network 命令（network 为主类网络地址）
+RIP_NETWORK_PATTERN = re.compile(
+    r'^\s*network\s+(\d+\.\d+\.\d+\.\d+)',
+    re.MULTILINE
+)
+
 
 def parse_routes_from_config(config: str, interfaces: list) -> list:
     """从配置推算路由表
@@ -711,6 +794,8 @@ def parse_routes_from_config(config: str, interfaces: list) -> list:
     1. 直连路由（从接口 IP 推算）
     2. 静态路由（ip route 命令）
     3. OSPF 路由（router ospf + network 命令）
+    4. BGP 路由（router bgp + network/neighbor 命令）
+    5. RIP 路由（router rip + network 命令）
     """
     if not config:
         return []
@@ -733,14 +818,16 @@ def parse_routes_from_config(config: str, interfaces: list) -> list:
                     'source': 'interface',
                 })
 
-    # 2. 静态路由
+    # 2. 静态路由（含默认路由特殊标记）
     for match in STATIC_ROUTE_PATTERN.finditer(config):
         network = match.group(1)
         mask = match.group(2)
         next_hop = match.group(3)
         metric = match.group(4)
+        # 默认路由：0.0.0.0/0 特殊标记为 default
+        is_default = (network == '0.0.0.0' and mask == '0.0.0.0')
         routes.append({
-            'type': 'static',
+            'type': 'default' if is_default else 'static',
             'network': network,
             'mask': mask,
             'cidr': _mask_to_cidr(mask),
@@ -772,6 +859,54 @@ def parse_routes_from_config(config: str, interfaces: list) -> list:
                 'source': 'router ospf',
             })
 
+    # 4. BGP 路由
+    for match in BGP_BLOCK_PATTERN.finditer(config):
+        process_id = match.group(1)  # AS 号
+        block = match.group(2)
+        # 解析 neighbor 列表
+        neighbors = []
+        for nbr_match in BGP_NEIGHBOR_PATTERN.finditer(block):
+            neighbors.append({
+                'ip': nbr_match.group(1),
+                'remoteAs': nbr_match.group(2),
+            })
+        # 解析 network 命令，每个 network 生成一条路由
+        for net_match in BGP_NETWORK_PATTERN.finditer(block):
+            network = net_match.group(1)
+            mask = net_match.group(2)
+            # 无 mask 时按主类推算
+            if not mask:
+                mask = _classful_mask(network)
+            routes.append({
+                'type': 'bgp',
+                'network': network,
+                'mask': mask,
+                'cidr': _mask_to_cidr(mask),
+                'nextHop': f'BGP AS {process_id}',
+                'processId': process_id,
+                'neighbors': neighbors,
+                'interface': '',
+                'source': 'bgp',
+            })
+
+    # 5. RIP 路由
+    for match in RIP_BLOCK_PATTERN.finditer(config):
+        block = match.group(1)
+        for net_match in RIP_NETWORK_PATTERN.finditer(block):
+            network = net_match.group(1)
+            # RIP network 为主类网络，按主类推算掩码
+            mask = _classful_mask(network)
+            routes.append({
+                'type': 'rip',
+                'network': network,
+                'mask': mask,
+                'cidr': _mask_to_cidr(mask),
+                'nextHop': 'RIP',
+                'processId': 'rip',
+                'interface': '',
+                'source': 'rip',
+            })
+
     return routes
 
 
@@ -798,6 +933,203 @@ def _wildcard_to_mask(wildcard: str) -> str:
         return '.'.join(str(x) for x in mask_parts)
     except (ValueError, AttributeError):
         return '0.0.0.0'
+
+
+# ============== PORT 结构化字段解析（PC/路由器通用） ==============
+
+def parse_pc_interfaces_from_port(device_node: ET.Element) -> list:
+    """从 PORT 结构化字段解析 PC 接口
+
+    PC 没有 RUNNINGCONFIG 节点，IP/SUBNET/GATEWAY/DNS 存于
+    ENGINE/MODULE/SLOT/MODULE/PORT/ 结构化字段中。
+
+    返回接口列表，格式与 parse_interfaces_from_config 一致，
+    额外含 mac/gateway/dns/dhcp 字段。
+    """
+    engine = device_node.find('ENGINE')
+    if engine is None:
+        return []
+
+    interfaces = []
+    # 各接口名前缀的索引计数（如 FastEthernet 0/1/2...）
+    type_counters = {}
+
+    for port_node in _iter_port_nodes(engine):
+        type_str = _get_text(port_node, 'TYPE') or ''
+        # 跳过蓝牙等非以太网/串行端口
+        if 'Bluetooth' in type_str or not type_str:
+            continue
+
+        # 推断接口名：优先 PORT NAME 属性，否则按 TYPE 前缀 + 索引
+        prefix = PORT_TYPE_PREFIX.get(type_str, 'Ethernet')
+        idx = type_counters.get(prefix, 0)
+        type_counters[prefix] = idx + 1
+        name = port_node.get('NAME') or port_node.get('name') or f'{prefix}{idx}'
+
+        ip = _get_text(port_node, 'IP')
+        mask = _get_text(port_node, 'SUBNET')
+        mac = _get_text(port_node, 'MACADDRESS')
+        gateway = _get_text(port_node, 'PORT_GATEWAY')
+        dns = _get_text(port_node, 'PORT_DNS')
+        dhcp_raw = _get_text(port_node, 'PORT_DHCP_ENABLE')
+        duplex_raw = _get_text(port_node, 'FULLDUPLEX')
+        bandwidth_raw = _get_text(port_node, 'BANDWIDTH')
+
+        # DHCP 是否启用
+        dhcp = dhcp_raw.lower() == 'true' if dhcp_raw else False
+
+        # 双工转换
+        if duplex_raw.lower() == 'true':
+            duplex = 'full'
+        elif duplex_raw.lower() == 'false':
+            duplex = 'half'
+        else:
+            duplex = ''
+
+        # 带宽转换
+        bandwidth = None
+        if bandwidth_raw:
+            try:
+                bandwidth = int(bandwidth_raw)
+            except ValueError:
+                pass
+
+        # 掩码转 CIDR
+        cidr = _mask_to_cidr(mask) if mask else None
+
+        interfaces.append({
+            'name': name,
+            'ip': ip,
+            'mask': mask,
+            'cidr': cidr,
+            'description': '',
+            'bandwidth': bandwidth,
+            'duplex': duplex,
+            'speed': '',
+            'shutdown': False,
+            'status': 'up' if ip else 'no-ip',
+            'mac': mac,
+            'gateway': gateway,
+            'dns': dns,
+            'dhcp': dhcp,
+        })
+
+    return interfaces
+
+
+def parse_ports_from_device(device_node: ET.Element) -> list:
+    """递归提取设备所有 PORT 节点的结构化字段
+
+    用于补充路由器等设备的 MAC 地址等缺失字段。
+    返回列表，每项含 ip/mac/subnet/bandwidth/fullduplex。
+    """
+    engine = device_node.find('ENGINE')
+    if engine is None:
+        return []
+
+    ports = []
+    for port_node in _iter_port_nodes(engine):
+        type_str = _get_text(port_node, 'TYPE') or ''
+        if 'Bluetooth' in type_str:
+            continue
+
+        ip = _get_text(port_node, 'IP')
+        mac = _get_text(port_node, 'MACADDRESS')
+        subnet = _get_text(port_node, 'SUBNET')
+        bandwidth_raw = _get_text(port_node, 'BANDWIDTH')
+        fullduplex_raw = _get_text(port_node, 'FULLDUPLEX')
+
+        bandwidth = None
+        if bandwidth_raw:
+            try:
+                bandwidth = int(bandwidth_raw)
+            except ValueError:
+                pass
+
+        ports.append({
+            'ip': ip,
+            'mac': mac,
+            'subnet': subnet,
+            'bandwidth': bandwidth,
+            'fullduplex': fullduplex_raw.lower() == 'true' if fullduplex_raw else False,
+        })
+
+    return ports
+
+
+def parse_device_gateway(device_node: ET.Element) -> tuple:
+    """提取设备顶层 GATEWAY 和 DNS_CLIENT/SERVER_IP
+
+    PC 设备的网关和 DNS 存于 ENGINE 顶层（非 PORT 内）。
+    返回 (gateway, dns)。
+    """
+    engine = device_node.find('ENGINE')
+    if engine is None:
+        return '', ''
+
+    gateway = _get_text(engine, 'GATEWAY')
+    dns = ''
+    dns_client = engine.find('DNS_CLIENT')
+    if dns_client is not None:
+        dns = _get_text(dns_client, 'SERVER_IP')
+
+    return gateway, dns
+
+
+def _synthesize_pc_config(dev_name: str, interfaces: list, gateway: str, dns: str) -> str:
+    """为 PC 设备合成配置文本（便于前端展示）
+
+    格式示例：
+        ! PC 配置
+        interface FastEthernet0
+         ip address 172.16.4.2 255.255.255.0
+         mac-address 0005.5E60.4966
+         duplex full
+        !
+        ip default-gateway 172.16.4.1
+        ip name-server <dns>
+        !
+    """
+    lines = ['! PC 配置']
+    for iface in interfaces:
+        lines.append(f"interface {iface['name']}")
+        if iface.get('ip') and iface.get('mask'):
+            lines.append(f" ip address {iface['ip']} {iface['mask']}")
+        if iface.get('mac'):
+            lines.append(f" mac-address {iface['mac']}")
+        if iface.get('duplex'):
+            lines.append(f" duplex {iface['duplex']}")
+        lines.append('!')
+
+    # 网关和 DNS
+    if gateway or dns:
+        if gateway:
+            lines.append(f"ip default-gateway {gateway}")
+        if dns:
+            lines.append(f"ip name-server {dns}")
+        lines.append('!')
+
+    return '\n'.join(lines)
+
+
+def _supplement_interfaces_with_ports(interfaces: list, ports: list) -> None:
+    """用 PORT 结构化数据补充接口的缺失字段（如 MAC 地址）
+
+    按 IP 匹配 PORT 与接口，填充 MAC/带宽等缺失字段。
+    """
+    # 按 IP 建立 PORT 索引
+    ports_by_ip = {p['ip']: p for p in ports if p.get('ip')}
+
+    for iface in interfaces:
+        ip = iface.get('ip', '')
+        if not ip or ip not in ports_by_ip:
+            continue
+        port = ports_by_ip[ip]
+        # 仅补充缺失字段，不覆盖已有值
+        if not iface.get('mac') and port.get('mac'):
+            iface['mac'] = port['mac']
+        if iface.get('bandwidth') is None and port.get('bandwidth') is not None:
+            iface['bandwidth'] = port['bandwidth']
 
 
 # ============== 设备分组解析 ==============
@@ -883,11 +1215,51 @@ def parse_xml(xml_text: str) -> dict:
         if old_id in id_mapping:
             cfg['deviceId'] = id_mapping[old_id]
 
+    # 重新查找所有设备节点，用于 PC 接口解析和 MAC 补充
+    device_nodes = root.findall('.//DEVICE')
+    if not device_nodes:
+        device_nodes = root.findall('.//device')
+
+    # 建立 原始ID -> (新ID, device_node) 映射
+    dev_node_map = {}  # 新 ID -> device_node
+    for dev_node in device_nodes:
+        dev_name = _get_attr_or_text(dev_node, 'NAME|name|DisplayName', 'ENGINE/NAME|NAME')
+        dev_id_raw = _get_attr_or_text(dev_node, 'DBID|id|ID', 'ENGINE/SAVE_REF_ID|SAVE_REF_ID')
+        if not dev_id_raw:
+            dev_id_raw = dev_name
+        new_id = id_mapping.get(dev_id_raw, str(dev_id_raw))
+        dev_node_map[new_id] = dev_node
+
+    # 为每个设备提取网关/DNS/MAC（PC 有，路由器通常无网关/DNS）
+    device_extra = {}  # 新 ID -> {gateway, dns, mac}
+    for dev in devices:
+        dev_id = dev['id']
+        dev_node = dev_node_map.get(dev_id)
+        if dev_node is None:
+            device_extra[dev_id] = {'gateway': '', 'dns': '', 'mac': ''}
+            continue
+        gateway, dns = parse_device_gateway(dev_node)
+        # 主接口 MAC：取第一个有 MAC 的 PORT
+        ports = parse_ports_from_device(dev_node)
+        mac = ''
+        for p in ports:
+            if p.get('mac'):
+                mac = p['mac']
+                break
+        device_extra[dev_id] = {'gateway': gateway, 'dns': dns, 'mac': mac}
+        # 同步写入设备字典，供 output 模块使用
+        dev['gateway'] = gateway
+        dev['dns'] = dns
+        dev['mac'] = mac
+
     # 从配置推算接口表/VLAN/ACL/路由
     interfaces_by_device = {}
     vlans_by_device = {}
     acls_by_device = {}
     routes_by_device = {}
+
+    # 已处理配置的设备 ID 集合
+    config_device_ids = set()
 
     for cfg in configs:
         dev_id = cfg['deviceId']
@@ -900,6 +1272,45 @@ def parse_xml(xml_text: str) -> dict:
             config_text,
             interfaces_by_device[dev_id]
         )
+        config_device_ids.add(dev_id)
+
+        # 用 PORT 结构补充路由器接口的 MAC 地址等缺失字段
+        dev_node = dev_node_map.get(dev_id)
+        if dev_node is not None:
+            ports = parse_ports_from_device(dev_node)
+            _supplement_interfaces_with_ports(interfaces_by_device[dev_id], ports)
+
+    # 处理无 RUNNINGCONFIG 的设备（如 PC）：从 PORT 结构解析接口
+    for dev in devices:
+        dev_id = dev['id']
+        if dev_id in config_device_ids:
+            continue
+        dev_node = dev_node_map.get(dev_id)
+        if dev_node is None:
+            continue
+
+        # 尝试从 PORT 结构解析 PC 接口
+        pc_interfaces = parse_pc_interfaces_from_port(dev_node)
+        if not pc_interfaces:
+            continue
+
+        # 提取顶层网关和 DNS
+        gateway, dns = parse_device_gateway(dev_node)
+
+        # 设置 PC 接口表（VLAN/ACL/路由为空）
+        interfaces_by_device[dev_id] = pc_interfaces
+        vlans_by_device[dev_id] = []
+        acls_by_device[dev_id] = []
+        routes_by_device[dev_id] = []
+
+        # 合成 PC 配置文本，便于前端展示
+        config_text = _synthesize_pc_config(dev['name'], pc_interfaces, gateway, dns)
+        configs.append({
+            'deviceId': dev_id,
+            'deviceName': dev['name'],
+            'config': config_text,
+        })
+        config_device_ids.add(dev_id)
 
     # 解析分组
     groups = _find_groups(root)

@@ -21,6 +21,7 @@
 }
 """
 
+import ipaddress
 import json
 import os
 from datetime import datetime
@@ -71,10 +72,13 @@ def build_topology_json(
             'vlanCount': len(parsed_data.get('vlans', {}).get(dev_id, [])),
             'aclCount': len(parsed_data.get('acls', {}).get(dev_id, [])),
             'routeCount': len(parsed_data.get('routes', {}).get(dev_id, [])),
+            'gateway': dev.get('gateway', ''),
+            'dns': dev.get('dns', ''),
+            'mac': dev.get('mac', ''),
         }
         enriched_devices.append(enriched_dev)
 
-    # 构建链路列表，附加速率信息
+    # 构建链路列表，附加速率和网段信息
     enriched_links = []
     for link in links:
         # 从接口表查找带宽
@@ -85,6 +89,9 @@ def build_topology_json(
                 bandwidth = iface.get('bandwidth')
                 break
 
+        # 推算链路网段及两端接口 IP
+        subnet, src_ip, dst_ip = _compute_link_subnet(link, interfaces_map)
+
         enriched_link = {
             'id': link['id'],
             'source': link['srcDevice'],
@@ -94,6 +101,9 @@ def build_topology_json(
             'cableType': link['cableType'],
             'cableRawType': link.get('cableRawType', ''),
             'bandwidth': bandwidth,
+            'subnet': subnet,
+            'srcIp': src_ip,
+            'dstIp': dst_ip,
         }
         enriched_links.append(enriched_link)
 
@@ -193,6 +203,53 @@ def _normalize_interface_name(name: str) -> str:
     # 去除空格
     name = name.replace(' ', '')
     return name
+
+
+def _compute_link_subnet(link: dict, interfaces_map: dict) -> tuple:
+    """根据链路两端设备的接口 IP 推算网段
+
+    查找 source 设备上 sourceInterface 对应的接口 IP，以及
+    target 设备上 targetInterface 对应的接口 IP。
+    两个 IP 应在同一网段，用 ipaddress 模块计算网络地址。
+
+    返回 (subnet, src_ip, dst_ip)，如 ("172.16.1.0/24", "172.16.1.1", "172.16.1.2")。
+    无法推算时对应字段为空字符串。
+    """
+    src_ip = ''
+    dst_ip = ''
+    src_mask = ''
+    dst_mask = ''
+
+    # 查找源设备接口 IP 和掩码
+    src_dev_id = link.get('srcDevice', '')
+    src_if_name = link.get('srcInterface', '')
+    for iface in interfaces_map.get(src_dev_id, []):
+        if _interface_name_match(iface.get('name', ''), src_if_name):
+            src_ip = iface.get('ip', '')
+            src_mask = iface.get('mask', '')
+            break
+
+    # 查找目的设备接口 IP 和掩码
+    dst_dev_id = link.get('dstDevice', '')
+    dst_if_name = link.get('dstInterface', '')
+    for iface in interfaces_map.get(dst_dev_id, []):
+        if _interface_name_match(iface.get('name', ''), dst_if_name):
+            dst_ip = iface.get('ip', '')
+            dst_mask = iface.get('mask', '')
+            break
+
+    # 计算网段：优先用源端，其次用目的端
+    subnet = ''
+    for ip, mask in ((src_ip, src_mask), (dst_ip, dst_mask)):
+        if ip and mask:
+            try:
+                network = ipaddress.IPv4Network(f'{ip}/{mask}', strict=False)
+                subnet = str(network)
+                break
+            except ValueError:
+                continue
+
+    return subnet, src_ip, dst_ip
 
 
 def write_json(data: dict, output_path: str) -> None:
