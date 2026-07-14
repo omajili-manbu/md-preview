@@ -740,7 +740,8 @@
           if (renderers.diff?.render) renderers.diff.render();
           if (renderers.katex?.render) renderers.katex.render();
           if (renderers.plantuml?.render) renderers.plantuml.render();
-          if (renderers.embedded?.render) renderers.embedded.render();
+          // 传入 outputElement 让 embedded 渲染器在 cell 容器内处理 pkt/geo 等嵌入
+          if (renderers.embedded?.render) renderers.embedded.render(outputElement);
         }
       } catch (e) { console.warn('[Editor] Plugin render error:', e); }
     }, 200);

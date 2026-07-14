@@ -38,64 +38,66 @@
     return { service, url, fullMatch };
   }
   
-  function render() {
-    const content = dom.markdownContent.innerHTML;
+  function render(container) {
+    // 支持传入外部容器（如编辑器 cell 的 outputElement），不传则默认操作主文档
+    const targetEl = container || dom.markdownContent;
+    const content = targetEl.innerHTML;
     let processedContent = content;
-    
+
     const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x', 'pkt'];
     const preTags = processedContent.match(/<pre[^>]*>[\s\S]*?<\/pre>/gi) || [];
     const prePlaceholders = [];
-    
+
     preTags.forEach((pre, idx) => {
       const placeholder = `__PRE_PLACEHOLDER_${idx}__`;
       prePlaceholders.push({ placeholder, content: pre });
       processedContent = processedContent.replace(pre, placeholder);
     });
-    
+
     prePlaceholders.forEach(({ placeholder, content }) => {
       let shouldRender = false;
-      
+
       for (const lang of embedLanguages) {
         if (content.includes(`language-${lang}`)) {
           shouldRender = true;
           break;
         }
       }
-      
+
       if (shouldRender) {
         const codeTagMatch = content.match(/<code[^>]*>([\s\S]*?)<\/code>/i);
         if (codeTagMatch) {
           let codeText = codeTagMatch[1];
-          
+
           codeText = codeText.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
-          
+
           const embedMatch = extractEmbedSyntax(codeText);
-          
+
           if (embedMatch) {
             const { service, url, fullMatch } = embedMatch;
-            
+
             if (service === 'geojson' || service === 'topojson') {
               const mapId = 'map-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-              const container = `<div id="${mapId}" class="geo-map" style="height:400px;border-radius:8px;overflow:hidden"></div>`;
-              
+              const mapContainer = `<div id="${mapId}" class="geo-map" style="height:400px;border-radius:8px;overflow:hidden"></div>`;
+
               setTimeout(() => {
                 window.MarkdownPreview.renderers.geo.renderGeoData(service, url, fullMatch, mapId);
               }, 10);
-              
-              processedContent = processedContent.replace(placeholder, container);
+
+              processedContent = processedContent.replace(placeholder, mapContainer);
             } else if (service === 'pkt') {
               // Packet Tracer 拓扑渲染
               const pktId = 'pkt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-              const container = `<div id="${pktId}" class="pkt-container"></div>`;
-              
+              const pktContainer = `<div id="${pktId}" class="pkt-container"></div>`;
+
               setTimeout(() => {
                 const el = document.getElementById(pktId);
                 if (el && window.MarkdownPreview.pkt) {
                   window.MarkdownPreview.pkt.loadAndRender(el, url);
                 }
               }, 50);
-              
-              processedContent = processedContent.replace(placeholder, container);
+
+              processedContent = processedContent.replace(placeholder, pktContainer);
             } else if (service === 'twitter' || service === 'x') {
               const twitterCode = renderTwitterEmbed(service, url, fullMatch);
               processedContent = processedContent.replace(placeholder, twitterCode);
@@ -117,8 +119,8 @@
         processedContent = processedContent.replace(placeholder, content);
       }
     });
-    
-    dom.markdownContent.innerHTML = processedContent;
+
+    targetEl.innerHTML = processedContent;
   }
   
   function renderTwitterEmbed(service, url, originalMatch) {
