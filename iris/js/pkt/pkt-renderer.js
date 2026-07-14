@@ -527,7 +527,10 @@
     const symbolId = DEVICE_ICONS[deviceType] || DEVICE_ICONS['unknown'];
     const symbol = document.querySelector(`#${symbolId}`);
     if (!symbol) return '';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="${getCSSVar('--color-text', '#333')}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${symbol.innerHTML}</svg>`;
+    // 读取 symbol 自身的 viewBox（Clarity 36x36 / Tabler 24x24），并通过 color 注入主题色，
+    // 使 symbol 内 <g fill="currentColor">/<g stroke="currentColor"> 正确着色。
+    const viewBox = symbol.getAttribute('viewBox') || '0 0 36 36';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="36" height="36" style="color:${getCSSVar('--color-text', '#333')}">${symbol.innerHTML}</svg>`;
     return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
   }
 
