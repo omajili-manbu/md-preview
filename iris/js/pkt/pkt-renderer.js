@@ -225,8 +225,10 @@
             'width': 40,
             'height': 40,
             'shape': 'rectangle',
-            'background-color': '#fff',
+            // 节点底色完全透明，只显示 background-image（SVG 图标本身透明）
+            'background-color': 'transparent',
             'background-opacity': 0,
+            'background-image-opacity': 1,
             'label': 'data(label)',
             'text-valign': 'bottom',
             'text-halign': 'center',
@@ -240,55 +242,55 @@
         },
         {
           selector: 'node[type="router"]',
-          style: { 'background-image': getIconDataURI('router'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('router'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="switch"]',
-          style: { 'background-image': getIconDataURI('switch'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('switch'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="pc"]',
-          style: { 'background-image': getIconDataURI('pc'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('pc'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="server"]',
-          style: { 'background-image': getIconDataURI('server'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('server'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="firewall"]',
-          style: { 'background-image': getIconDataURI('firewall'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('firewall'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="laptop"]',
-          style: { 'background-image': getIconDataURI('laptop'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('laptop'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="phone"]',
-          style: { 'background-image': getIconDataURI('phone'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('phone'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="access-point"]',
-          style: { 'background-image': getIconDataURI('access-point'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('access-point'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="cloud"]',
-          style: { 'background-image': getIconDataURI('cloud'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('cloud'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="hub"]',
-          style: { 'background-image': getIconDataURI('hub'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('hub'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="tv"]',
-          style: { 'background-image': getIconDataURI('tv'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('tv'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="tablet"]',
-          style: { 'background-image': getIconDataURI('tablet'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('tablet'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[type="unknown"]',
-          style: { 'background-image': getIconDataURI('unknown'), 'background-fit': 'contain', 'background-opacity': 1, 'background-color': 'transparent' },
+          style: { 'background-image': getIconDataURI('unknown'), 'background-fit': 'contain' },
         },
         {
           selector: 'node[?primaryIp]',
@@ -355,12 +357,14 @@
       const devType = node.data('deviceType') || 'unknown';
       node.addClass(`type-${devType}`);
       // 直接设置 background-image（兼容 CSS 选择器失效的场景）
+      // 注意：不要设置 background-opacity > 0，否则 Cytoscape 会先画一层不透明底色
       const iconURI = getIconDataURI(devType);
       if (iconURI) {
         node.style('background-image', iconURI);
         node.style('background-fit', 'contain');
-        node.style('background-opacity', 1);
+        node.style('background-image-opacity', 1);
         node.style('background-color', 'transparent');
+        node.style('background-opacity', 0);
       }
     });
 
@@ -530,7 +534,8 @@
     // 读取 symbol 自身的 viewBox（Clarity 36x36 / Tabler 24x24），并通过 color 注入主题色，
     // 使 symbol 内 <g fill="currentColor">/<g stroke="currentColor"> 正确着色。
     const viewBox = symbol.getAttribute('viewBox') || '0 0 36 36';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="36" height="36" style="color:${getCSSVar('--color-text', '#333')}">${symbol.innerHTML}</svg>`;
+    // 显式声明透明背景，避免某些渲染路径（canvas/data-URI）填充默认黑/白底
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="36" height="36" style="background:transparent;color:${getCSSVar('--color-text', '#333')}">${symbol.innerHTML}</svg>`;
     return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
   }
 
