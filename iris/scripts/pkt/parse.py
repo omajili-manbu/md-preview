@@ -87,16 +87,28 @@ def _normalize_device_type(raw_type: str) -> str:
 CABLE_TYPE_MAP = {
     'Straight': 'straight',
     'Copper-Straight': 'straight',
+    'eStraight': 'straight',
+    'eCopperStraight': 'straight',
     'Cross-Over': 'crossover',
     'Copper-Cross-Over': 'crossover',
+    'eCrossOver': 'crossover',
+    'eCopperCrossOver': 'crossover',
+    'eCopper': 'copper',
     'Fiber': 'fiber',
     'Fiber-Straight': 'fiber',
+    'eFiber': 'fiber',
     'Serial': 'serial',
     'Serial-DCE': 'serial-dce',
     'Serial-DTE': 'serial-dte',
+    'eSerial': 'serial',
+    'eSerialDCE': 'serial-dce',
+    'eSerialDTE': 'serial-dte',
     'Console': 'console',
+    'eConsole': 'console',
     'Coaxial': 'coaxial',
+    'eCoaxial': 'coaxial',
     'Wireless': 'wireless',
+    'eWireless': 'wireless',
 }
 
 
@@ -139,22 +151,101 @@ def _find_devices(root: ET.Element) -> list:
     return devices
 
 
-def _parse_device_node(node: ET.Element) -> dict:
-    """解析单个设备节点"""
-    # 设备名
-    name = node.get('NAME') or node.get('name') or ''
-    # 设备类型
-    raw_type = node.get('TYPE') or node.get('type') or node.get('DEVICE_TYPE') or ''
-    device_type = _normalize_device_type(raw_type)
-    # 设备 ID
-    dev_id = node.get('DBID') or node.get('id') or node.get('ID') or name
-    # 坐标
-    x = _parse_float(node.get('POSITION_X') or node.get('X') or node.get('x') or '0')
-    y = _parse_float(node.get('POSITION_Y') or node.get('Y') or node.get('y') or '0')
-    # 型号
-    model = node.get('MODEL') or node.get('model') or raw_type or ''
+def _get_text(node: ET.Element, path: str) -> str:
+    """安全获取子节点文本内容
 
-    if not name and not raw_type:
+    支持多种路径尝试，按优先级返回第一个非空值
+    """
+    if node is None:
+        return ''
+    paths = path.split('|')
+    for p in paths:
+        child = node.find(p.strip())
+        if child is not None and child.text:
+            return child.text.strip()
+    return ''
+
+
+def _get_attr_or_text(node: ET.Element, attr_names: str, text_paths: str = '') -> str:
+    """优先从属性获取，其次从子节点文本获取
+
+    attr_names: 多个属性名用 | 分隔
+    text_paths: 多个子节点路径用 | 分隔
+    """
+    if node is None:
+        return ''
+    # 尝试属性
+    for attr in attr_names.split('|'):
+        val = node.get(attr.strip())
+        if val:
+            return val.strip()
+    # 尝试子节点文本
+    if text_paths:
+        return _get_text(node, text_paths)
+    return ''
+
+
+def _parse_device_node(node: ET.Element) -> dict:
+    """解析单个设备节点
+
+    兼容多种 PT 版本的结构：
+    - 旧版：信息在 DEVICE 节点属性中
+    - 新版（PT 7.x+）：信息在 DEVICE/ENGINE 子节点中
+    """
+    engine = node.find('ENGINE')
+    data_node = engine if engine is not None else node
+
+    # 设备名
+    name = _get_attr_or_text(node, 'NAME|name|DisplayName', 'ENGINE/NAME|NAME')
+    # 设备类型（文本内容，如 "Router"、"Switch"）
+    raw_type = _get_attr_or_text(node, 'TYPE|type|DEVICE_TYPE', 'ENGINE/TYPE|TYPE')
+    # 设备型号（TYPE 节点的 model 属性，如 "2811"、"2960"）
+    model = ''
+    type_node = data_node.find('TYPE')
+    if type_node is not None:
+        model = type_node.get('model', '') or type_node.get('Model', '') or ''
+    if not model:
+        model = _get_attr_or_text(node, 'MODEL|model', '')
+
+    device_type = _normalize_device_type(raw_type or model)
+    # 设备 ID（优先用 SAVE_REF_ID，兼容旧版 DBID）
+    dev_id = _get_attr_or_text(node, 'DBID|id|ID', 'ENGINE/SAVE_REF_ID|SAVE_REF_ID')
+    if not dev_id:
+        dev_id = name
+
+    # 坐标（优先级：WORKSPACE/LOGICAL/X,Y > COORD_SETTINGS > 属性）
+    x = 0.0
+    y = 0.0
+
+    # 1. 优先使用 WORKSPACE/LOGICAL 中的坐标（逻辑视图位置，即用户画布上的位置）
+    workspace = node.find('WORKSPACE')
+    if workspace is not None:
+        logical = workspace.find('LOGICAL')
+        if logical is not None:
+            logical_x = _get_text(logical, 'X|x')
+            logical_y = _get_text(logical, 'Y|y')
+            if logical_x:
+                x = _parse_float(logical_x)
+            if logical_y:
+                y = _parse_float(logical_y)
+
+    # 2. 其次使用 ENGINE/COORD_SETTINGS 中的坐标
+    if x == 0.0 and y == 0.0:
+        coord_node = data_node.find('COORD_SETTINGS')
+        if coord_node is not None:
+            coord_x = _get_text(coord_node, 'X_COORD|x')
+            coord_y = _get_text(coord_node, 'Y_COORD|y')
+            if coord_x:
+                x = _parse_float(coord_x)
+            if coord_y:
+                y = _parse_float(coord_y)
+
+    # 3. 最后尝试从属性获取（旧版格式）
+    if x == 0.0 and y == 0.0:
+        x = _parse_float(_get_attr_or_text(node, 'POSITION_X|X|x', ''))
+        y = _parse_float(_get_attr_or_text(node, 'POSITION_Y|Y|y', ''))
+
+    if not name and not raw_type and not model:
         return None
 
     return {
@@ -198,29 +289,83 @@ def _find_links(root: ET.Element) -> list:
 
 
 def _parse_link_node(node: ET.Element) -> dict:
-    """解析单个链路节点"""
+    """解析单个链路节点
+
+    兼容多种 PT 版本的结构：
+    - 旧版：信息在 LINK 节点属性中，或 FROM/TO 子节点属性中
+    - 新版 PT 7.x+：信息在 LINK/CABLE 子节点中
+      - CABLE/FROM: 源设备 ID（save-ref-id:...）
+      - CABLE/TO: 目的设备 ID（save-ref-id:...）
+      - CABLE/PORT: 两个 PORT 子节点，第一个是源接口，第二个是目的接口
+      - CABLE/TYPE: 线缆具体类型（如 eCrossOver）
+      - LINK/TYPE: 线缆大类（如 eCopper）
+    """
     # 链路 ID
-    link_id = node.get('DBID') or node.get('id') or node.get('ID') or ''
+    link_id = _get_attr_or_text(node, 'DBID|id|ID', '')
+
     # 线缆类型
+    cable_raw = ''
+    # 先尝试属性
     cable_raw = node.get('CABLE_TYPE') or node.get('cableType') or node.get('TYPE') or ''
+
+    # 尝试从 CABLE 子节点获取（新版结构）
+    cable_node = node.find('CABLE')
+    if cable_node is not None:
+        # CABLE 中的 TYPE 是更具体的类型（如 eCrossOver）
+        cable_type_inner = _get_text(cable_node, 'TYPE')
+        if cable_type_inner:
+            cable_raw = cable_type_inner
+    if not cable_raw:
+        # LINK 层面的 TYPE 是大类（如 eCopper）
+        cable_raw = _get_text(node, 'TYPE')
+
     cable_type = _normalize_cable_type(cable_raw)
 
     # 两端设备 ID 和接口
+    src_dev = ''
+    dst_dev = ''
+    src_if = ''
+    dst_if = ''
+
+    # 先尝试从属性获取（旧版）
     src_dev = node.get('SRC_DEVICE') or node.get('srcDevice') or node.get('FROM') or ''
     dst_dev = node.get('DST_DEVICE') or node.get('dstDevice') or node.get('TO') or ''
     src_if = node.get('SRC_PORT') or node.get('srcPort') or node.get('SRC_INTERFACE') or ''
     dst_if = node.get('DST_PORT') or node.get('dstPort') or node.get('DST_INTERFACE') or ''
 
-    # 尝试从子节点解析（PT 某些版本使用子节点存储端点信息）
+    # 尝试从直接子节点解析（旧版的 FROM/TO 子节点）
     if not src_dev or not dst_dev:
         for child in node:
             tag = child.tag.upper()
             if tag in ('FROM', 'SRC', 'SOURCE', 'ENDPOINT1'):
-                src_dev = src_dev or child.get('DEVICE') or child.get('device') or child.text or ''
+                src_dev = src_dev or child.get('DEVICE') or child.get('device') or (child.text or '').strip() or ''
                 src_if = src_if or child.get('PORT') or child.get('port') or child.get('INTERFACE') or ''
             elif tag in ('TO', 'DST', 'DEST', 'ENDPOINT2'):
-                dst_dev = dst_dev or child.get('DEVICE') or child.get('device') or child.text or ''
+                dst_dev = dst_dev or child.get('DEVICE') or child.get('device') or (child.text or '').strip() or ''
                 dst_if = dst_if or child.get('PORT') or child.get('port') or child.get('INTERFACE') or ''
+
+    # 尝试从 CABLE 子节点解析（新版 PT 7.x+ 结构）
+    if cable_node is not None and (not src_dev or not dst_dev or not src_if or not dst_if):
+        # 从 CABLE/FROM 和 CABLE/TO 获取设备 ID
+        from_text = _get_text(cable_node, 'FROM')
+        to_text = _get_text(cable_node, 'TO')
+        if from_text:
+            src_dev = src_dev or from_text
+        if to_text:
+            dst_dev = dst_dev or to_text
+
+        # 从 CABLE/PORT 节点获取接口名
+        # 注意：CABLE 下通常有两个 PORT 子节点，第一个是源端，第二个是目的端
+        port_nodes = cable_node.findall('PORT')
+        if len(port_nodes) >= 2:
+            if not src_if and port_nodes[0].text:
+                src_if = port_nodes[0].text.strip()
+            if not dst_if and port_nodes[1].text:
+                dst_if = port_nodes[1].text.strip()
+        elif len(port_nodes) == 1:
+            # 只有一个 PORT 的情况，尝试用其他方式区分
+            if not src_if and port_nodes[0].text:
+                src_if = port_nodes[0].text.strip()
 
     if not src_dev and not dst_dev:
         return None
@@ -238,29 +383,71 @@ def _parse_link_node(node: ET.Element) -> dict:
 
 # ============== 配置解析 ==============
 
+def _extract_config_from_device(device_node: ET.Element) -> str:
+    """从设备节点中提取配置文本
+
+    支持多种格式：
+    1. 旧版：CONFIGURATION/IOS_CONFIG/CONFIG/RUNNING_CONFIG 等节点直接存文本
+    2. 新版 PT 7.x+：ENGINE/RUNNINGCONFIG 下多个 LINE 子节点逐行存储
+    3. 新版：ENGINE/STARTUPCONFIG（启动配置）
+    """
+    # 先尝试在 ENGINE 子节点中找（新版结构）
+    engine = device_node.find('ENGINE')
+    search_nodes = [engine] if engine is not None else []
+    search_nodes.append(device_node)
+
+    config_tags = [
+        'RUNNINGCONFIG', 'RUNNING_CONFIG',
+        'STARTUPCONFIG', 'STARTUP_CONFIG',
+        'CONFIGURATION', 'IOS_CONFIG', 'CONFIG',
+    ]
+
+    for node in search_nodes:
+        for tag in config_tags:
+            config_node = node.find(tag)
+            if config_node is None:
+                continue
+
+            # 情况1：节点有直接的文本内容
+            if config_node.text and config_node.text.strip():
+                return config_node.text.strip()
+
+            # 情况2：节点下有多个 LINE 子节点（PT 7.x+ 格式）
+            lines = []
+            for line_node in config_node.findall('LINE'):
+                if line_node.text is not None:
+                    lines.append(line_node.text)
+            if lines:
+                return '\n'.join(lines)
+
+    return ''
+
+
 def _find_configs(root: ET.Element) -> list:
     """查找设备配置文本
 
-    PT XML 中配置可能在：
-    - DEVICE/CONFIGURATION
-    - DEVICE/IOS_CONFIG
-    - DEVICE/CONFIG
-    - .//CONFIGURATION
+    PT XML 中配置可能在多种位置，兼容不同版本：
+    - 旧版：DEVICE/CONFIGURATION、DEVICE/IOS_CONFIG 等
+    - 新版 PT 7.x+：DEVICE/ENGINE/RUNNINGCONFIG/LINE[]
     """
     configs = []
 
-    # 查找所有带配置的设备节点
-    for device_node in root.findall('.//DEVICE'):
-        dev_name = device_node.get('NAME') or device_node.get('name') or ''
-        dev_id = device_node.get('DBID') or device_node.get('id') or dev_name
+    # 查找所有设备节点（大小写都试）
+    device_nodes = root.findall('.//DEVICE')
+    if not device_nodes:
+        device_nodes = root.findall('.//device')
 
-        config_text = None
-        # 尝试多种配置标签
-        for tag in ['CONFIGURATION', 'IOS_CONFIG', 'CONFIG', 'STARTUP_CONFIG', 'RUNNING_CONFIG']:
-            config_node = device_node.find(tag)
-            if config_node is not None and config_node.text:
-                config_text = config_node.text.strip()
-                break
+    for device_node in device_nodes:
+        # 用与 _parse_device_node 相同的方式获取设备 ID 和名称
+        engine = device_node.find('ENGINE')
+        data_node = engine if engine is not None else device_node
+
+        dev_name = _get_attr_or_text(device_node, 'NAME|name|DisplayName', 'ENGINE/NAME|NAME')
+        dev_id = _get_attr_or_text(device_node, 'DBID|id|ID', 'ENGINE/SAVE_REF_ID|SAVE_REF_ID')
+        if not dev_id:
+            dev_id = dev_name
+
+        config_text = _extract_config_from_device(device_node)
 
         if config_text:
             configs.append({
@@ -663,11 +850,38 @@ def parse_xml(xml_text: str) -> dict:
     # 解析设备
     devices = _find_devices(root)
 
+    # 建立设备 ID 映射表：原始 ID -> 数字 ID（从 1 开始）
+    # 用于将 save-ref-id:xxx 等长 ID 转换为前端兼容的数字 ID
+    id_mapping = {}
+    for idx, dev in enumerate(devices, start=1):
+        old_id = dev['id']
+        new_id = str(idx)
+        id_mapping[old_id] = new_id
+        dev['id'] = new_id
+
     # 解析链路
     links = _find_links(root)
 
+    # 给链路分配 L1, L2, L3... 格式的 ID，并更新两端设备 ID
+    for idx, link in enumerate(links, start=1):
+        link['id'] = f'L{idx}'
+        # 更新源设备 ID
+        old_src = link['srcDevice']
+        if old_src in id_mapping:
+            link['srcDevice'] = id_mapping[old_src]
+        # 更新目的设备 ID
+        old_dst = link['dstDevice']
+        if old_dst in id_mapping:
+            link['dstDevice'] = id_mapping[old_dst]
+
     # 解析配置
     configs = _find_configs(root)
+
+    # 更新配置中的设备 ID
+    for cfg in configs:
+        old_id = cfg['deviceId']
+        if old_id in id_mapping:
+            cfg['deviceId'] = id_mapping[old_id]
 
     # 从配置推算接口表/VLAN/ACL/路由
     interfaces_by_device = {}
@@ -689,6 +903,16 @@ def parse_xml(xml_text: str) -> dict:
 
     # 解析分组
     groups = _find_groups(root)
+
+    # 更新分组中的设备 ID
+    for group in groups:
+        updated_members = []
+        for member in group['members']:
+            if member in id_mapping:
+                updated_members.append(id_mapping[member])
+            else:
+                updated_members.append(member)
+        group['members'] = updated_members
 
     return {
         'devices': devices,

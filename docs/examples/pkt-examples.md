@@ -18,6 +18,29 @@ title: Packet Tracer 拓扑渲染示例
 
 @[pkt](example)
 
+> **提示**：如果文件名包含空格，引用时请使用 URL 编码（空格替换为 `%20`）。例如 `@[pkt](my%20topology)`。
+
+## 示例拓扑
+
+### 基础网络示例
+
+简单的双路由器 + 交换机 + PC + 服务器拓扑，包含 VLAN 划分、OSPF 路由、ACL 访问控制列表。
+
+@[pkt](example)
+
+### 路由协议综合实验
+
+包含 OSPF、BGP、RIP 三种路由协议的综合实验拓扑，6 台路由器、2 台 PC、9 条链路，展示多种路由协议的配置与互通。
+
+@[pkt](ospf-bgp-rip%20over)
+
+## 可用拓扑一览
+
+| 拓扑名称 | 设备数 | 链路数 | 技术点 |
+|---------|--------|--------|--------|
+| example | 6 | 5 | VLAN、OSPF、ACL |
+| ospf-bgp-rip over | 9 | 9 | OSPF、BGP、RIP |
+
 ## 交互功能
 
 - **缩放平移**：鼠标滚轮缩放，拖拽平移画布
@@ -50,6 +73,12 @@ title: Packet Tracer 拓扑渲染示例
 2. 本地运行 `python iris/scripts/pkt/main.py` 或推送到 GitHub 触发 CI
 3. 脚本自动解密（XOR / Twofish EAX）→ 解压（zlib）→ 解析 XML → 输出 JSON
 4. 在 Markdown 中用 `@[pkt](文件名)` 引用
+
+### 文件命名建议
+
+- 推荐使用英文、数字、连字符（`-`）和下划线（`_`）
+- 避免空格和特殊字符
+- 含空格的文件名引用时需用 `%20` 编码
 
 ## 支持的 PT 版本
 
