@@ -186,6 +186,7 @@
           id: dev.id,
           label: dev.name,
           deviceType: dev.type,
+          type: dev.type,  // 兼容 CSS 选择器 node[type="..."]
           primaryIp: dev.primaryIp || '',
           model: dev.model || '',
           rawType: dev.rawType || '',
@@ -343,7 +344,7 @@
           style: { 'border-width': 3, 'border-color': getCSSVar('--color-accent-purple', '#9b59b6') },
         },
       ],
-      layout: { name: 'preset', fit: true, padding: 40 },
+      layout: { name: 'preset', fit: false, padding: 40 },
       wheelSensitivity: 0.2,
       minZoom: 0.3,
       maxZoom: 3,
@@ -353,7 +354,7 @@
     cy.nodes().forEach(node => {
       const devType = node.data('deviceType') || 'unknown';
       node.addClass(`type-${devType}`);
-      // 直接设置 background-image
+      // 直接设置 background-image（兼容 CSS 选择器失效的场景）
       const iconURI = getIconDataURI(devType);
       if (iconURI) {
         node.style('background-image', iconURI);
@@ -363,8 +364,10 @@
       }
     });
 
-    // 适应屏幕
-    cy.fit(cy.elements(), 40);
+    // 适应屏幕（排除离群点，避免正常设备被缩成不可见的小点）
+    // 策略：只对参与链路的节点 + 坐标在合理范围内的节点做 fit
+    const fitEls = computeFitElements(cy, jsonData);
+    cy.fit(fitEls.length ? fitEls : cy.elements(), 40);
 
     // 更新缩放显示
     const zoomDisplay = wrapper.querySelector('.pkt-zoom-display');
@@ -408,7 +411,10 @@
     // ============== 工具栏按钮 ==============
 
     wrapper.querySelector('[data-action="layout-pt"]').addEventListener('click', () => {
-      cy.layout({ name: 'preset', fit: true, padding: 40 }).run();
+      // PT 坐标布局：用保存的原始位置重跑 preset，再 fit 到非离群元素
+      cy.layout({ name: 'preset', fit: false, padding: 40 }).run();
+      const fitEls = computeFitElements(cy, jsonData);
+      cy.fit(fitEls.length ? fitEls : cy.elements(), 40);
       setActiveBtn(wrapper, 'layout-pt');
     });
 
@@ -420,17 +426,24 @@
         nodeRepulsion: 8000,
         idealEdgeLength: 100,
         padding: 40,
+        fit: true,
       }).run();
       setActiveBtn(wrapper, 'layout-force');
     });
 
     wrapper.querySelector('[data-action="toggle-grid"]').addEventListener('click', () => {
       canvasWrapper.classList.toggle('grid');
+      // 确保 canvas 背景透明，让 wrapper 的网格能透出来
+      const canvasChild = canvasEl.querySelector('canvas');
+      if (canvasChild) {
+        canvasChild.style.background = 'transparent';
+      }
       wrapper.querySelector('[data-action="toggle-grid"]').classList.toggle('active');
     });
 
     wrapper.querySelector('[data-action="fit"]').addEventListener('click', () => {
-      cy.fit(cy.elements(), 40);
+      const fitEls = computeFitElements(cy, jsonData);
+      cy.fit(fitEls.length ? fitEls : cy.elements(), 40);
     });
 
     wrapper.querySelector('[data-action="export"]').addEventListener('click', (e) => {
@@ -466,6 +479,48 @@
   function getCSSVar(name, fallback) {
     const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return val || fallback;
+  }
+
+  // 计算 fit 时应包含的元素：排除坐标离群点
+  // 策略：先按链路找出参与连接的节点；再用这些节点的坐标中位数作为基准，
+  //       剔除距离中位数过远（>2.5 倍中位绝对偏差）的离群节点
+  function computeFitElements(cy, jsonData) {
+    const linkedIds = new Set();
+    (jsonData.links || []).forEach(l => {
+      if (l.source) linkedIds.add(String(l.source));
+      if (l.target) linkedIds.add(String(l.target));
+    });
+
+    // 参与链路的节点（孤立节点不参与 fit，避免把画布撑大）
+    const linkedNodes = cy.nodes().filter(n => linkedIds.has(String(n.data('id'))));
+    if (linkedNodes.length === 0) return cy.elements();
+
+    // 统计这些节点的坐标，计算中位数
+    const xs = linkedNodes.map(n => n.position().x).filter(v => Number.isFinite(v)).sort((a, b) => a - b);
+    const ys = linkedNodes.map(n => n.position().y).filter(v => Number.isFinite(v)).sort((a, b) => a - b);
+    if (xs.length === 0 || ys.length === 0) return cy.elements();
+
+    const median = arr => arr.length % 2 === 0
+      ? (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2
+      : arr[Math.floor(arr.length / 2)];
+    const mx = median(xs), my = median(ys);
+
+    // 计算到中位数的距离，用 MAD（中位绝对偏差）作为离群判定
+    const dists = linkedNodes.map(n => Math.hypot(n.position().x - mx, n.position().y - my));
+    const sortedDists = [...dists].sort((a, b) => a - b);
+    const medDist = median(sortedDists);
+    const mad = median(sortedDists.map(d => Math.abs(d - medDist)));
+    // 阈值：距离中位数 > medDist + 3 * mad + 500 也视为离群
+    // （加 500 是为了在所有节点都很近时也能容忍正常布局间距）
+    const threshold = medDist + 3 * Math.max(mad, 1) + 500;
+
+    const fitNodes = linkedNodes.filter(n => {
+      const p = n.position();
+      return Math.hypot(p.x - mx, p.y - my) <= threshold;
+    });
+
+    // 返回节点 + 它们的连接边
+    return fitNodes.union(fitNodes.connectedEdges());
   }
 
   function getIconDataURI(deviceType) {

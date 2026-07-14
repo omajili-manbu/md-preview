@@ -120,6 +120,12 @@
 .pkt-canvas {
   width: 100%;
   height: 100%;
+  background: transparent !important;
+}
+
+/* 确保 Cytoscape 生成的 canvas 元素透明，让 wrapper 的网格背景透出来 */
+.pkt-canvas > canvas {
+  background: transparent !important;
 }
 
 /* Cytoscape 节点样式覆盖 */
