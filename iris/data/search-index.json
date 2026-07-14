@@ -77,7 +77,7 @@
   {
     "path": "docs/examples/pkt-examples.md",
     "title": "Packet Tracer 拓扑渲染示例",
-    "preview": "Packet Tracer 拓扑渲染 本站点支持在 Markdown 文档中嵌入 Cisco Packet Tracer 拓扑图。将 .pkt 文件放入 iris/data/pkt/raw/ 目录，构建脚本会自动解密、解压、解析并生成 JSON，前端用 Cytoscape.js 渲染为交互式拓扑图。 基本用法 使用 @pkt 嵌入语法引用预处理好的拓扑 JSON： 渲染效果如下： @pkt 交互功"
+    "preview": "Packet Tracer 拓扑渲染 本站点支持在 Markdown 文档中嵌入 Cisco Packet Tracer 拓扑图。将 .pkt 文件放入 iris/data/pkt/raw/ 目录，构建脚本会自动解密、解压、解析并生成 JSON，前端用 Cytoscape.js 渲染为交互式拓扑图。 基本用法 使用 @pkt 嵌入语法引用预处理好的拓扑 JSON，需要用 pkt 代码块包裹（即三反"
   },
   {
     "path": "docs/examples/plantuml-examples.md",
