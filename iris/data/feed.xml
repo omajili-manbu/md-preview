@@ -5,14 +5,14 @@
     <link>https://theforeveriris.github.io/md-preview/</link>
     <description>一个简洁优雅的 Markdown 文档预览站点，支持多种渲染功能</description>
     <language>zh-CN</language>
-    <lastBuildDate>Tue, 14 Jul 2026 01:07:03 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 14 Jul 2026 03:08:02 GMT</lastBuildDate>
     <atom:link href="https://theforeveriris.github.io/md-preview/iris/data/feed.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Packet Tracer 拓扑渲染示例</title>
       <link>https://theforeveriris.github.io/md-preview/#/docs/examples/pkt-examples.md</link>
       <guid isPermaLink="true">https://theforeveriris.github.io/md-preview/#/docs/examples/pkt-examples.md</guid>
-      <pubDate>Tue, 14 Jul 2026 01:06:43 GMT</pubDate>
-      <description>本站点支持在 Markdown 文档中嵌入 Cisco Packet Tracer 拓扑图。将 文件放入 目录，构建脚本会自动解密、解压、解析并生成 JSON，前端用 Cytoscape.js 渲染为交互式拓扑图。 使用 嵌入语法引用预处理好的拓扑 JSON： 渲染效果如下： @pkt &gt; 提示：如果文件名包含空格，引用时请使用 URL 编码（空格替换为 ）。例如 。 简单的双路由器 + 交换机 </description>
+      <pubDate>Tue, 14 Jul 2026 01:22:04 GMT</pubDate>
+      <description>本站点支持在 Markdown 文档中嵌入 Cisco Packet Tracer 拓扑图。将 文件放入 目录，构建脚本会自动解密、解压、解析并生成 JSON，前端用 Cytoscape.js 渲染为交互式拓扑图。 使用 嵌入语法引用预处理好的拓扑 JSON，需要用 代码块包裹（即三反引号 + 语言标记）： 渲染效果如下： &gt; 提示：如果文件名包含空格，引用时请使用 URL 编码（空格替换为 ）。</description>
     </item>
     <item>
       <title>feat.md — 优化路线图</title>
