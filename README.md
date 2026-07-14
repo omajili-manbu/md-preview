@@ -22,6 +22,7 @@
 - 📋 **代码块增强** — 一键复制按钮、语言标签、横向滚动优化
 - 📊 **长表格优化** — 自动包裹支持横向滚动
 - 🔗 **标题锚点分享** — 标题悬浮出现复制链接按钮，直达章节
+- 🌐 **Packet Tracer 拓扑** — 解析 Cisco `.pkt` 文件，渲染交互式网络拓扑图（基于 Cytoscape.js）
 
 ### 主题与外观
 
@@ -166,6 +167,67 @@ node iris/scripts/build-feed.js
 - [插件开发指南](docs/plugin-development.md)
 - [RSS 订阅](docs/rss.md)
 - [开发者文档](readme-dev.md)
+
+## 🙏 致谢
+
+本项目基于众多优秀的开源项目构建，在此向所有项目的作者和贡献者表示衷心感谢。
+
+### 核心引擎
+
+| 项目 | 用途 | 许可证 |
+|------|------|--------|
+| [marked](https://github.com/markedjs/marked) | Markdown 解析为 HTML 的核心引擎 | MIT |
+| [highlight.js](https://github.com/highlightjs/highlight.js) | 代码块语法高亮（10 套主题） | BSD-3-Clause |
+| [FlexSearch](https://github.com/nextapps-de/flexsearch) | 中文分词全文搜索引擎 | Apache-2.0 |
+
+### 图表与可视化
+
+| 项目 | 用途 | 许可证 |
+|------|------|--------|
+| [Mermaid](https://github.com/mermaid-js/mermaid) | 流程图、时序图、甘特图等 18+ 种图表 | MIT |
+| [ApexCharts](https://github.com/apexcharts/apexcharts.js) | 交互式折线图、柱状图、饼图等 | MIT |
+| [KaTeX](https://github.com/KaTeX/KaTeX) | LaTeX 数学公式渲染 | MIT |
+| [Diff2Html](https://github.com/rtfpessoa/diff2html) | Git Diff 差异可视化 | MIT |
+| [Cytoscape.js](https://github.com/cytoscape/cytoscape.js) | Packet Tracer 网络拓扑图渲染 | MIT |
+
+### 地图与地理数据
+
+| 项目 | 用途 | 许可证 |
+|------|------|--------|
+| [Leaflet](https://github.com/Leaflet/Leaflet) | GeoJSON / TopoJSON 地图渲染 | BSD-2-Clause |
+| [OpenStreetMap](https://www.openstreetmap.org) | 地图瓦片数据服务 | ODbL |
+
+### 工具库
+
+| 项目 | 用途 | 许可证 |
+|------|------|--------|
+| [pako](https://github.com/nodeca/pako) | PlantUML 文本压缩（zlib） | MIT AND Zlib |
+| [sharp](https://github.com/lovell/sharp) | PWA 图标生成（构建期） | Apache-2.0 |
+
+### 图标与设计资源
+
+| 项目 | 用途 | 许可证 |
+|------|------|--------|
+| [VMware Clarity Icons](https://github.com/vmware-archive/clarity-assets) | 网络设备图标（路由器/交换机/防火墙等） | MIT |
+| [Tabler Icons](https://github.com/tabler/tabler-icons) | 设备图标补充 | MIT |
+| [Geist UI Icons](https://github.com/vercel/geist-ui) | 文件树组件图标 | MIT |
+
+### 字体
+
+| 项目 | 用途 | 许可证 |
+|------|------|--------|
+| [Cormorant Garamond](https://fonts.google.com/specimen/Cormorant+Garamond) | 标题衬线字体 | OFL 1.1 |
+| [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans) | 正文无衬线字体 | OFL 1.1 |
+| [Google Fonts](https://fonts.google.com) | 字体分发服务 | — |
+
+### 运行时服务
+
+以下服务在运行时被调用，感谢其提供的公共服务：
+
+- [PlantUML 公共服务器](https://plantuml.com) — UML 图表渲染
+- [OpenStreetMap](https://www.openstreetmap.org) — 地图瓦片
+- [Shields.io](https://shields.io) / [Badgen](https://badgen.net) — 徽章图生成
+- [YouTube](https://youtube.com) / [Bilibili](https://bilibili.com) / [CodePen](https://codepen.io) / [Figma](https://figma.com) 等嵌入服务
 
 ## 📄 License
 
