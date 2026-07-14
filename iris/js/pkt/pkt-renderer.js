@@ -887,9 +887,17 @@
 
     try {
       const base = getBasePath();
+      // 对文件名做 URL 编码（先 decode 防止重复编码，如 %20 → %2520）
+      let safePath = jsonPath;
+      if (!jsonPath.startsWith('http') && !jsonPath.startsWith('/')) {
+        try {
+          safePath = decodeURIComponent(jsonPath);
+        } catch (e) { /* 已是原始字符串，decode 失败则原样使用 */ }
+        safePath = encodeURIComponent(safePath);
+      }
       const url = jsonPath.startsWith('http') || jsonPath.startsWith('/')
         ? jsonPath
-        : `${base}iris/data/pkt/json/${jsonPath}`;
+        : `${base}iris/data/pkt/json/${safePath}.json`;
 
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);

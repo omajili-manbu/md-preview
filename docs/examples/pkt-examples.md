@@ -8,7 +8,7 @@ title: Packet Tracer 拓扑渲染示例
 
 ## 基本用法
 
-使用 `@[pkt](文件名)` 嵌入语法引用预处理好的拓扑 JSON：
+使用 `@[pkt](文件名)` 嵌入语法引用预处理好的拓扑 JSON，需要用 `pkt` 代码块包裹（即三反引号 + `pkt` 语言标记）：
 
 ```
 @[pkt](example)
@@ -16,7 +16,9 @@ title: Packet Tracer 拓扑渲染示例
 
 渲染效果如下：
 
+```pkt
 @[pkt](example)
+```
 
 > **提示**：如果文件名包含空格，引用时请使用 URL 编码（空格替换为 `%20`）。例如 `@[pkt](my%20topology)`。
 
@@ -26,13 +28,17 @@ title: Packet Tracer 拓扑渲染示例
 
 简单的双路由器 + 交换机 + PC + 服务器拓扑，包含 VLAN 划分、OSPF 路由、ACL 访问控制列表。
 
+```pkt
 @[pkt](example)
+```
 
 ### 路由协议综合实验
 
 包含 OSPF、BGP、RIP 三种路由协议的综合实验拓扑，6 台路由器、2 台 PC、9 条链路，展示多种路由协议的配置与互通。
 
+```pkt
 @[pkt](ospf-bgp-rip%20over)
+```
 
 ## 可用拓扑一览
 

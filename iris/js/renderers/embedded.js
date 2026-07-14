@@ -42,7 +42,7 @@
     const content = dom.markdownContent.innerHTML;
     let processedContent = content;
     
-    const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x'];
+    const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x', 'pkt'];
     const preTags = processedContent.match(/<pre[^>]*>[\s\S]*?<\/pre>/gi) || [];
     const prePlaceholders = [];
     
