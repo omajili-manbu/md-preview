@@ -1108,7 +1108,6 @@
     updateBreadcrumbs,
     setupHeadingNavigation,
     calculateReadingTime,
-    renderWithPlugins,
     highlightCodeBlocks
   };
 })();

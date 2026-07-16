@@ -152,7 +152,10 @@
   async function loadPlugin(url) {
     console.log(`[PluginLoader] Loading plugin from: ${url}`);
     try {
-      const module = await import(/* @vite-ignore */ url);
+      // 浏览器 import() 需要绝对 URL 或以 / ./ ../ 开头的路径
+      // 将 bare specifier 解析为相对于 baseURI 的绝对 URL
+      const resolvedUrl = new URL(url, document.baseURI).href;
+      const module = await import(/* @vite-ignore */ resolvedUrl);
       const plugin = module.default || module;
 
       if (!plugin || typeof plugin !== 'object') {
