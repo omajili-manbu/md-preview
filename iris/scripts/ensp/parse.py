@@ -150,7 +150,8 @@ def _extract_uuid(raw_id: str) -> str:
 def _find_devices(root: ET.Element) -> list:
     """查找所有设备节点
 
-    eNSP XML 中设备在 Devices/Device 下
+    eNSP XML 中设备在 <devices>/<dev> 下（小写标签，常见于实际工程文件）
+    也兼容 <Devices>/<Device> 风格
     """
     devices = []
 
@@ -158,53 +159,59 @@ def _find_devices(root: ET.Element) -> list:
     if not device_nodes:
         device_nodes = root.findall('.//device')
     if not device_nodes:
+        device_nodes = root.findall('.//dev')
+    if not device_nodes:
         devices_node = root.find('Devices')
+        if devices_node is None:
+            devices_node = root.find('devices')
         if devices_node is not None:
-            device_nodes = devices_node.findall('Device')
-            if not device_nodes:
-                device_nodes = devices_node.findall('device')
+            device_nodes = (
+                devices_node.findall('Device')
+                or devices_node.findall('device')
+                or devices_node.findall('dev')
+            )
 
     for node in device_nodes:
-        device = _parse_device_node(node)
+        device = _parse_device_node(node, root)
         if device:
             devices.append(device)
 
     return devices
 
 
-def _parse_device_node(node: ET.Element) -> dict:
+def _parse_device_node(node: ET.Element, root: ET.Element = None) -> dict:
     """解析单个设备节点
 
-    eNSP 设备节点结构：
-    <Device>
-        <uuid>xxx</uuid>
-        <model>AR1220</model>
-        <name>R1</name>
-        <x>100</x>
-        <y>200</y>
-        <icon>...</icon>
-    </Device>
+    eNSP 实际节点结构（属性式）：
+    <dev id="UUID" name="R1" model="AR2220" cx="100" cy="200" system_mac="...">
+        <slot number="slot17" isMainBoard="1">
+            <interface sztype="Ethernet" interfacename="GE" count="2" />
+        </slot>
+    </dev>
     """
-    # 设备 ID
-    dev_id = _extract_uuid(_get_text(node, 'uuid|UUID'))
+    # 设备 ID（优先用属性 id，其次子元素 uuid/UUID）
+    dev_id = node.get('id') or node.get('ID') or ''
     if not dev_id:
-        dev_id = _get_text(node, 'id|ID')
+        dev_id = _get_text(node, 'uuid|UUID')
 
     # 设备名
-    name = _get_text(node, 'name|NAME')
+    name = node.get('name') or node.get('NAME') or _get_text(node, 'name|NAME')
 
     # 设备型号
-    model = _get_text(node, 'model|MODEL')
+    model = node.get('model') or node.get('MODEL') or _get_text(node, 'model|MODEL')
 
     # 设备类型（根据 model 映射）
     device_type = _normalize_device_type(model)
 
-    # 坐标
-    x = _parse_float(_get_text(node, 'x|X'))
-    y = _parse_float(_get_text(node, 'y|Y'))
+    # 坐标（eNSP 用属性 cx/cy，兼容 <x>/<y>）
+    x = _parse_float(node.get('cx') or node.get('CX') or '')
+    y = _parse_float(node.get('cy') or node.get('CY') or '')
+    if not x and not y:
+        x = _parse_float(_get_text(node, 'x|X'))
+        y = _parse_float(_get_text(node, 'y|Y'))
 
-    # 图标（可选）
-    icon = _get_text(node, 'icon|ICON')
+    # MAC
+    mac = node.get('system_mac') or node.get('systemMac') or node.get('mac') or ''
 
     if not name and not model:
         return None
@@ -217,7 +224,8 @@ def _parse_device_node(node: ET.Element) -> dict:
         'model': model,
         'x': x,
         'y': y,
-        'icon': icon,
+        'mac': mac,
+        'icon': '',
     }
 
 
@@ -226,7 +234,7 @@ def _parse_device_node(node: ET.Element) -> dict:
 def _find_links(root: ET.Element) -> list:
     """查找所有链路节点
 
-    eNSP XML 中链路在 Lines/Line 下
+    eNSP XML 中链路在 <lines>/<line> 下，srcDeviceID/destDeviceID 是属性
     """
     links = []
 
@@ -235,99 +243,267 @@ def _find_links(root: ET.Element) -> list:
         link_nodes = root.findall('.//line')
     if not link_nodes:
         lines_node = root.find('Lines')
+        if lines_node is None:
+            lines_node = root.find('lines')
         if lines_node is not None:
-            link_nodes = lines_node.findall('Line')
-            if not link_nodes:
-                link_nodes = lines_node.findall('line')
+            link_nodes = lines_node.findall('Line') or lines_node.findall('line')
 
-    for node in link_nodes:
-        link = _parse_link_node(node)
+    # 构建设备 id → 接口名列表 映射（用于根据 srcIndex/tarIndex 解析接口名）
+    dev_id_to_interfaces = _build_device_interface_index(root)
+
+    for idx, node in enumerate(link_nodes, start=1):
+        link = _parse_link_node(node, dev_id_to_interfaces)
         if link:
+            link['id'] = f'L{idx}'
             links.append(link)
 
     return links
 
 
-def _parse_link_node(node: ET.Element) -> dict:
+def _build_device_interface_index(root: ET.Element) -> dict:
+    """构建 设备ID → 接口名列表 的映射
+
+    eNSP 实际结构：
+    <dev id="UUID" name="R1">
+        <slot number="slot17" isMainBoard="1">
+            <interface interfacename="GE" count="2" />
+        </slot>
+    </dev>
+
+    其中 interfacename 是接口类型前缀（GE/Ethernet/Serial 等），
+    count 是该前缀下的接口数量。
+    索引 i (0-based) 对应接口名 = interfacename + str(i)（部分以 1 起始）。
+    """
+    mapping = {}
+    for dev_node in root.findall('.//dev'):
+        dev_id = dev_node.get('id') or dev_node.get('ID') or ''
+        if not dev_id:
+            continue
+
+        # 仅取主控板（isMainBoard=1）作为接口来源
+        # 注意：每个 <interface> 是连续的接口段，索引需要跨段累加
+        # 不同类型前缀的"子板号"独立递增：
+        #   - Serial: 第一个 Serial 段是 Serial1/0/x，第二个是 Serial2/0/x ...
+        #   - E1:     同 Serial
+        #   - GE / Ethernet / FE / XE 等: 始终是 0/0/x
+        interfaces = []
+        serial_seg = 0
+        e1_seg = 0
+        for slot in dev_node.findall('slot'):
+            if slot.get('isMainBoard') not in ('1', 'true', 'True'):
+                continue
+            for if_node in slot.findall('interface'):
+                prefix = if_node.get('interfacename') or if_node.get('InterfaceName') or ''
+                count_str = if_node.get('count') or if_node.get('Count') or '0'
+                try:
+                    count = int(count_str)
+                except (ValueError, TypeError):
+                    count = 0
+                p = prefix.lower()
+                if p in ('serial', 'se'):
+                    serial_seg += 1
+                    seg_no = serial_seg
+                    base = f'Serial{seg_no}/0/'
+                    for i in range(count):
+                        interfaces.append(f'{base}{i}')
+                elif p in ('e1',):
+                    e1_seg += 1
+                    seg_no = e1_seg
+                    base = f'E1{seg_no}/0/'
+                    for i in range(count):
+                        interfaces.append(f'{base}{i}')
+                else:
+                    # GE / Ethernet / FE / XE 等：直接 0/0/<index> 累加
+                    base = _iface_base(prefix)
+                    segment_start = len(interfaces)  # 跨段累加
+                    for i in range(count):
+                        interfaces.append(f'{base}{segment_start + i + _iface_offset(prefix)}')
+
+        # 也考虑子板槽位（isMainBoard=0，type=516/521 通常是 2SA/4SA 等串口子卡）
+        # eNSP 中子板的接口索引是累加在主控板后面的
+        for slot in dev_node.findall('slot'):
+            if slot.get('isMainBoard') in ('1', 'true', 'True'):
+                continue
+            slot_type = slot.get('type', '')
+            if slot_type in ('521', '516', '522'):
+                serial_seg += 1
+                base = f'Serial{serial_seg}/0/'
+                for i in range(2):
+                    interfaces.append(f'{base}{i}')
+
+        mapping[dev_id] = interfaces
+
+    return mapping
+
+
+def _iface_base(prefix: str) -> str:
+    """根据前缀返回接口名前缀（不含末尾斜杠）"""
+    p = prefix.lower() if prefix else ''
+    if p in ('ge', 'gigabitethernet'):
+        return 'GigabitEthernet0/0/'
+    if p in ('xe', 'tengigabitethernet', '10ge'):
+        return 'TenGigabitEthernet0/0/'
+    if p in ('ethernet', 'eth'):
+        return 'Ethernet0/0/'
+    if p in ('fe', 'fastethernet'):
+        return 'FastEthernet0/0/'
+    if p in ('loopback', 'lo'):
+        return 'LoopBack'
+    if p in ('vlanif', 'vl'):
+        return 'Vlanif'
+    if not prefix:
+        return 'Interface'
+    return f'{prefix}'
+
+
+def _iface_offset(prefix: str) -> int:
+    """部分接口类型从 1 开始计数（如 Vlanif1, LoopBack0）"""
+    p = prefix.lower() if prefix else ''
+    if p in ('vlanif', 'vl'):
+        return 1
+    if p in ('loopback', 'lo'):
+        return 0
+    return 0
+
+
+def _build_iface_name(prefix: str, index: int) -> str:
+    """兼容旧代码：根据前缀和索引构造 eNSP 接口名（已弃用，请使用 _iface_base）"""
+    return f'{_iface_base(prefix)}{index + _iface_offset(prefix)}'
+
+
+def _parse_link_node(node: ET.Element, dev_id_to_interfaces: dict = None) -> dict:
     """解析单个链路节点
 
-    eNSP 链路节点结构：
-    <Line>
-        <interfacePair>
-            <source>uuid:xxx,port:GigabitEthernet0/0/0</source>
-            <target>uuid:yyy,port:GigabitEthernet0/0/1</target>
-        </interfacePair>
-        <type>Copper</type>
-    </Line>
+    eNSP 实际节点结构（属性式）：
+    <line srcDeviceID="UUID-A" destDeviceID="UUID-B">
+        <interfacePair lineName="Copper" srcIndex="0" tarIndex="1" />
+    </line>
     """
-    # 链路 ID（eNSP 通常没有显式 ID，用索引生成）
-    link_id = _get_text(node, 'id|ID')
+    dev_id_to_interfaces = dev_id_to_interfaces or {}
 
-    # 线缆类型
-    cable_raw = _get_text(node, 'type|TYPE')
+    # 线缆类型（lineName 在 <interfacePair> 属性上，兼容 <line> 直接属性）
+    cable_raw = node.get('lineName') or node.get('LineName') or ''
+    if not cable_raw:
+        # 兜底：从 <interfacePair> 子元素上读
+        interface_pair_for_type = node.find('interfacePair')
+        if interface_pair_for_type is None:
+            interface_pair_for_type = node.find('InterfacePair')
+        if interface_pair_for_type is not None:
+            cable_raw = (
+                interface_pair_for_type.get('lineName')
+                or interface_pair_for_type.get('LineName')
+                or ''
+            )
+    if not cable_raw:
+        cable_raw = _get_text(node, 'type|TYPE')
     cable_type = _normalize_cable_type(cable_raw)
 
-    # 两端设备 ID 和接口
-    src_dev = ''
-    dst_dev = ''
-    src_if = ''
-    dst_if = ''
+    # 设备 ID（属性 srcDeviceID/destDeviceID）
+    src_dev = (
+        node.get('srcDeviceID')
+        or node.get('SrcDeviceID')
+        or _get_text(node, 'srcDevice|src_device')
+    )
+    dst_dev = (
+        node.get('destDeviceID')
+        or node.get('DstDeviceID')
+        or node.get('dstDeviceID')
+        or _get_text(node, 'destDevice|dest_device')
+    )
+    src_dev = _extract_uuid(src_dev)
+    dst_dev = _extract_uuid(dst_dev)
 
+    # 接口索引（interfacePair 属性）
+    src_index = None
+    dst_index = None
     interface_pair = node.find('interfacePair')
     if interface_pair is None:
         interface_pair = node.find('InterfacePair')
-    if interface_pair is None:
-        interface_pair = node.find('interfacepair')
-
     if interface_pair is not None:
-        source_text = _get_text(interface_pair, 'source|SOURCE')
-        target_text = _get_text(interface_pair, 'target|TARGET')
+        try:
+            src_index = int(interface_pair.get('srcIndex', ''))
+        except (ValueError, TypeError):
+            src_index = None
+        try:
+            dst_index = int(interface_pair.get('tarIndex', interface_pair.get('dstIndex', '')))
+        except (ValueError, TypeError):
+            dst_index = None
 
-        # 解析 source: uuid:xxx,port:GigabitEthernet0/0/0
-        if source_text:
-            parts = source_text.split(',')
-            for part in parts:
-                part = part.strip()
-                if part.startswith('uuid:') or part.startswith('UUID:'):
-                    src_dev = _extract_uuid(part)
-                elif part.startswith('port:') or part.startswith('PORT:'):
-                    src_if = part[5:].strip()
+    src_if = ''
+    dst_if = ''
 
-        # 解析 target
-        if target_text:
-            parts = target_text.split(',')
-            for part in parts:
-                part = part.strip()
-                if part.startswith('uuid:') or part.startswith('UUID:'):
-                    dst_dev = _extract_uuid(part)
-                elif part.startswith('port:') or part.startswith('PORT:'):
-                    dst_if = part[5:].strip()
+    # 根据设备接口列表将索引转为接口名
+    if dev_id_to_interfaces and src_index is not None:
+        ifaces = dev_id_to_interfaces.get(src_dev, [])
+        if 0 <= src_index < len(ifaces):
+            src_if = ifaces[src_index]
+    if dev_id_to_interfaces and dst_index is not None:
+        ifaces = dev_id_to_interfaces.get(dst_dev, [])
+        if 0 <= dst_index < len(ifaces):
+            dst_if = ifaces[dst_index]
 
-    # 备用解析路径（其他可能的结构）
-    if not src_dev or not dst_dev:
-        src_dev = _extract_uuid(_get_text(node, 'source|SOURCE')) or src_dev
-        dst_dev = _extract_uuid(_get_text(node, 'target|TARGET')) or dst_dev
-        src_if = _get_text(node, 'srcPort|src_port|SOURCE_PORT') or src_if
-        dst_if = _get_text(node, 'dstPort|dst_port|TARGET_PORT') or dst_if
+    # 兜底：从 interfacePair 子元素中读取端口字符串
+    if not src_if and interface_pair is not None:
+        src_if = (
+            interface_pair.get('srcPort', '')
+            or _get_text(interface_pair, 'srcPort|src_port')
+        )
+    if not dst_if and interface_pair is not None:
+        dst_if = (
+            interface_pair.get('tarPort', '')
+            or interface_pair.get('dstPort', '')
+            or _get_text(interface_pair, 'dstPort|dst_port')
+        )
 
     if not src_dev and not dst_dev:
         return None
 
     return {
-        'id': str(link_id),
+        'id': '',
         'srcDevice': str(src_dev),
         'dstDevice': str(dst_dev),
         'srcInterface': str(src_if),
         'dstInterface': str(dst_if),
         'cableType': cable_type,
-        'cableRawType': cable_raw,
+        'cableRawType': cable_raw or '',
     }
 
 
-# ============== 配置解析（从 .cfg 文件） ==============
+# ============== 配置解析（从 vrpcfg.zip） ==============
+
+def parse_config_from_zip(zip_path: str) -> str:
+    """从 vrpcfg.zip 中读取配置文本
+
+    eNSP 中每个设备的配置都打包在 vrpcfg.zip 内的 vrpcfg.cfg（或类似）文件中。
+    """
+    import os
+    import zipfile
+
+    if not os.path.exists(zip_path):
+        return ''
+
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            # 常见内部文件名：vrpcfg.cfg / *.cfg
+            for name in zf.namelist():
+                if name.endswith('.cfg') and not name.endswith('/'):
+                    try:
+                        with zf.open(name) as f:
+                            data = f.read()
+                            try:
+                                return data.decode('utf-8').strip()
+                            except UnicodeDecodeError:
+                                return data.decode('gbk', errors='ignore').strip()
+                    except Exception:
+                        continue
+    except (zipfile.BadZipFile, OSError):
+        return ''
+
+    return ''
+
 
 def parse_config_from_file(config_path: str) -> str:
-    """从 .cfg 文件读取配置文本"""
+    """从 .cfg 文件读取配置文本（兼容 .cfg 直接存放的情况）"""
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             return f.read().strip()
@@ -344,40 +520,67 @@ def parse_config_from_file(config_path: str) -> str:
 def _find_configs(root: ET.Element, topo_dir: str) -> list:
     """查找设备配置文本
 
-    eNSP 的配置通常不存于 .topo 文件中，而是单独的 .cfg 文件。
-    .cfg 文件命名通常为：设备名.cfg 或 uuid.cfg
+    eNSP 的配置存储方式有两种：
+    1. 旧版：<devName>.cfg 与 .topo 同目录
+    2. 新版（ZIP）：每个设备 UUID 目录下有 vrpcfg.zip
+
+    本函数先尝试从 vrpcfg.zip 读取（按 UUID 子目录），
+    再回退到 <name>.cfg / <UUID>.cfg 旧格式。
     """
     import os
 
     configs = []
 
-    device_nodes = root.findall('.//Device')
-    if not device_nodes:
-        device_nodes = root.findall('.//device')
+    # 找设备：同时支持 <dev> 和 <Device>
+    device_nodes = (
+        root.findall('.//Device')
+        or root.findall('.//device')
+        or root.findall('.//dev')
+    )
+
+    # 收集可能的 UUID 目录名（ZIP 内的子目录名）
+    uuid_dirs = set()
+    if topo_dir and os.path.isdir(topo_dir):
+        try:
+            for entry in os.listdir(topo_dir):
+                full = os.path.join(topo_dir, entry)
+                if os.path.isdir(full) and entry not in ('__MACOSX',):
+                    uuid_dirs.add(entry)
+        except OSError:
+            pass
 
     for device_node in device_nodes:
-        dev_id = _extract_uuid(_get_text(device_node, 'uuid|UUID'))
+        dev_id = device_node.get('id') or device_node.get('ID') or ''
         if not dev_id:
-            dev_id = _get_text(device_node, 'id|ID')
-        dev_name = _get_text(device_node, 'name|NAME')
+            dev_id = _get_text(device_node, 'uuid|UUID')
+        dev_name = device_node.get('name') or device_node.get('NAME') or _get_text(device_node, 'name|NAME')
 
         if not dev_id and not dev_name:
             continue
 
-        # 尝试查找 .cfg 文件
         config_text = ''
-        possible_names = []
-        if dev_name:
-            possible_names.append(f'{dev_name}.cfg')
-            possible_names.append(f'{dev_name.lower()}.cfg')
-        if dev_id:
-            possible_names.append(f'{dev_id}.cfg')
 
-        for cfg_name in possible_names:
-            cfg_path = os.path.join(topo_dir, cfg_name)
-            if os.path.exists(cfg_path):
-                config_text = parse_config_from_file(cfg_path)
-                break
+        # 1. 优先从 UUID 子目录中的 vrpcfg.zip 读取
+        if dev_id and dev_id in uuid_dirs:
+            cfg_zip = os.path.join(topo_dir, dev_id, 'vrpcfg.zip')
+            if os.path.exists(cfg_zip):
+                config_text = parse_config_from_zip(cfg_zip)
+
+        # 2. 兜底：尝试 <dev_name>.cfg / <UUID>.cfg
+        if not config_text and topo_dir:
+            possible_names = []
+            if dev_name:
+                possible_names.append(f'{dev_name}.cfg')
+                possible_names.append(f'{dev_name.lower()}.cfg')
+            if dev_id:
+                possible_names.append(f'{dev_id}.cfg')
+
+            for cfg_name in possible_names:
+                cfg_path = os.path.join(topo_dir, cfg_name)
+                if os.path.exists(cfg_path):
+                    config_text = parse_config_from_file(cfg_path)
+                    if config_text:
+                        break
 
         if config_text:
             configs.append({
