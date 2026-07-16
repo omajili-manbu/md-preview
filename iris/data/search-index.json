@@ -35,6 +35,11 @@
     "preview": "外部服务嵌入示例 本页面展示各种外部服务的嵌入方式和渲染效果。 --- 1. 视频平台 YouTube 源码： 渲染效果： --- Bilibili 源码： 渲染效果： --- Vimeo 源码： 渲染效果： --- 2. 设计稿 Figma 源码： 渲染效果： --- 3. 代码演示 CodePen 源码： 渲染效果： --- JSFiddle 源码： 渲染效果： --- StackBlitz "
   },
   {
+    "path": "docs/examples/ensp-examples.md",
+    "title": "eNSP 拓扑渲染示例",
+    "preview": "华为 eNSP 拓扑渲染 本站点支持在 Markdown 文档中嵌入华为 eNSP 拓扑图。将 .topo 或 .zip 压缩包放入 iris/data/ensp/raw/ 目录，构建脚本会自动解压、解析并生成 JSON，前端用 Cytoscape.js 渲染为交互式拓扑图。 基本用法 使用 @ensp 嵌入语法引用预处理好的拓扑 JSON，需要用 ensp 代码块包裹（即三反引号 + ensp "
+  },
+  {
     "path": "docs/examples/gallery-layouts.md",
     "title": "画廊布局样式速查",
     "preview": "画廊布局样式速查 本页是画廊布局样式的快速查阅卡片。完整示例与说明见 图片画廊与懒加载示例。 语法 在连续图片之前，用单独一行 @样式名 指定该组图片的渲染样式： - @style 必须独占一行（单独成段） - 标记只作用于紧跟其后的一组连续图片 - 不写 @style 时，连续 2 张及以上图片自动使用默认网格布局 - 未识别的 @xxx 会被当作普通文本输出 样式速查表 | 样式 | 说明 |"
