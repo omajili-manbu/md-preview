@@ -1,9 +1,9 @@
-"""Huawei eNSP .topo → JSON 预处理脚本主入口
+"""Huawei eNSP .topo/.zip → JSON 预处理脚本主入口
 
 功能：
-1. 扫描 iris/data/ensp/raw/ 下的所有 .topo 文件
+1. 扫描 iris/data/ensp/raw/ 下的所有 .topo 或 .zip 文件
 2. 对比 mtime 实现增量处理
-3. XML 解析 → JSON 输出
+3. XML 解析 → JSON 输出（.zip 先解压再解析）
 4. 原始 XML 存到 iris/data/ensp/xml/
 5. 解析后的 JSON 存到 iris/data/ensp/json/
 6. 失败时生成错误 JSON
@@ -16,8 +16,10 @@
 
 import argparse
 import os
+import shutil
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -56,15 +58,16 @@ def needs_rebuild(topo_path: Path, json_path: Path, force: bool = False) -> bool
 # ============== 单文件处理 ==============
 
 def process_topo(topo_path: Path, verbose: bool = False) -> dict:
-    """处理单个 .topo 文件
+    """处理单个 .topo 或 .zip 文件
 
+    .zip 文件先解压到临时目录，再解析其中的 .topo 文件
     返回处理结果摘要
     """
     filename = topo_path.name
     stem = topo_path.stem
     xml_path = XML_DIR / f'{stem}.xml'
     json_path = JSON_DIR / f'{stem}.json'
-    topo_dir = str(topo_path.parent)
+    is_zip = topo_path.suffix.lower() == '.zip'
 
     result = {
         'file': filename,
@@ -78,8 +81,37 @@ def process_topo(topo_path: Path, verbose: bool = False) -> dict:
     start_time = time.time()
 
     try:
-        with open(topo_path, 'rb') as f:
-            raw_data = f.read()
+        if is_zip:
+            # ZIP 文件：解压到临时目录
+            extract_dir = XML_DIR / f'{stem}_extracted'
+            if extract_dir.exists():
+                shutil.rmtree(extract_dir)
+            extract_dir.mkdir(parents=True, exist_ok=True)
+
+            with zipfile.ZipFile(topo_path, 'r') as zf:
+                zf.extractall(str(extract_dir))
+
+            # 查找解压后的 .topo 文件
+            topo_files = list(extract_dir.glob('*.topo'))
+            if not topo_files:
+                raise ValueError(f'ZIP 中未找到 .topo 文件')
+            if len(topo_files) > 1:
+                if verbose:
+                    print(f'  [{filename}] ZIP 中包含多个 .topo 文件，将处理第一个: {topo_files[0].name}')
+
+            actual_topo = topo_files[0]
+            topo_dir = str(actual_topo.parent)
+
+            with open(actual_topo, 'rb') as f:
+                raw_data = f.read()
+
+            # 同时把 topo 文件复制到 xml 目录方便查看
+            write_xml(raw_data.decode('utf-8', errors='ignore'), str(xml_path))
+        else:
+            with open(topo_path, 'rb') as f:
+                raw_data = f.read()
+            topo_dir = str(topo_path.parent)
+            write_xml(raw_data.decode('utf-8', errors='ignore'), str(xml_path))
 
         if verbose:
             print(f'  [{filename}] 大小: {len(raw_data)} bytes')
@@ -88,8 +120,6 @@ def process_topo(topo_path: Path, verbose: bool = False) -> dict:
             xml_text = raw_data.decode('utf-8')
         except UnicodeDecodeError:
             xml_text = raw_data.decode('gbk')
-
-        write_xml(xml_text, str(xml_path))
 
         if verbose:
             print(f'  [{filename}] XML 已保存: {xml_path.name} ({len(xml_text)} chars)')
@@ -148,11 +178,11 @@ def main():
             print(f'文件不存在: {topo_files[0]}')
             sys.exit(1)
     else:
-        topo_files = sorted(RAW_DIR.glob('*.topo'))
+        topo_files = sorted(RAW_DIR.glob('*.topo')) + sorted(RAW_DIR.glob('*.zip'))
 
     if not topo_files:
-        print(f'未找到 .topo 文件，请将文件放入 {RAW_DIR}')
-        print('提示：目录已创建，可放入 .topo 文件后重新运行。')
+        print(f'未找到 .topo 或 .zip 文件，请将文件放入 {RAW_DIR}')
+        print('提示：目录已创建，可放入 .topo 或 .zip 文件后重新运行。')
         return
 
     to_process = []
