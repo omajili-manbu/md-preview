@@ -1048,7 +1048,6 @@
   // ============== 加载 JSON 并渲染 ==============
 
   async function loadAndRender(container, jsonPath, options) {
-    // 显示加载状态
     container.innerHTML = `
       <div class="pkt-topology-container">
         <div class="pkt-loading">
@@ -1060,7 +1059,6 @@
 
     try {
       const base = getBasePath();
-      // 对文件名做 URL 编码（先 decode 防止重复编码，如 %20 → %2520）
       let safePath = jsonPath;
       if (!jsonPath.startsWith('http') && !jsonPath.startsWith('/')) {
         try {
@@ -1068,9 +1066,19 @@
         } catch (e) { /* 已是原始字符串，decode 失败则原样使用 */ }
         safePath = encodeURIComponent(safePath);
       }
+
+      let dataPath = 'pkt';
+      if (options && typeof options === 'string') {
+        if (options === 'ensp') dataPath = 'ensp';
+        else if (options === 'dot') dataPath = 'gnu';
+      } else if (options && options.format) {
+        if (options.format === 'ensp') dataPath = 'ensp';
+        else if (options.format === 'dot') dataPath = 'gnu';
+      }
+
       const url = jsonPath.startsWith('http') || jsonPath.startsWith('/')
         ? jsonPath
-        : `${base}iris/data/pkt/json/${safePath}.json`;
+        : `${base}iris/data/${dataPath}/json/${safePath}.json`;
 
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);

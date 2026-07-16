@@ -44,7 +44,7 @@
     const content = targetEl.innerHTML;
     let processedContent = content;
 
-    const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x', 'pkt'];
+    const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x', 'pkt', 'ensp', 'dot'];
     const preTags = processedContent.match(/<pre[^>]*>[\s\S]*?<\/pre>/gi) || [];
     const prePlaceholders = [];
 
@@ -86,14 +86,37 @@
 
               processedContent = processedContent.replace(placeholder, mapContainer);
             } else if (service === 'pkt') {
-              // Packet Tracer 拓扑渲染
               const pktId = 'pkt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
               const pktContainer = `<div id="${pktId}" class="pkt-container"></div>`;
 
               setTimeout(() => {
                 const el = document.getElementById(pktId);
                 if (el && window.MarkdownPreview.pkt) {
-                  window.MarkdownPreview.pkt.loadAndRender(el, url);
+                  window.MarkdownPreview.pkt.loadAndRender(el, url, 'pkt');
+                }
+              }, 50);
+
+              processedContent = processedContent.replace(placeholder, pktContainer);
+            } else if (service === 'ensp') {
+              const pktId = 'pkt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+              const pktContainer = `<div id="${pktId}" class="pkt-container"></div>`;
+
+              setTimeout(() => {
+                const el = document.getElementById(pktId);
+                if (el && window.MarkdownPreview.pkt) {
+                  window.MarkdownPreview.pkt.loadAndRender(el, url, 'ensp');
+                }
+              }, 50);
+
+              processedContent = processedContent.replace(placeholder, pktContainer);
+            } else if (service === 'dot') {
+              const pktId = 'pkt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+              const pktContainer = `<div id="${pktId}" class="pkt-container"></div>`;
+
+              setTimeout(() => {
+                const el = document.getElementById(pktId);
+                if (el && window.MarkdownPreview.pkt) {
+                  window.MarkdownPreview.pkt.loadAndRender(el, url, 'dot');
                 }
               }, 50);
 
