@@ -44,7 +44,7 @@
     const content = targetEl.innerHTML;
     let processedContent = content;
 
-    const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x', 'pkt', 'ensp', 'dot'];
+    const embedLanguages = ['embed', 'geojson', 'topojson', 'twitter', 'x', 'pkt', 'ensp'];
     const preTags = processedContent.match(/<pre[^>]*>[\s\S]*?<\/pre>/gi) || [];
     const prePlaceholders = [];
 
@@ -105,18 +105,6 @@
                 const el = document.getElementById(pktId);
                 if (el && window.MarkdownPreview.pkt) {
                   window.MarkdownPreview.pkt.loadAndRender(el, url, 'ensp');
-                }
-              }, 50);
-
-              processedContent = processedContent.replace(placeholder, pktContainer);
-            } else if (service === 'dot') {
-              const pktId = 'pkt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-              const pktContainer = `<div id="${pktId}" class="pkt-container"></div>`;
-
-              setTimeout(() => {
-                const el = document.getElementById(pktId);
-                if (el && window.MarkdownPreview.pkt) {
-                  window.MarkdownPreview.pkt.loadAndRender(el, url, 'dot');
                 }
               }, 50);
 

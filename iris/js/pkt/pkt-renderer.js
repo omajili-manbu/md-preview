@@ -1070,10 +1070,8 @@
       let dataPath = 'pkt';
       if (options && typeof options === 'string') {
         if (options === 'ensp') dataPath = 'ensp';
-        else if (options === 'dot') dataPath = 'gnu';
       } else if (options && options.format) {
         if (options.format === 'ensp') dataPath = 'ensp';
-        else if (options.format === 'dot') dataPath = 'gnu';
       }
 
       const url = jsonPath.startsWith('http') || jsonPath.startsWith('/')
