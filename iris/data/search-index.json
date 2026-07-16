@@ -132,7 +132,7 @@
   {
     "path": "docs/plugin-development.md",
     "title": "插件开发指南",
-    "preview": "插件开发指南 插件机制概述 Markdown Preview 的插件系统允许你扩展 Markdown 渲染能力，自定义处理特定的代码块。插件放入 iris/plugins/ 目录后，加载器会自动发现并注册。 插件接口 每个插件是一个导出对象的 JavaScript 模块，需要实现以下接口： API 说明 | 方法 | 参数 | 返回值 | 说明 | |------|------|--------|"
+    "preview": "插件开发指南 插件机制概述 Markdown Preview 的插件系统允许你扩展 Markdown 渲染能力，自定义处理特定的代码块。插件放入 iris/plugins/ 目录后，加载器会自动发现并注册。 插件接口（v2） 每个插件是一个导出对象的 JavaScript 模块（ES Module），支持以下接口： API 说明 | 字段/方法 | 类型 | 必填 | 说明 | |--------"
   },
   {
     "path": "docs/rss.md",
