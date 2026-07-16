@@ -492,7 +492,12 @@
     
     setTimeout(async () => {
       console.log('[Markdown] Starting render cycle');
-      await renderWithPlugins();
+      const plugins = window.MarkdownPreview.plugins;
+      if (plugins && typeof plugins.render === 'function') {
+        await plugins.render({ documentPath: currentPath });
+      } else {
+        await renderWithPluginsLegacy();
+      }
       console.log('[Markdown] Plugins rendered, calling other renderers');
       window.MarkdownPreview.renderers.apexcharts.render();
       window.MarkdownPreview.renderers.diff.render();
@@ -534,7 +539,7 @@
     });
   }
 
-  async function renderWithPlugins() {
+  async function renderWithPluginsLegacy() {
     console.log('[Plugins] renderWithPlugins called');
     const plugins = window.MarkdownPreview.plugins;
     if (!plugins || typeof plugins.find !== 'function') {

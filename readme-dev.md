@@ -277,22 +277,50 @@ cells = [{
 
 ### 插件系统
 
-插件接口：
+插件接口（v2）：
 
 ```javascript
 export default {
   name: 'plugin-name',
   description: '插件描述',
-  
+  priority: 10,                 // 优先级，数值越大越优先
+
+  // 生命周期：初始化
+  init(config) { },
+
+  // 判断逻辑（可选，默认精确匹配 language === name）
   test(code, language) {
     return language === 'my-language';
   },
-  
-  render(code, container) {
+
+  // 渲染前/后钩子（可选）
+  beforeRender(code, container, context) { },
+  afterRender(container, context) { },
+
+  // 渲染（支持同步或 async）
+  async render(code, container, context) {
     container.innerHTML = '...';
-  }
+  },
+
+  // 销毁钩子（可选）
+  destroy() { }
 };
 ```
+
+**上下文对象 `context`**：
+
+| 字段 | 说明 |
+|------|------|
+| `language` | 代码块语言标识 |
+| `documentPath` | 当前文档路径 |
+| `config` | 来自 `config.json` 的插件专属配置 |
+| `registerResource` | 注册可清理资源（需实现 `destroy()`） |
+
+**插件加载策略**（按优先级）：
+
+1. `config.plugins.manifest` — 显式 URL 列表，最可靠
+2. `iris/plugins/directory.json` — 预构建索引文件
+3. 目录扫描 — 回退到 `fetch('iris/plugins/')`（部分静态托管不支持）
 
 将插件文件放入 `iris/plugins/` 目录，插件加载器会自动发现并注册。详见 [插件开发指南](docs/plugin-development.md)。
 
