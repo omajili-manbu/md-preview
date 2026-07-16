@@ -1,0 +1,9 @@
+/* 测试网络拓扑 */
+graph G {
+  hostnametype="hostname"
+  "R1":"GigabitEthernet0/0/0" -- "R2":"GigabitEthernet0/0/1" [label="172.16.1.0/24"];
+  "R2":"GigabitEthernet0/0/0" -- "S1":"GigabitEthernet0/0/1";
+  "S1":"GigabitEthernet0/0/2" -- "PC1":"FastEthernet0";
+  "S1":"GigabitEthernet0/0/3" -- "PC2":"FastEthernet0" [label="192.168.1.0/24"];
+  "R1":"GigabitEthernet0/0/1" -- "Server1":"GigabitEthernet0";
+}
