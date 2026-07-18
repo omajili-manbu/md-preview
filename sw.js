@@ -1,8 +1,9 @@
-const CACHE_NAME = 'md-preview-v6.15';
-const RUNTIME_CACHE = 'md-preview-runtime-v6.15';
+const CACHE_NAME = 'md-preview-v7.1';
+const RUNTIME_CACHE = 'md-preview-runtime-v7.1';
+const PRECACHE_MANIFEST_URL = './iris/data/precache-manifest.json';
 
-// 预缓存：首屏关键静态资源
-const PRECACHE_URLS = [
+// 最小化兜底清单：当 manifest 拉取失败时使用，仅保证核心骨架可离线
+const PRECACHE_FALLBACK_URLS = [
   './',
   './index.html',
   './manifest.json',
@@ -11,54 +12,50 @@ const PRECACHE_URLS = [
   './iris/css/layout.css',
   './iris/css/markdown.css',
   './iris/css/components.css',
-  './iris/css/floating.css',
-  './iris/css/responsive.css',
-  './iris/css/galleries.css',
   './iris/css/editor.css',
   './iris/css/themes/themes.css',
   './iris/app.js',
   './iris/js/config.js',
-  './iris/js/state.js',
   './iris/js/dom.js',
-  './iris/js/ui.js',
-  './iris/js/search.js',
-  './iris/js/file-tree.js',
   './iris/js/markdown.js',
+  './iris/js/md-render.js',
   './iris/js/editor.js',
-  './iris/js/router.js',
-  './iris/js/settings.js',
-  './iris/js/debug.js',
-  './iris/js/plugins/loader.js',
-  './iris/js/renderers/mermaid.js',
-  './iris/js/renderers/plantuml.js',
-  './iris/js/renderers/apexcharts.js',
-  './iris/js/renderers/diff.js',
-  './iris/js/renderers/geo.js',
-  './iris/js/renderers/embedded.js',
-  './iris/js/renderers/katex.js',
-  './iris/js/pkt/pkt-renderer.js',
-  './iris/css/pkt/pkt.css',
-  './iris/data/pkt/icons.svg',
-  './iris/vendor/cytoscape/cytoscape.min.js',
-  './iris/js/themes/theme-manager.js',
+  './iris/js/storage.js',
   './iris/vendor/marked.js',
-  './iris/vendor/highlight.js/highlight.min.js',
-  './iris/vendor/flexsearch.bundle.js',
-  './iris/vendor/file-tree/prod.js',
-  './iris/data/file-tree.json',
-  './iris/data/search-index.json',
-  './iris/icons/favicon-32.png',
-  './iris/icons/apple-touch-icon.png',
-  './iris/vendor/highlight.js/styles/github.css'
+  './iris/vendor/codemirror/codemirror.min.js',
+  './iris/vendor/highlight.js/highlight.min.js'
 ];
 
+// 拉取自动生成的 precache-manifest.json，失败时回退到最小清单
+async function loadPrecacheUrls() {
+  try {
+    const resp = await fetch(PRECACHE_MANIFEST_URL, { cache: 'no-store' });
+    if (!resp.ok) throw new Error('manifest HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data || !Array.isArray(data.urls) || data.urls.length === 0) {
+      throw new Error('manifest empty or invalid');
+    }
+    // manifest 自身也加入缓存，便于后续 activate 时校验
+    const urls = data.urls.slice();
+    if (!urls.includes(PRECACHE_MANIFEST_URL)) urls.push(PRECACHE_MANIFEST_URL);
+    console.log('[SW] Loaded precache manifest:', data.count, 'urls (v' + (data.version || '?') + ')');
+    return urls;
+  } catch (err) {
+    console.warn('[SW] Manifest fetch failed, using fallback:', err.message);
+    const urls = PRECACHE_FALLBACK_URLS.slice();
+    if (!urls.includes(PRECACHE_MANIFEST_URL)) urls.push(PRECACHE_MANIFEST_URL);
+    return urls;
+  }
+}
+
 async function precache() {
+  const urls = await loadPrecacheUrls();
   const cache = await caches.open(CACHE_NAME);
   let successCount = 0;
   let failCount = 0;
 
   await Promise.all(
-    PRECACHE_URLS.map(async (url) => {
+    urls.map(async (url) => {
       try {
         // 检查是否已缓存，避免重复请求
         const cached = await cache.match(url);
@@ -83,7 +80,7 @@ async function precache() {
 }
 
 self.addEventListener('install', event => {
-  console.log('[SW] Installing v6.5...');
+  console.log('[SW] Installing v7.1...');
   event.waitUntil(
     precache()
       .then(() => self.skipWaiting())
@@ -95,7 +92,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating v6.5...');
+  console.log('[SW] Activating v7.1...');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
