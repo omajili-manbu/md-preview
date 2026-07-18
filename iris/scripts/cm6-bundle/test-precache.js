@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../../..');
 const builder = require(path.join(ROOT, 'iris/scripts/build-precache.js'));
 
 let pass = 0, fail = 0;

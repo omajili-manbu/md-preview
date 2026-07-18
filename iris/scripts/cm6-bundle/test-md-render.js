@@ -14,7 +14,7 @@ const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../../..');
 
 const HTML = `<!DOCTYPE html><html><body>
   <div id="markdownContent" class="markdown-body"></div>

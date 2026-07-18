@@ -13,7 +13,7 @@ const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../../..');
 
 // 构造一个最小但够用的 DOM：包含 editor-overlay 中所有 tab 相关元素
 const HTML = `<!DOCTYPE html><html><body>

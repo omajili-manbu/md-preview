@@ -6,7 +6,7 @@ const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../../..');
 
 // 1. 构造 jsdom 环境
 const dom = new JSDOM(`<!DOCTYPE html><html><body><div id="host"></div></body></html>`, {
