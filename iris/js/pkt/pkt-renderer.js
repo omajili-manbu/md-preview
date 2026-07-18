@@ -139,7 +139,7 @@
         </div>
         <div class="pkt-toolbar-right">
           <input type="search" class="pkt-search-input" placeholder="搜索设备..." />
-          <button class="pkt-btn" data-action="layout-pt" title="使用 PT 原始坐标布局">
+          <button class="pkt-btn active" data-action="layout-pt" title="使用 PT 原始坐标布局">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
             PT 坐标
           </button>
@@ -421,6 +421,13 @@
       }
     });
 
+    // 保存初始位置（PT 原始坐标），用于 layout-pt 按钮恢复
+    const originalPositions = {};
+    cy.nodes().forEach(node => {
+      const pos = node.position();
+      originalPositions[node.id()] = { x: pos.x, y: pos.y };
+    });
+
     // 适应屏幕（排除离群点，避免正常设备被缩成不可见的小点）
     // 策略：只对参与链路的节点 + 坐标在合理范围内的节点做 fit
     const fitEls = computeFitElements(cy, jsonData);
@@ -475,7 +482,13 @@
     // ============== 工具栏按钮 ==============
 
     wrapper.querySelector('[data-action="layout-pt"]').addEventListener('click', () => {
-      // PT 坐标布局：用保存的原始位置重跑 preset，再 fit 到非离群元素
+      // PT 坐标布局：先把节点位置恢复成初始坐标，再跑 preset，再 fit 到非离群元素
+      cy.nodes().forEach(node => {
+        const orig = originalPositions[node.id()];
+        if (orig) {
+          node.position({ x: orig.x, y: orig.y });
+        }
+      });
       cy.layout({ name: 'preset', fit: false, padding: 40 }).run();
       const fitEls = computeFitElements(cy, jsonData);
       cy.fit(fitEls.length ? fitEls : cy.elements(), 40);
@@ -657,7 +670,9 @@
   }
 
   function setActiveBtn(wrapper, action) {
-    wrapper.querySelectorAll('.pkt-btn').forEach(btn => btn.classList.remove('active'));
+    // 只在布局类按钮之间互斥切换，不影响 toggle-iface / toggle-subnet 等开关按钮的 active 状态
+    const layoutBtns = wrapper.querySelectorAll('.pkt-btn[data-action^="layout-"]');
+    layoutBtns.forEach(btn => btn.classList.remove('active'));
     const btn = wrapper.querySelector(`[data-action="${action}"]`);
     if (btn) btn.classList.add('active');
   }
