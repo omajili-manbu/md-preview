@@ -37,8 +37,10 @@
   };
 
   // ============== 线缆类型颜色 ==============
+  // pkt 用 straight/crossover，ensp 用 copper/crossover，二者都是双绞线，统一映射为蓝色系
   const CABLE_COLORS = {
     'straight': '#3498db',
+    'copper': '#3498db',      // eNSP 的 Copper 双绞线，等价于 PT 的 straight
     'crossover': '#e74c3c',
     'fiber': '#9b59b6',
     'serial': '#f39c12',
@@ -148,6 +150,14 @@
           <button class="pkt-btn" data-action="toggle-grid" title="切换网格背景">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
             网格
+          </button>
+          <button class="pkt-btn active" data-action="toggle-iface" title="显示/隐藏接口名">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
+            接口名
+          </button>
+          <button class="pkt-btn active" data-action="toggle-subnet" title="显示/隐藏网段">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+            网段
           </button>
           <button class="pkt-btn" data-action="fit" title="适应屏幕">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg>
@@ -353,6 +363,10 @@
           style: { 'line-color': CABLE_COLORS.straight, 'width': 2 },
         },
         {
+          selector: 'edge[cableType="copper"]',
+          style: { 'line-color': CABLE_COLORS.copper, 'width': 2 },
+        },
+        {
           selector: 'edge[cableType="crossover"]',
           style: { 'line-color': CABLE_COLORS.crossover, 'width': 2 },
         },
@@ -489,6 +503,37 @@
         canvasChild.style.background = 'transparent';
       }
       wrapper.querySelector('[data-action="toggle-grid"]').classList.toggle('active');
+    });
+
+    // ============== 接口名 / 网段 显示开关 ==============
+    // 状态保存在 wrapper 上，便于在多次切换间持久化
+    const labelState = { showIface: true, showSubnet: true };
+
+    function applyEdgeLabels() {
+      cy.edges().forEach(edge => {
+        const srcIf = edge.data('sourceInterface') || '';
+        const dstIf = edge.data('targetInterface') || '';
+        const subnet = edge.data('subnet') || '';
+        // 接口名开关
+        edge.style('source-label', labelState.showIface ? shortIfName(srcIf) : '');
+        edge.style('target-label', labelState.showIface ? shortIfName(dstIf) : '');
+        // 网段开关
+        edge.style('label', labelState.showSubnet ? subnet : '');
+      });
+    }
+
+    wrapper.querySelector('[data-action="toggle-iface"]').addEventListener('click', () => {
+      labelState.showIface = !labelState.showIface;
+      const btn = wrapper.querySelector('[data-action="toggle-iface"]');
+      btn.classList.toggle('active', labelState.showIface);
+      applyEdgeLabels();
+    });
+
+    wrapper.querySelector('[data-action="toggle-subnet"]').addEventListener('click', () => {
+      labelState.showSubnet = !labelState.showSubnet;
+      const btn = wrapper.querySelector('[data-action="toggle-subnet"]');
+      btn.classList.toggle('active', labelState.showSubnet);
+      applyEdgeLabels();
     });
 
     wrapper.querySelector('[data-action="fit"]').addEventListener('click', () => {
@@ -725,6 +770,7 @@
         <button class="pkt-tab" data-tab="vlans">VLAN (${vlans.length})</button>
         <button class="pkt-tab" data-tab="acls">ACL (${acls.length})</button>
         <button class="pkt-tab" data-tab="routes">路由 (${routes.length})</button>
+        <button class="pkt-tab" data-tab="process">可能的配置过程</button>
       </div>
       <div class="pkt-drawer-body">
         ${renderInterfacesTab(interfaces)}
@@ -732,6 +778,7 @@
         ${renderVlansTab(vlans)}
         ${renderAclsTab(acls)}
         ${renderRoutesTab(routes)}
+        ${renderConfigProcessTab(config?.config || '', devName, devType, jsonData.meta?.ptVersion || '')}
       </div>
     `;
     document.body.appendChild(drawerEl);
@@ -932,6 +979,798 @@
         </div>
       </div>
     `;
+  }
+
+  // ============== "可能的配置过程" Tab ==============
+  // 根据解析出来的配置记录，按真实工程师的操作顺序，重新组织成可逐步执行的 CLI 命令序列。
+  // 自动识别 Cisco IOS / Huawei VRP 语法，生成对应的进入配置模式、设主机名、配接口、
+  // 配路由协议、配 ACL、保存等步骤。
+
+  function renderConfigProcessTab(configText, devName, devType, ptVersion) {
+    if (!configText || !configText.trim()) {
+      return `<div class="pkt-tab-content" data-tab="process"><p style="color:var(--color-text-muted,#888);font-size:13px;text-align:center;padding:20px;">无配置信息，无法推算配置过程</p></div>`;
+    }
+
+    const vendor = detectVendor(configText, ptVersion);
+    const steps = vendor === 'huawei'
+      ? generateHuaweiSteps(configText, devName, devType)
+      : generateCiscoSteps(configText, devName, devType);
+
+    if (!steps.length) {
+      return `<div class="pkt-tab-content" data-tab="process"><p style="color:var(--color-text-muted,#888);font-size:13px;text-align:center;padding:20px;">未能从配置中提取出可识别的配置步骤</p></div>`;
+    }
+
+    const vendorLabel = vendor === 'huawei' ? 'Huawei VRP' : 'Cisco IOS';
+    const stepsHtml = steps.map((step, idx) => {
+      const cmdsHtml = step.commands.map(cmd => {
+        // 高亮：以 < 开头是用户视图提示符，[ 开头是系统/子视图提示符，纯命令着色
+        let cls = 'pkt-cp-cmd';
+        if (/^[<[]/.test(cmd)) cls = 'pkt-cp-prompt';
+        return `<div class="${cls}">${escapeHtml(cmd)}</div>`;
+      }).join('');
+      return `
+        <div class="pkt-cp-step">
+          <div class="pkt-cp-step-head">
+            <span class="pkt-cp-step-no">${idx + 1}</span>
+            <span class="pkt-cp-step-title">${escapeHtml(step.title)}</span>
+          </div>
+          ${step.desc ? `<div class="pkt-cp-step-desc">${escapeHtml(step.desc)}</div>` : ''}
+          <pre class="pkt-cp-cmds">${cmdsHtml}</pre>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="pkt-tab-content" data-tab="process">
+        <div class="pkt-cp-banner">
+          <span class="pkt-cp-vendor">${vendorLabel}</span>
+          <span class="pkt-cp-hint">根据已解析的配置记录逆向推算，按典型操作顺序排列。仅包含核心业务配置，省略系统默认项。</span>
+        </div>
+        ${stepsHtml}
+      </div>
+    `;
+  }
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // ============== 厂商语法识别 ==============
+  function detectVendor(configText, ptVersion) {
+    const text = configText || '';
+    // 1. ptVersion 强信号
+    if (ptVersion && /ensp/i.test(ptVersion)) return 'huawei';
+    if (ptVersion && /pt\s*\d/i.test(ptVersion)) return 'cisco';
+    // 2. Huawei VRP 强信号
+    if (/^\[v\d+r\d+/im.test(text)) return 'huawei';
+    if (/^\s*sysname\s+\S+/m.test(text)) return 'huawei';
+    if (/^\s*user-interface\s+con\s+/m.test(text)) return 'huawei';
+    if (/^\s*(?:ospf|isis|bgp|rip)\s+\d+/m.test(text)) return 'huawei';
+    if (/^\s*ip\s+route-static\s+/m.test(text)) return 'huawei';
+    if (/^\s*board\s+add\s+/m.test(text)) return 'huawei';
+    if (/^\s*undo\s+/m.test(text)) return 'huawei';
+    if (/interface\s+(?:gigabitethernet|ethernet|serial)\d+\/\d+\/\d+/i.test(text)) return 'huawei';
+    // 3. Cisco IOS 强信号
+    if (/^\s*hostname\s+\S+/m.test(text)) return 'cisco';
+    if (/^\s*router\s+(?:ospf|bgp|rip|eigrp)\s+/m.test(text)) return 'cisco';
+    if (/^\s*ip\s+route\s+\S+\s+\S+\s+\S+/m.test(text)) return 'cisco';
+    if (/^\s*no\s+shutdown\s*$/m.test(text)) return 'cisco';
+    if (/^version\s+\d+/m.test(text)) return 'cisco';
+    if (/^end\s*$/m.test(text)) return 'cisco';
+    if (/interface\s+(?:gigabitethernet|fastethernet)\d+\/\d+/i.test(text)) return 'cisco';
+    // 4. 默认按 # 分段 → 华为，! 分段 → 思科
+    const hashCount = (text.match(/^#/gm) || []).length;
+    const bangCount = (text.match(/^!/gm) || []).length;
+    if (hashCount > bangCount) return 'huawei';
+    if (bangCount > hashCount) return 'cisco';
+    return 'cisco';
+  }
+
+  // ============== 通用分段工具 ==============
+  // 将配置文本按段分隔符切成 [header, bodyLines[]] 列表
+  function splitConfigSections(configText, delimiter) {
+    const sections = [];
+    const rawSections = configText.split(new RegExp('^' + delimiter + '\\s*$', 'm'));
+    for (const raw of rawSections) {
+      const lines = raw.split(/\r?\n/).map(l => l).filter(l => l.trim() !== '');
+      if (!lines.length) continue;
+      const header = lines[0].trim();
+      const body = lines.slice(1).map(l => l.trim());
+      sections.push({ header, body, raw: lines.map(l => l.trim()) });
+    }
+    return sections;
+  }
+
+  // ============== Huawei VRP 配置过程生成 ==============
+  function generateHuaweiSteps(configText, devName, devType) {
+    const steps = [];
+    // 提取 sysname 作为提示符中的设备名
+    const sysnameMatch = configText.match(/^\s*sysname\s+(\S+)/m);
+    const host = sysnameMatch ? sysnameMatch[1] : (devName || 'Huawei');
+    const defaultName = 'Huawei';
+
+    // ---- 步骤 1：进入系统视图 ----
+    steps.push({
+      title: '进入系统视图',
+      desc: '从用户视图切换到系统视图，准备进行全局配置',
+      commands: [
+        `<${defaultName}>system-view`,
+        `[${defaultName}]sysname ${host}`,
+        `[${host}]`,
+      ],
+    });
+
+    const sections = splitConfigSections(configText, '#');
+
+    // ---- 收集各模块 ----
+    const vlans = [];
+    const interfaces = [];
+    const ospfBlocks = [];
+    const isisBlocks = [];
+    const bgpBlocks = [];
+    const ripBlocks = [];
+    const staticRoutes = [];
+    const acls = [];
+
+    for (const sec of sections) {
+      const h = sec.header;
+      // VLAN：vlan 10 / vlan batch 10 20
+      const vlanM = h.match(/^vlan\s+(.+)$/i);
+      if (vlanM) {
+        const body = sec.body.join('\n');
+        const nameM = body.match(/^\s*name\s+(.+)$/m);
+        // vlan batch 10 20 → 拆成多个
+        const ids = vlanM[1].startsWith('batch')
+          ? vlanM[1].replace(/^batch\s+/i, '').split(/\s+/)
+          : [vlanM[1]];
+        for (const id of ids) {
+          if (id.includes('-')) {
+            // 范围 vlan batch 10-20
+            const [s, e] = id.split('-').map(Number);
+            for (let i = s; i <= e; i++) vlans.push({ id: String(i), name: nameM ? nameM[1] : '' });
+          } else {
+            vlans.push({ id, name: nameM ? nameM[1] : '' });
+          }
+        }
+        continue;
+      }
+      // 接口
+      const ifM = h.match(/^interface\s+(.+)$/i);
+      if (ifM) {
+        const ifName = ifM[1].trim();
+        const body = sec.body.join('\n');
+        const ipM = body.match(/^\s*ip\s+address\s+(\S+)\s+(\S+)/m);
+        const descM = body.match(/^\s*description\s+(.+)$/m);
+        const shutM = /shutdown/.test(body) && !/undo\s+shutdown/.test(body);
+        const linkProtoM = body.match(/^\s*link-protocol\s+(\S+)/m);
+        const isisEnM = body.match(/^\s*isis\s+enable\s+(\S+)/m);
+        const ospfEnM = body.match(/^\s*ospf\s+enable\s+(\S+)/m);
+        const portTypeM = body.match(/^\s*port\s+link-type\s+(\S+)/m);
+        const portAccM = body.match(/^\s*port\s+default\s+vlan\s+(\S+)/m);
+        const trunkAllowM = body.match(/^\s*port\s+trunk\s+allow-pass\s+vlan\s+(.+)$/m);
+        interfaces.push({
+          name: ifName,
+          ip: ipM ? ipM[1] : '',
+          mask: ipM ? ipM[2] : '',
+          desc: descM ? descM[1].trim() : '',
+          shutdown: shutM,
+          linkProtocol: linkProtoM ? linkProtoM[1] : '',
+          isisEnable: isisEnM ? isisEnM[1] : '',
+          ospfEnable: ospfEnM ? ospfEnM[1] : '',
+          portType: portTypeM ? portTypeM[1] : '',
+          portAccessVlan: portAccM ? portAccM[1] : '',
+          trunkAllow: trunkAllowM ? trunkAllowM[1] : '',
+          rawBody: body,
+        });
+        continue;
+      }
+      // OSPF
+      const ospfM = h.match(/^ospf\s+(\d+)(?:\s+router-id\s+(\S+))?/i);
+      if (ospfM) {
+        ospfBlocks.push({
+          processId: ospfM[1],
+          routerId: ospfM[2] || '',
+          body: sec.body,
+          rawBody: sec.body.join('\n'),
+        });
+        continue;
+      }
+      // ISIS
+      const isisM = h.match(/^isis\s+(\d+)/i);
+      if (isisM) {
+        isisBlocks.push({
+          processId: isisM[1],
+          body: sec.body,
+          rawBody: sec.body.join('\n'),
+        });
+        continue;
+      }
+      // BGP
+      const bgpM = h.match(/^bgp\s+(\d+)/i);
+      if (bgpM) {
+        bgpBlocks.push({
+          asNumber: bgpM[1],
+          body: sec.body,
+          rawBody: sec.body.join('\n'),
+        });
+        continue;
+      }
+      // RIP
+      const ripM = h.match(/^rip\s+(\d+)/i);
+      if (ripM) {
+        ripBlocks.push({
+          processId: ripM[1],
+          body: sec.body,
+          rawBody: sec.body.join('\n'),
+        });
+        continue;
+      }
+      // ACL
+      const aclM = h.match(/^acl\s+(?:number\s+)?(\S+)/i);
+      if (aclM) {
+        acls.push({
+          name: aclM[1],
+          body: sec.body,
+        });
+        continue;
+      }
+      // 静态路由（可能不在独立段内，单独扫描）
+    }
+
+    // 静态路由：扫描全文 ip route-static
+    const routeStaticRe = /^\s*ip\s+route-static\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(.+))?$/gm;
+    let rsm;
+    while ((rsm = routeStaticRe.exec(configText)) !== null) {
+      staticRoutes.push({
+        network: rsm[1],
+        mask: rsm[2],
+        nextHop: rsm[3],
+        extra: rsm[4] || '',
+      });
+    }
+
+    // ---- 步骤 2：创建 VLAN ----
+    if (vlans.length) {
+      const cmds = [];
+      for (const v of vlans) {
+        cmds.push(`[${host}]vlan ${v.id}`);
+        if (v.name) {
+          cmds.push(`[${host}-vlan-${v.id}]name ${v.name}`);
+        }
+        cmds.push(`[${host}-vlan-${v.id}]quit`);
+      }
+      steps.push({
+        title: '创建 VLAN',
+        desc: '在交换机上创建 VLAN 并命名（仅交换机/三层交换机需要）',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 3：配置接口 ----
+    if (interfaces.length) {
+      const cmds = [];
+      for (const iface of interfaces) {
+        // 跳过 NULL0 等无配置接口
+        if (!iface.ip && !iface.desc && !iface.linkProtocol && !iface.isisEnable &&
+            !iface.ospfEnable && !iface.portType && !iface.trunkAllow &&
+            iface.name.toUpperCase() !== 'NULL0' && iface.rawBody.trim() === '') {
+          continue;
+        }
+        // 跳过明显的空接口
+        if (iface.name.toUpperCase() === 'NULL0' && !iface.ip) continue;
+
+        cmds.push(`[${host}]interface ${iface.name}`);
+        const ifPrompt = `[${host}-${iface.name}]`;
+        if (iface.desc) cmds.push(`${ifPrompt}description ${iface.desc}`);
+        if (iface.linkProtocol) cmds.push(`${ifPrompt}link-protocol ${iface.linkProtocol}`);
+        if (iface.ip && iface.mask) cmds.push(`${ifPrompt}ip address ${iface.ip} ${iface.mask}`);
+        // 二层接口配置
+        if (iface.portType) cmds.push(`${ifPrompt}port link-type ${iface.portType}`);
+        if (iface.portAccessVlan) cmds.push(`${ifPrompt}port default vlan ${iface.portAccessVlan}`);
+        if (iface.trunkAllow) cmds.push(`${ifPrompt}port trunk allow-pass vlan ${iface.trunkAllow}`);
+        // 路由协议使能
+        if (iface.isisEnable) cmds.push(`${ifPrompt}isis enable ${iface.isisEnable}`);
+        if (iface.ospfEnable) cmds.push(`${ifPrompt}ospf enable ${iface.ospfEnable}`);
+        // 接口使能
+        if (iface.shutdown) {
+          cmds.push(`${ifPrompt}shutdown`);
+        } else if (iface.ip || iface.linkProtocol) {
+          cmds.push(`${ifPrompt}undo shutdown`);
+        }
+        cmds.push(`${ifPrompt}quit`);
+      }
+      if (cmds.length) {
+        steps.push({
+          title: '配置接口',
+          desc: '为每个接口配置 IP 地址、描述、链路协议并使能',
+          commands: cmds,
+        });
+      }
+    }
+
+    // ---- 步骤 4：配置 ISIS ----
+    for (const isis of isisBlocks) {
+      const cmds = [];
+      cmds.push(`[${host}]isis ${isis.processId}`);
+      const prompt = `[${host}-isis-${isis.processId}]`;
+      const body = isis.rawBody;
+      const levelM = body.match(/^\s*is-level\s+(\S+)/m);
+      if (levelM) cmds.push(`${prompt}is-level ${levelM[1]}`);
+      const netM = body.match(/^\s*network-entity\s+(\S+)/m);
+      if (netM) cmds.push(`${prompt}network-entity ${netM[1]}`);
+      // 其他常见子命令
+      const costStyleM = body.match(/^\s*cost-style\s+(.+)/m);
+      if (costStyleM) cmds.push(`${prompt}cost-style ${costStyleM[1].trim()}`);
+      cmds.push(`${prompt}quit`);
+      steps.push({
+        title: `配置 IS-IS 进程 ${isis.processId}`,
+        desc: '创建 IS-IS 进程，设置级别和网络实体标题',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 5：配置 OSPF ----
+    for (const ospf of ospfBlocks) {
+      const cmds = [];
+      cmds.push(`[${host}]ospf ${ospf.processId}` + (ospf.routerId ? ` router-id ${ospf.routerId}` : ''));
+      const prompt = `[${host}-ospf-${ospf.processId}]`;
+      const body = ospf.rawBody;
+      // 解析 area 块
+      const areaLines = body.split('\n');
+      let currentArea = '';
+      let areaPrompt = '';
+      for (const line of areaLines) {
+        const trimmed = line.trim();
+        const areaM = trimmed.match(/^area\s+(\S+)/);
+        if (areaM) {
+          currentArea = areaM[1];
+          areaPrompt = `[${host}-ospf-${ospf.processId}-area-${currentArea}]`;
+          cmds.push(`${prompt}area ${currentArea}`);
+          continue;
+        }
+        const netM = trimmed.match(/^network\s+(\S+)\s+(\S+)/);
+        if (netM && currentArea) {
+          cmds.push(`${areaPrompt}network ${netM[1]} ${netM[2]}`);
+          continue;
+        }
+        const authM = trimmed.match(/^authentication-mode\s+(.+)/);
+        if (authM && currentArea) {
+          cmds.push(`${areaPrompt}authentication-mode ${authM[1].trim()}`);
+          continue;
+        }
+        const vlinkM = trimmed.match(/^vlink-peer\s+(\S+)/);
+        if (vlinkM && currentArea) {
+          cmds.push(`${areaPrompt}vlink-peer ${vlinkM[1]}`);
+          continue;
+        }
+        // 进程级命令
+        const importM = trimmed.match(/^import-route\s+(.+)/);
+        if (importM && !currentArea) {
+          cmds.push(`${prompt}import-route ${importM[1].trim()}`);
+        }
+        const filterM = trimmed.match(/^filter-policy\s+(.+)/);
+        if (filterM && !currentArea) {
+          cmds.push(`${prompt}filter-policy ${filterM[1].trim()}`);
+        }
+      }
+      cmds.push(`${prompt}quit`);
+      steps.push({
+        title: `配置 OSPF 进程 ${ospf.processId}`,
+        desc: '创建 OSPF 进程，设置 Router-ID，划分区域并宣告网段',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 6：配置 BGP ----
+    for (const bgp of bgpBlocks) {
+      const cmds = [];
+      cmds.push(`[${host}]bgp ${bgp.asNumber}`);
+      const prompt = `[${host}-bgp]`;
+      const body = bgp.rawBody;
+      const lines = body.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        const nbrM = trimmed.match(/^peer\s+(\S+)\s+as-number\s+(\S+)/);
+        if (nbrM) {
+          cmds.push(`${prompt}peer ${nbrM[1]} as-number ${nbrM[2]}`);
+          continue;
+        }
+        const netM = trimmed.match(/^network\s+(\S+)(?:\s+mask\s+(\S+))?/);
+        if (netM) {
+          cmds.push(`${prompt}network ${netM[1]}` + (netM[2] ? ` mask ${netM[2]}` : ''));
+          continue;
+        }
+      }
+      cmds.push(`${prompt}quit`);
+      steps.push({
+        title: `配置 BGP AS ${bgp.asNumber}`,
+        desc: '建立 BGP 进程，指定邻居 AS 并宣告网段',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 7：配置 RIP ----
+    for (const rip of ripBlocks) {
+      const cmds = [];
+      cmds.push(`[${host}]rip ${rip.processId}`);
+      const prompt = `[${host}-rip-${rip.processId}]`;
+      const body = rip.rawBody;
+      const lines = body.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        const netM = trimmed.match(/^network\s+(\S+)/);
+        if (netM) { cmds.push(`${prompt}network ${netM[1]}`); continue; }
+        const verM = trimmed.match(/^version\s+(\S+)/);
+        if (verM) { cmds.push(`${prompt}version ${verM[1]}`); continue; }
+        const sumM = trimmed.match(/^undo\s+summary/);
+        if (sumM) { cmds.push(`${prompt}undo summary`); continue; }
+        const peerM = trimmed.match(/^peer\s+(\S+)/);
+        if (peerM) { cmds.push(`${prompt}peer ${peerM[1]}`); continue; }
+        const silentM = trimmed.match(/^silent-interface\s+(\S+)/);
+        if (silentM) { cmds.push(`${prompt}silent-interface ${silentM[1]}`); continue; }
+        const defaultM = trimmed.match(/^default-route\s+originate/);
+        if (defaultM) { cmds.push(`${prompt}default-route originate`); continue; }
+      }
+      cmds.push(`${prompt}quit`);
+      steps.push({
+        title: `配置 RIP 进程 ${rip.processId}`,
+        desc: '创建 RIP 进程，设置版本并宣告网段',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 8：配置静态路由 ----
+    if (staticRoutes.length) {
+      const cmds = [];
+      for (const r of staticRoutes) {
+        let cmd = `[${host}]ip route-static ${r.network} ${r.mask} ${r.nextHop}`;
+        if (r.extra) cmd += ` ${r.extra}`;
+        cmds.push(cmd);
+      }
+      steps.push({
+        title: '配置静态路由',
+        desc: '为非直连网段配置静态路由（含默认路由）',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 9：配置 ACL ----
+    for (const acl of acls) {
+      const cmds = [];
+      cmds.push(`[${host}]acl ${acl.name}`);
+      // 推断 ACL 提示符：数字 2000-2999 是 basic，3000-3999 是 advanced
+      const numMatch = acl.name.match(/^(\d+)/);
+      let aclPrompt = `[${host}-acl-adv-${acl.name}]`;
+      if (numMatch) {
+        const num = parseInt(numMatch[1], 10);
+        if (num >= 2000 && num <= 2999) aclPrompt = `[${host}-acl-basic-${acl.name}]`;
+      }
+      for (const rule of acl.body) {
+        const trimmed = rule.trim();
+        if (trimmed.startsWith('rule')) cmds.push(`${aclPrompt}${trimmed}`);
+      }
+      cmds.push(`${aclPrompt}quit`);
+      steps.push({
+        title: `配置 ACL ${acl.name}`,
+        desc: '创建访问控制列表并添加规则',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 10：保存配置 ----
+    steps.push({
+      title: '退出并保存配置',
+      desc: '返回用户视图并保存配置到设备',
+      commands: [
+        `[${host}]quit`,
+        `<${host}>save`,
+        `# 提示后输入 Y 确认保存`,
+      ],
+    });
+
+    return steps;
+  }
+
+  // ============== Cisco IOS 配置过程生成 ==============
+  function generateCiscoSteps(configText, devName, devType) {
+    const steps = [];
+    // 提取 hostname
+    const hostM = configText.match(/^\s*hostname\s+(\S+)/m);
+    const host = hostM ? hostM[1] : (devName || 'Router');
+    const defaultName = 'Router';
+
+    // ---- 步骤 1：进入特权模式与全局配置模式 ----
+    steps.push({
+      title: '进入特权与全局配置模式',
+      desc: '从用户 EXEC 模式进入特权 EXEC，再进入全局配置模式',
+      commands: [
+        `${defaultName}>enable`,
+        `${defaultName}#configure terminal`,
+        `Enter configuration commands, one per line. End with CNTL/Z.`,
+        `${defaultName}(config)#hostname ${host}`,
+        `${host}(config)#`,
+      ],
+    });
+
+    const sections = splitConfigSections(configText, '!');
+
+    const vlans = [];
+    const interfaces = [];
+    const ospfBlocks = [];
+    const bgpBlocks = [];
+    const ripBlocks = [];
+    const staticRoutes = [];
+    const acls = [];
+
+    for (const sec of sections) {
+      const h = sec.header;
+      // VLAN：vlan 10 / vlan 20
+      const vlanM = h.match(/^vlan\s+(\d+)/i);
+      if (vlanM) {
+        const body = sec.body.join('\n');
+        const nameM = body.match(/^\s*name\s+(.+)$/m);
+        vlans.push({ id: vlanM[1], name: nameM ? nameM[1].trim() : '' });
+        continue;
+      }
+      // 接口
+      const ifM = h.match(/^interface\s+(.+)$/i);
+      if (ifM) {
+        const ifName = ifM[1].trim();
+        const body = sec.body.join('\n');
+        const ipM = body.match(/^\s*ip\s+address\s+(\S+)\s+(\S+)/m);
+        const descM = body.match(/^\s*description\s+(.+)$/m);
+        const shutM = /shutdown/.test(body) && !/no\s+shutdown/.test(body);
+        const duplexM = body.match(/^\s*duplex\s+(\S+)/m);
+        const speedM = body.match(/^\s*speed\s+(\S+)/m);
+        const swAccM = body.match(/^\s*switchport\s+access\s+vlan\s+(\S+)/m);
+        const swModeM = body.match(/^\s*switchport\s+mode\s+(\S+)/m);
+        const swTrunkM = body.match(/^\s*switchport\s+trunk\s+(?:allowed\s+)?vlan\s+(.+)$/m);
+        interfaces.push({
+          name: ifName,
+          ip: ipM ? ipM[1] : '',
+          mask: ipM ? ipM[2] : '',
+          desc: descM ? descM[1].trim() : '',
+          shutdown: shutM,
+          duplex: duplexM ? duplexM[1] : '',
+          speed: speedM ? speedM[1] : '',
+          swAccessVlan: swAccM ? swAccM[1] : '',
+          swMode: swModeM ? swModeM[1] : '',
+          swTrunkVlan: swTrunkM ? swTrunkM[1] : '',
+          rawBody: body,
+        });
+        continue;
+      }
+      // OSPF
+      const ospfM = h.match(/^router\s+ospf\s+(\d+)/i);
+      if (ospfM) {
+        ospfBlocks.push({
+          processId: ospfM[1],
+          body: sec.body,
+          rawBody: sec.body.join('\n'),
+        });
+        continue;
+      }
+      // BGP
+      const bgpM = h.match(/^router\s+bgp\s+(\d+)/i);
+      if (bgpM) {
+        bgpBlocks.push({
+          asNumber: bgpM[1],
+          body: sec.body,
+          rawBody: sec.body.join('\n'),
+        });
+        continue;
+      }
+      // RIP
+      const ripM = h.match(/^router\s+rip\b/i);
+      if (ripM) {
+        ripBlocks.push({
+          body: sec.body,
+          rawBody: sec.body.join('\n'),
+        });
+        continue;
+      }
+      // ACL：ip access-list extended NAME / access-list N
+      const aclNamedM = h.match(/^ip\s+access-list\s+(?:standard|extended)\s+(\S+)/i);
+      if (aclNamedM) {
+        acls.push({ name: aclNamedM[1], body: sec.body });
+        continue;
+      }
+      const aclNumM = h.match(/^access-list\s+(\d+)\s+(.+)/i);
+      if (aclNumM) {
+        acls.push({ name: aclNumM[1], body: [aclNumM[2]] });
+        continue;
+      }
+      // 静态路由（独立行）
+      const srM = h.match(/^ip\s+route\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(.+))?/i);
+      if (srM) {
+        staticRoutes.push({
+          network: srM[1],
+          mask: srM[2],
+          nextHop: srM[3],
+          extra: srM[4] || '',
+        });
+        continue;
+      }
+    }
+
+    // ---- 步骤 2：创建 VLAN ----
+    if (vlans.length) {
+      const cmds = [];
+      for (const v of vlans) {
+        cmds.push(`${host}(config)#vlan ${v.id}`);
+        if (v.name) cmds.push(`${host}(config-vlan)#name ${v.name}`);
+        cmds.push(`${host}(config-vlan)#exit`);
+      }
+      steps.push({
+        title: '创建 VLAN',
+        desc: '在交换机上创建 VLAN 并命名',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 3：配置接口 ----
+    if (interfaces.length) {
+      const cmds = [];
+      for (const iface of interfaces) {
+        // 跳过 Vlan1 等无配置接口
+        if (!iface.ip && !iface.desc && !iface.swAccessVlan && !iface.swMode &&
+            !iface.swTrunkVlan && iface.rawBody.trim() === '') continue;
+        if (/^vlan\d+$/i.test(iface.name) && !iface.ip) continue;
+
+        cmds.push(`${host}(config)#interface ${iface.name}`);
+        const ifPrompt = `${host}(config-if)#`;
+        if (iface.desc) cmds.push(`${ifPrompt}description ${iface.desc}`);
+        if (iface.ip && iface.mask) cmds.push(`${ifPrompt}ip address ${iface.ip} ${iface.mask}`);
+        if (iface.duplex) cmds.push(`${ifPrompt}duplex ${iface.duplex}`);
+        if (iface.speed) cmds.push(`${ifPrompt}speed ${iface.speed}`);
+        // 二层接口配置
+        if (iface.swMode) cmds.push(`${ifPrompt}switchport mode ${iface.swMode}`);
+        if (iface.swAccessVlan) cmds.push(`${ifPrompt}switchport access vlan ${iface.swAccessVlan}`);
+        if (iface.swTrunkVlan) cmds.push(`${ifPrompt}switchport trunk allowed vlan ${iface.swTrunkVlan}`);
+        // 接口使能
+        if (iface.shutdown) {
+          cmds.push(`${ifPrompt}shutdown`);
+        } else if (iface.ip || iface.swAccessVlan || iface.swMode) {
+          cmds.push(`${ifPrompt}no shutdown`);
+        }
+        cmds.push(`${ifPrompt}exit`);
+      }
+      if (cmds.length) {
+        steps.push({
+          title: '配置接口',
+          desc: '为每个接口配置 IP 地址、描述、双工/速率并使能',
+          commands: cmds,
+        });
+      }
+    }
+
+    // ---- 步骤 4：配置 OSPF ----
+    for (const ospf of ospfBlocks) {
+      const cmds = [];
+      cmds.push(`${host}(config)#router ospf ${ospf.processId}`);
+      const prompt = `${host}(config-router)#`;
+      const body = ospf.rawBody;
+      const netRe = /^\s*network\s+(\S+)\s+(\S+)\s+area\s+(\S+)/gm;
+      let nm;
+      while ((nm = netRe.exec(body)) !== null) {
+        cmds.push(`${prompt}network ${nm[1]} ${nm[2]} area ${nm[3]}`);
+      }
+      const logM = body.match(/^\s*log-adjacency-changes/m);
+      if (logM) cmds.push(`${prompt}log-adjacency-changes`);
+      cmds.push(`${prompt}exit`);
+      steps.push({
+        title: `配置 OSPF 进程 ${ospf.processId}`,
+        desc: '创建 OSPF 进程并宣告网段到对应区域',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 5：配置 BGP ----
+    for (const bgp of bgpBlocks) {
+      const cmds = [];
+      cmds.push(`${host}(config)#router bgp ${bgp.asNumber}`);
+      const prompt = `${host}(config-router)#`;
+      const body = bgp.rawBody;
+      const lines = body.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        const nbrM = trimmed.match(/^neighbor\s+(\S+)\s+remote-as\s+(\S+)/);
+        if (nbrM) { cmds.push(`${prompt}neighbor ${nbrM[1]} remote-as ${nbrM[2]}`); continue; }
+        const netM = trimmed.match(/^network\s+(\S+)(?:\s+mask\s+(\S+))?/);
+        if (netM) { cmds.push(`${prompt}network ${netM[1]}` + (netM[2] ? ` mask ${netM[2]}` : '')); continue; }
+        const noSyncM = trimmed.match(/^no\s+synchronization/);
+        if (noSyncM) { cmds.push(`${prompt}no synchronization`); continue; }
+        const logM = trimmed.match(/^bgp\s+log-neighbor-changes/);
+        if (logM) { cmds.push(`${prompt}bgp log-neighbor-changes`); continue; }
+      }
+      cmds.push(`${prompt}exit`);
+      steps.push({
+        title: `配置 BGP AS ${bgp.asNumber}`,
+        desc: '建立 BGP 进程，指定邻居 AS 并宣告网段',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 6：配置 RIP ----
+    for (const rip of ripBlocks) {
+      const cmds = [];
+      cmds.push(`${host}(config)#router rip`);
+      const prompt = `${host}(config-router)#`;
+      const body = rip.rawBody;
+      const netRe = /^\s*network\s+(\S+)/gm;
+      let nm;
+      while ((nm = netRe.exec(body)) !== null) {
+        cmds.push(`${prompt}network ${nm[1]}`);
+      }
+      const verM = body.match(/^\s*version\s+(\S+)/m);
+      if (verM) cmds.push(`${prompt}version ${verM[1]}`);
+      cmds.push(`${prompt}exit`);
+      steps.push({
+        title: '配置 RIP',
+        desc: '创建 RIP 进程并宣告网段',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 7：配置静态路由 ----
+    if (staticRoutes.length) {
+      const cmds = [];
+      for (const r of staticRoutes) {
+        let cmd = `${host}(config)#ip route ${r.network} ${r.mask} ${r.nextHop}`;
+        if (r.extra) cmd += ` ${r.extra}`;
+        cmds.push(cmd);
+      }
+      steps.push({
+        title: '配置静态路由',
+        desc: '为非直连网段配置静态路由（含默认路由）',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 8：配置 ACL ----
+    for (const acl of acls) {
+      const cmds = [];
+      const isNamed = isNaN(Number(acl.name));
+      if (isNamed) {
+        cmds.push(`${host}(config)#ip access-list extended ${acl.name}`);
+      } else {
+        cmds.push(`${host}(config)#access-list ${acl.name} ...`);
+      }
+      const prompt = isNamed ? `${host}(config-ext-nacl)#` : `${host}(config)#`;
+      for (const rule of acl.body) {
+        const trimmed = rule.trim();
+        if (!trimmed) continue;
+        if (isNamed) {
+          cmds.push(`${prompt}${trimmed}`);
+        } else {
+          cmds.push(`${prompt}access-list ${acl.name} ${trimmed}`);
+        }
+      }
+      if (isNamed) cmds.push(`${prompt}exit`);
+      steps.push({
+        title: `配置 ACL ${acl.name}`,
+        desc: '创建访问控制列表并添加规则',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 9：保存配置 ----
+    steps.push({
+      title: '退出并保存配置',
+      desc: '返回特权 EXEC 模式并保存配置到 NVRAM',
+      commands: [
+        `${host}(config)#end`,
+        `${host}#`,
+        `${host}#write memory`,
+        `Building configuration...`,
+        `[OK]`,
+      ],
+    });
+
+    return steps;
   }
 
   // ============== 导出菜单 ==============
