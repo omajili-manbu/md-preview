@@ -3,6 +3,24 @@
 
   const { dom, state, CONFIG } = window.MarkdownPreview;
 
+  // ============== 注册 marked-footnote 扩展 ==============
+  // 支持 [^id] 引用 与 [^id]: 定义 语法，渲染为带回链的脚注区
+  if (typeof marked !== 'undefined' && typeof markedFootnote !== 'undefined') {
+    try {
+      marked.use(markedFootnote({
+        prefixId: 'fn-',
+        description: '脚注',
+        refMarkers: false,
+        footnoteDivider: true,
+        sectionClass: 'footnotes',
+        headingClass: 'footnotes-heading',
+        backRefLabel: '返回引用 {0}'
+      }));
+    } catch (e) {
+      console.warn('[markdown] markedFootnote 注册失败:', e);
+    }
+  }
+
   async function loadMarkdownFile(path) {
     try {
       // 立即更新 URL，提供即时反馈

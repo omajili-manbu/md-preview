@@ -1,5 +1,5 @@
-const CACHE_NAME = 'md-preview-v6.17';
-const RUNTIME_CACHE = 'md-preview-runtime-v6.16';
+const CACHE_NAME = 'md-preview-v7.0';
+const RUNTIME_CACHE = 'md-preview-runtime-v7.0';
 
 // 预缓存：首屏关键静态资源
 const PRECACHE_URLS = [
@@ -41,7 +41,11 @@ const PRECACHE_URLS = [
   './iris/data/pkt/icons.svg',
   './iris/vendor/cytoscape/cytoscape.min.js',
   './iris/js/themes/theme-manager.js',
+  './iris/vendor/codemirror/codemirror.min.js',
+  './iris/js/cm-editor.js',
+  './iris/js/storage.js',
   './iris/vendor/marked.js',
+  './iris/vendor/marked-footnote.min.js',
   './iris/vendor/highlight.js/highlight.min.js',
   './iris/vendor/flexsearch.bundle.js',
   './iris/vendor/file-tree/prod.js',

@@ -67,6 +67,7 @@
     <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
     <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
     <symbol id="i-quote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h4v6a4 4 0 0 1-4 4M13 7h4v6a4 4 0 0 1-4 4"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
   </svg>
   <div class="progress-bar" id="progressBar"></div>
   
@@ -840,6 +841,7 @@
       </div>
       <div class="toolbar-right">
         <button class="toolbar-icon-btn" id="fontSizeBtn" title="字号调节"><svg class="ico"><use href="#i-font"/></svg></button>
+        <button class="toolbar-icon-btn" id="imageUploadBtn" title="图片上传设置"><svg class="ico"><use href="#i-upload"/></svg></button>
         <button class="toolbar-icon-btn" id="searchBtn" title="全局搜索/替换 (Ctrl+F)"><svg class="ico"><use href="#i-search"/></svg></button>
         <button class="toolbar-icon-btn" id="themeToggleBtn" title="切换主题"><svg class="ico"><use href="#i-moon"/></svg></button>
         <span class="toolbar-divider"></span>
@@ -847,7 +849,35 @@
         <button class="toolbar-run-btn" id="runAllBtn" title="运行全部 Cell (Ctrl+Shift+Enter)"><svg class="ico"><use href="#i-zap"/></svg> 全部运行</button>
         <button class="toolbar-run-btn primary" id="runCurrentBtn" title="运行当前 Cell (Ctrl+Enter)"><svg class="ico"><use href="#i-play"/></svg> 运行</button>
       </div>
+
+      <!-- 图片上传设置弹出层 -->
+      <div class="image-upload-popover" id="imageUploadPopover">
+        <div class="image-upload-popover-title">图片上传设置</div>
+        <div class="image-upload-mode">
+          <label class="image-upload-radio"><input type="radio" name="imgMode" value="base64" checked> Base64 内嵌（默认，无需配置）</label>
+          <label class="image-upload-radio"><input type="radio" name="imgMode" value="host"> 图床上传</label>
+        </div>
+        <div class="image-upload-host-config" id="imageHostConfig" style="display:none;">
+          <input type="text" id="imageUploadUrl" class="image-upload-input" placeholder="https://your-image-host.com/api/upload" />
+          <div class="image-upload-hint">端点需接收 multipart/form-data（字段名 file），返回 JSON <code>{ "url": "..." }</code></div>
+          <div class="image-upload-hint">若需鉴权，可附带请求头（见下方自定义头）</div>
+          <input type="text" id="imageUploadHeaders" class="image-upload-input" placeholder='自定义请求头 JSON，如 {"Authorization":"Bearer xxx"}' />
+        </div>
+        <div class="image-upload-actions">
+          <button class="toolbar-btn" id="imageUploadClear">清除配置</button>
+          <button class="toolbar-run-btn primary" id="imageUploadSave">保存</button>
+        </div>
+        <div class="image-upload-hint image-upload-hint-tip">提示：在编辑区直接 <kbd>粘贴</kbd> 或 <kbd>拖拽</kbd> 图片即可插入</div>
+      </div>
     </header>
+
+    <!-- 多标签页栏 -->
+    <nav class="tab-bar" id="tabBar" aria-label="笔记本标签">
+      <div class="tab-list" id="tabList"></div>
+      <button class="tab-new-btn" id="tabNewBtn" title="新建笔记本 (Ctrl+T)">
+        <svg class="ico ico-sm"><use href="#i-plus"/></svg>
+      </button>
+    </nav>
 
     <!-- 搜索/替换面板 -->
     <div class="search-panel" id="searchPanel">
@@ -951,6 +981,7 @@
   </div>
 
   <script defer src="iris/vendor/marked.js"></script>
+  <script defer src="iris/vendor/marked-footnote.min.js"></script>
   <script defer src="iris/vendor/highlight.js/highlight.min.js"></script>
   <script defer src="iris/vendor/flexsearch.bundle.js"></script>
   <script defer src="iris/vendor/mermaid.min.js"></script>
@@ -998,6 +1029,9 @@
 
   <!-- Main Entry -->
   <script defer src="iris/js/themes/theme-manager.js"></script>
+  <script defer src="iris/vendor/codemirror/codemirror.min.js"></script>
+  <script defer src="iris/js/cm-editor.js"></script>
+  <script defer src="iris/js/storage.js"></script>
   <script defer src="iris/js/editor.js"></script>
   <script defer src="iris/app.js"></script>
   
