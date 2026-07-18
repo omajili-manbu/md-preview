@@ -1066,20 +1066,21 @@
     if (/^\[v\d+r\d+/im.test(text)) return 'huawei';
     if (/^\s*sysname\s+\S+/m.test(text)) return 'huawei';
     if (/^\s*user-interface\s+con\s+/m.test(text)) return 'huawei';
-    if (/^\s*(?:ospf|isis|bgp|rip)\s+\d+/m.test(text)) return 'huawei';
     if (/^\s*ip\s+route-static\s+/m.test(text)) return 'huawei';
     if (/^\s*board\s+add\s+/m.test(text)) return 'huawei';
-    if (/^\s*undo\s+/m.test(text)) return 'huawei';
-    if (/interface\s+(?:gigabitethernet|ethernet|serial)\d+\/\d+\/\d+/i.test(text)) return 'huawei';
-    // 3. Cisco IOS 强信号
+    // 3. Cisco IOS 强信号（放在 3 段接口名检查之前，避免 Catalyst 交换机被误判为华为）
     if (/^\s*hostname\s+\S+/m.test(text)) return 'cisco';
     if (/^\s*router\s+(?:ospf|bgp|rip|eigrp)\s+/m.test(text)) return 'cisco';
-    if (/^\s*ip\s+route\s+\S+\s+\S+\s+\S+/m.test(text)) return 'cisco';
     if (/^\s*no\s+shutdown\s*$/m.test(text)) return 'cisco';
     if (/^version\s+\d+/m.test(text)) return 'cisco';
     if (/^end\s*$/m.test(text)) return 'cisco';
+    // 4. 中等强度 Huawei 信号
+    if (/^\s*(?:ospf|isis|bgp|rip)\s+\d+/m.test(text)) return 'huawei';
+    if (/^\s*undo\s+/m.test(text)) return 'huawei';
+    // 5. 弱信号：3 段接口名倾向华为，2 段倾向思科（最后才用，容易被 Catalyst 干扰）
+    if (/interface\s+(?:gigabitethernet|ethernet|serial)\d+\/\d+\/\d+/i.test(text)) return 'huawei';
     if (/interface\s+(?:gigabitethernet|fastethernet)\d+\/\d+/i.test(text)) return 'cisco';
-    // 4. 默认按 # 分段 → 华为，! 分段 → 思科
+    // 6. 默认按 # 分段 → 华为，! 分段 → 思科
     const hashCount = (text.match(/^#/gm) || []).length;
     const bangCount = (text.match(/^!/gm) || []).length;
     if (hashCount > bangCount) return 'huawei';
@@ -1336,12 +1337,16 @@
       cmds.push(`[${host}]ospf ${ospf.processId}` + (ospf.routerId ? ` router-id ${ospf.routerId}` : ''));
       const prompt = `[${host}-ospf-${ospf.processId}]`;
       const body = ospf.rawBody;
-      // 解析 area 块
+      // 解析 area 块。area 子命令有：network / authentication-mode / vlink-peer / stub / nssa / default-cost
+      // 一旦遇到非 area 子命令的进程级命令（import-route / filter-policy / spf-delay 等），
+      // 视为退出 area 上下文，回到进程级。避免 currentArea 一直为真导致后续进程级命令被丢弃。
       const areaLines = body.split('\n');
       let currentArea = '';
       let areaPrompt = '';
+      const exitArea = () => { currentArea = ''; areaPrompt = ''; };
       for (const line of areaLines) {
         const trimmed = line.trim();
+        if (!trimmed) continue;
         const areaM = trimmed.match(/^area\s+(\S+)/);
         if (areaM) {
           currentArea = areaM[1];
@@ -1349,6 +1354,7 @@
           cmds.push(`${prompt}area ${currentArea}`);
           continue;
         }
+        // area 子命令
         const netM = trimmed.match(/^network\s+(\S+)\s+(\S+)/);
         if (netM && currentArea) {
           cmds.push(`${areaPrompt}network ${netM[1]} ${netM[2]}`);
@@ -1364,14 +1370,35 @@
           cmds.push(`${areaPrompt}vlink-peer ${vlinkM[1]}`);
           continue;
         }
-        // 进程级命令
+        const stubM = trimmed.match(/^(stub|nssa)\b/);
+        if (stubM && currentArea) {
+          cmds.push(`${areaPrompt}${stubM[1]}`);
+          continue;
+        }
+        // 进程级命令：遇到这些命令说明已退出 area 上下文
         const importM = trimmed.match(/^import-route\s+(.+)/);
-        if (importM && !currentArea) {
+        if (importM) {
+          exitArea();
           cmds.push(`${prompt}import-route ${importM[1].trim()}`);
+          continue;
         }
         const filterM = trimmed.match(/^filter-policy\s+(.+)/);
-        if (filterM && !currentArea) {
+        if (filterM) {
+          exitArea();
           cmds.push(`${prompt}filter-policy ${filterM[1].trim()}`);
+          continue;
+        }
+        const spfM = trimmed.match(/^spf-delay(?:-intelligent)?\s+(.+)/);
+        if (spfM) {
+          exitArea();
+          cmds.push(`${prompt}${trimmed}`);
+          continue;
+        }
+        const bandwidthM = trimmed.match(/^bandwidth-reference\s+(.+)/);
+        if (bandwidthM) {
+          exitArea();
+          cmds.push(`${prompt}${trimmed}`);
+          continue;
         }
       }
       cmds.push(`${prompt}quit`);
@@ -1590,28 +1617,40 @@
         });
         continue;
       }
-      // ACL：ip access-list extended NAME / access-list N
+      // ACL：命名 ACL（ip access-list extended NAME）— 整段 body 都是该 ACL 的规则
       const aclNamedM = h.match(/^ip\s+access-list\s+(?:standard|extended)\s+(\S+)/i);
       if (aclNamedM) {
-        acls.push({ name: aclNamedM[1], body: sec.body });
+        acls.push({ name: aclNamedM[1], body: sec.body, isNamed: true });
         continue;
       }
-      const aclNumM = h.match(/^access-list\s+(\d+)\s+(.+)/i);
-      if (aclNumM) {
-        acls.push({ name: aclNumM[1], body: [aclNumM[2]] });
-        continue;
-      }
-      // 静态路由（独立行）
-      const srM = h.match(/^ip\s+route\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(.+))?/i);
-      if (srM) {
-        staticRoutes.push({
-          network: srM[1],
-          mask: srM[2],
-          nextHop: srM[3],
-          extra: srM[4] || '',
-        });
-        continue;
-      }
+      // 编号 ACL（access-list N permit/deny ...）不在这里处理，下面用全局正则扫描并按编号分组
+      // （否则同一 ! 段内多条 access-list N 只会命中第一条，其余被丢）
+      // 静态路由也改用全局正则扫描，避免 ip route 跟在 ip classless 等命令后时漏掉
+    }
+
+    // 全局扫描编号 ACL：access-list N permit/deny ...，按编号分组
+    const aclNumRe = /^\s*access-list\s+(\d+)\s+(.+)$/gm;
+    const numberedAcls = {};
+    let aclNumM;
+    while ((aclNumM = aclNumRe.exec(configText)) !== null) {
+      const num = aclNumM[1];
+      if (!numberedAcls[num]) numberedAcls[num] = [];
+      numberedAcls[num].push(aclNumM[2].trim());
+    }
+    for (const num of Object.keys(numberedAcls)) {
+      acls.push({ name: num, body: numberedAcls[num], isNamed: false });
+    }
+
+    // 全局扫描静态路由：ip route N M nextHop [extra]
+    const routeRe = /^\s*ip\s+route\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(.+))?$/gm;
+    let routeM;
+    while ((routeM = routeRe.exec(configText)) !== null) {
+      staticRoutes.push({
+        network: routeM[1],
+        mask: routeM[2],
+        nextHop: routeM[3],
+        extra: routeM[4] || '',
+      });
     }
 
     // ---- 步骤 2：创建 VLAN ----
@@ -1751,11 +1790,11 @@
     // ---- 步骤 8：配置 ACL ----
     for (const acl of acls) {
       const cmds = [];
-      const isNamed = isNaN(Number(acl.name));
+      // 命名 ACL（isNamed === true）进入子模式；编号 ACL（isNamed === false）直接全局配置
+      // 用显式标志而非 isNaN(name) 推断，避免数字命名的命名 ACL 被误判
+      const isNamed = acl.isNamed !== false;
       if (isNamed) {
         cmds.push(`${host}(config)#ip access-list extended ${acl.name}`);
-      } else {
-        cmds.push(`${host}(config)#access-list ${acl.name} ...`);
       }
       const prompt = isNamed ? `${host}(config-ext-nacl)#` : `${host}(config)#`;
       for (const rule of acl.body) {
