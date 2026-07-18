@@ -56,8 +56,18 @@
   let contextMenuCellId = null;
   let globalAddBtn = null;
 
-  // ============== 画廊样式注册 ==============
-  const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic', 'scattered', 'hexagon', 'coverflow', 'tape', 'duotone', 'frame', 'arch', 'masonry', 'slider', 'ticket', 'panorama'];
+  // ============== 画廊样式注册（来自共享渲染模块） ==============
+  const mdRender = window.MarkdownPreview.mdRender;
+  const knownStyles = mdRender.KNOWN_STYLES;
+  // editor.js 使用 SVG 版本的 Alert 图标
+  const svgWrap = (path) => `<svg class="alert-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+  const EDITOR_ALERT_TYPES = {
+    NOTE:     { icon: svgWrap('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'), title: 'Note' },
+    IMPORTANT:{ icon: svgWrap('<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>'), title: 'Important' },
+    WARNING:  { icon: svgWrap('<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'), title: 'Warning' },
+    TIP:      { icon: svgWrap('<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3v1h6v-1c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/>'), title: 'Tip' },
+    CAUTION:  { icon: svgWrap('<circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/>'), title: 'Caution' }
+  };
 
   // ============== 自动补全：多触发器条目库 ==============
   // 每个条目：{ trigger: 触发前缀, label, desc, insert, replaceLength: 替换前缀长度 }
@@ -594,186 +604,18 @@
     cellData.lastRunContent = cellData.textarea.value;
   }
 
-  // ============== Markdown 渲染 ==============
-
-  function processGitHubAlerts(text) {
-    const svgWrap = (path) => `<svg class="alert-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
-    const alertTypes = {
-      NOTE: svgWrap('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'),
-      IMPORTANT: svgWrap('<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>'),
-      WARNING: svgWrap('<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'),
-      TIP: svgWrap('<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3v1h6v-1c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/>'),
-      CAUTION: svgWrap('<circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/>')
-    };
-    const lines = text.split('\n');
-    let result = '';
-    let i = 0;
-    while (i < lines.length) {
-      const m = lines[i].match(/^> \[!([A-Z]+)\](.*)$/);
-      if (m && alertTypes[m[1]]) {
-        const icon = alertTypes[m[1]];
-        const title = m[1].charAt(0) + m[1].slice(1).toLowerCase();
-        const contentLines = [];
-        i++;
-        while (i < lines.length && (lines[i].startsWith('> ') || lines[i].trim() === '')) {
-          contentLines.push(lines[i].trim() === '' ? '' : lines[i].substring(2));
-          i++;
-        }
-        const parsedContent = marked.parse(contentLines.join('\n').trim(), { breaks: true, gfm: true });
-        result += `<div class="alert alert-${m[1].toLowerCase()}"><div class="alert-header"><span class="alert-icon">${icon}</span><span class="alert-title">${title}</span></div><div class="alert-content">${parsedContent}</div></div>\n`;
-      } else {
-        result += lines[i] + '\n';
-        i++;
-      }
-    }
-    return result;
-  }
-
-  function protectLaTeXBlocks(text) {
-    const blocks = [];
-    const processed = text.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
-      const idx = blocks.length;
-      const cleaned = match.split('\n').map((l, i, a) => {
-        if (i === 0) return l.replace(/^\$\$\s*/, '');
-        if (i === a.length - 1) return l.replace(/\s*\$\$$/, '');
-        return l.replace(/^    /, '');
-      }).join('\n').trim();
-      blocks.push(cleaned);
-      return `LATEXPROTECT_${idx}_`;
-    });
-    return { processed, blocks };
-  }
-
-  function createRenderer() {
-    const renderer = new marked.Renderer();
-    renderer.code = function({ text, lang }) {
-      const language = lang || '';
-      const languageClass = language ? ` class="language-${language}"` : '';
-      const langLabel = language ? `<span class="code-lang-label">${language}</span>` : '';
-      return `<pre class="code-block"${language ? ` data-lang="${language}"` : ''}><button class="copy-btn" aria-label="复制代码"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>${langLabel}<code${languageClass}>${text}</code></pre>`;
-    };
-    renderer.paragraph = function(token) {
-      const trimmed = (token && token.text ? token.text : '').trim();
-      const markerMatch = trimmed.match(/^@([a-zA-Z][\w-]*)(\s.*)?$/);
-      if (markerMatch && knownStyles.includes(markerMatch[1].toLowerCase())) {
-        return `<p class="gallery-style-marker" data-style="${markerMatch[1].toLowerCase()}"></p>`;
-      }
-      return `<p>${this.parser.parseInline(token.tokens)}</p>`;
-    };
-    return renderer;
-  }
-
-  function processImages(container) {
-    const images = container.querySelectorAll('img');
-    if (images.length < 2) return;
-
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = container.innerHTML;
-    const allElements = Array.from(tempDiv.childNodes);
-    const galleryGroups = [];
-    let currentGroup = [];
-    let pendingStyle = null;
-    const markersToRemove = [];
-
-    allElements.forEach((node, index) => {
-      if (node.nodeName === 'P') {
-        if (node.classList && node.classList.contains('gallery-style-marker')) {
-          if (currentGroup.length >= 2) galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-          currentGroup = [];
-          pendingStyle = node.getAttribute('data-style') || null;
-          markersToRemove.push(node);
-          return;
-        }
-        const imgs = node.querySelectorAll('img');
-        if (imgs.length > 0 && node.textContent.trim() === '') {
-          currentGroup.push(...Array.from(imgs));
-          const nextNode = allElements[index + 1];
-          if (!nextNode || nextNode.nodeName !== 'P' || nextNode.querySelectorAll('img').length === 0) {
-            if (currentGroup.length >= 2) galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-            currentGroup = [];
-            pendingStyle = null;
-          }
-        } else {
-          if (currentGroup.length >= 2) galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-          currentGroup = [];
-          pendingStyle = null;
-        }
-      } else {
-        if (currentGroup.length >= 2) galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-        currentGroup = [];
-        pendingStyle = null;
-      }
-    });
-
-    if (currentGroup.length >= 2) galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-    markersToRemove.forEach(n => n.remove());
-
-    galleryGroups.forEach(group => {
-      if (group.imgs.length < 2) return;
-      const firstImg = group.imgs[0];
-      const parentP = firstImg.closest('p');
-      if (!parentP) return;
-      const galleryDiv = document.createElement('div');
-      galleryDiv.className = 'image-gallery';
-      if (group.style) galleryDiv.classList.add(`image-gallery--${group.style}`);
-      group.imgs.forEach(img => galleryDiv.appendChild(img.cloneNode(true)));
-      parentP.replaceWith(galleryDiv);
-    });
-
-    container.innerHTML = tempDiv.innerHTML;
-  }
-
-  function initSliders(container) {
-    container.querySelectorAll('.image-gallery--slider').forEach(slider => {
-      const imgs = Array.from(slider.querySelectorAll('img'));
-      if (imgs.length < 2) return;
-      const track = document.createElement('div');
-      track.className = 'slider-track';
-      imgs.forEach(img => track.appendChild(img));
-      slider.appendChild(track);
-      const dots = document.createElement('div');
-      dots.className = 'slider-dots';
-      imgs.forEach((_, i) => {
-        const dot = document.createElement('span');
-        if (i === 0) dot.classList.add('active');
-        dots.appendChild(dot);
-      });
-      slider.appendChild(dots);
-      const count = imgs.length;
-      let index = 0;
-      let timer = null;
-      function go(i) {
-        index = ((i % count) + count) % count;
-        track.style.transform = `translateX(-${index * 100}%)`;
-        dots.querySelectorAll('span').forEach((d, di) => d.classList.toggle('active', di === index));
-      }
-      function start() { stop(); timer = setInterval(() => go(index + 1), 4000); }
-      function stop() { if (timer) { clearInterval(timer); timer = null; } }
-      slider.addEventListener('mouseenter', stop);
-      slider.addEventListener('mouseleave', start);
-      start();
-    });
-  }
+  // ============== Markdown 渲染（共享渲染逻辑） ==============
+  //
+  // processGitHubAlerts / protectLaTeXBlocks / createMdRenderer / 画廊分组 / 轮播 / 代码高亮
+  // 这些函数已在 iris/js/md-render.js 中统一实现，这里仅保留 cell 级编排。
+  // editor.js 传入 SVG 版 Alert 图标，与文档站的 emoji 版本区分。
 
   function renderCellMarkdown(content, outputElement) {
-    const { processed, blocks } = protectLaTeXBlocks(content);
-    const alertProcessed = processGitHubAlerts(processed);
-    const renderer = createRenderer();
-    let html = marked.parse(alertProcessed, { breaks: true, gfm: true, renderer });
-
-    html = html.replace(/LATEXPROTECT_(\d+)_/g, (m, idx) => {
-      return `<div class="katex-block">${blocks[parseInt(idx)]}</div>`;
-    });
-
+    const { html } = mdRender.parseMarkdown(content, { alertTypes: EDITOR_ALERT_TYPES });
     outputElement.innerHTML = html;
-    processImages(outputElement);
-    initSliders(outputElement);
-
-    if (window.hljs) {
-      outputElement.querySelectorAll('pre code').forEach(block => {
-        hljs.highlightElement(block);
-      });
-    }
+    mdRender.groupGalleries(outputElement);
+    mdRender.initSliders(outputElement);
+    mdRender.highlightCodeBlocks(outputElement);
 
     setTimeout(() => {
       try {
@@ -1888,17 +1730,234 @@
   // ============== 自动保存（IndexedDB，localStorage 兜底） ==============
 
   const STORAGE_KEY = 'mdnb_autosave_v2'; // 兼容旧 localStorage key，仅用于迁移
-  const NOTEBOOK_ID = 'autosave';          // IndexedDB 中的笔记本 ID
+  let NOTEBOOK_ID = 'autosave';           // 当前激活笔记本 ID（IndexedDB key）
   const storage = window.MarkdownPreview.storage;
   let saveTimer = null;
   let isUnsaved = false;
   let useIndexedDB = storage && storage.isAvailable();
+
+  // ============== 多标签页 ==============
+  //
+  // 每个 tab 对应一个独立笔记本：
+  //   { id, title, unsaved, savedAt }
+  // tabs 数组保序；activeTabId 指向当前激活的笔记本
+  // 切换时：序列化当前 → 恢复目标；新建时：先保存当前再开新空白；
+  // 关闭时：从列表与 IndexedDB 中移除，无 tab 则自动建一个空白
+
+  const tabBar = document.getElementById('tabBar');
+  const tabList = document.getElementById('tabList');
+  const tabNewBtn = document.getElementById('tabNewBtn');
+
+  let tabs = [];            // [{ id, title, unsaved }]
+  let activeTabId = null;
+  let tabCounter = 0;
+  let isSwitching = false;  // 切换中禁止 autosave 重入
+
+  function genTabId() {
+    tabCounter++;
+    return 'nb-' + Date.now().toString(36) + '-' + tabCounter;
+  }
+
+  function defaultTabTitle(index) {
+    return '笔记本 ' + index;
+  }
+
+  function deriveTitleFromCells() {
+    // 取第一个非空 Cell 的第一行作为标题
+    for (const c of cells) {
+      const v = (c.textarea.value || '').trim();
+      if (v) {
+        const firstLine = v.split(/\r?\n/)[0].replace(/^#+\s*/, '').trim();
+        if (firstLine) return firstLine.slice(0, 30);
+      }
+    }
+    return null;
+  }
+
+  function getTabById(id) {
+    return tabs.find(t => t.id === id);
+  }
+
+  function renderTabs() {
+    if (!tabList) return;
+    tabList.innerHTML = '';
+    tabs.forEach((t, idx) => {
+      const item = document.createElement('div');
+      item.className = 'tab-item' + (t.id === activeTabId ? ' active' : '') + (t.unsaved ? ' unsaved' : '');
+      item.dataset.tabId = t.id;
+      item.title = t.title + (t.unsaved ? ' (未保存)' : '');
+      const titleEl = document.createElement('span');
+      titleEl.className = 'tab-title';
+      titleEl.textContent = t.title || defaultTabTitle(idx + 1);
+      const dot = document.createElement('span');
+      dot.className = 'tab-unsaved-dot';
+      const close = document.createElement('button');
+      close.className = 'tab-close';
+      close.title = '关闭';
+      close.innerHTML = '<svg><use href="#i-x"/></svg>';
+      close.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeTab(t.id);
+      });
+      item.addEventListener('click', () => switchTab(t.id));
+      item.appendChild(titleEl);
+      item.appendChild(dot);
+      item.appendChild(close);
+      tabList.appendChild(item);
+    });
+    // 滚动到激活 tab
+    const active = tabList.querySelector('.tab-item.active');
+    if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function updateActiveTabState() {
+    const t = getTabById(activeTabId);
+    if (!t) return;
+    const derived = deriveTitleFromCells();
+    if (derived) t.title = derived;
+    t.unsaved = isUnsaved;
+    renderTabs();
+  }
+
+  function persistTabMeta() {
+    if (!useIndexedDB || !storage) return;
+    try {
+      storage.setMeta('tabOrder', tabs.map(t => ({ id: t.id, title: t.title })));
+      storage.setMeta('activeTab', activeTabId);
+    } catch (e) { /* 忽略元信息写入失败 */ }
+  }
+
+  async function createTab(opts) {
+    opts = opts || {};
+    // 先保存当前 tab 数据
+    if (!opts.skipSaveCurrent && activeTabId && tabs.length > 0) {
+      try { await saveCurrentTabToStorage(); } catch (e) {}
+    }
+    const id = opts.id || genTabId();
+    const idx = tabs.length + 1;
+    const tab = { id, title: opts.title || defaultTabTitle(idx), unsaved: false };
+    tabs.push(tab);
+    if (!opts.skipSwitch) {
+      await activateTab(tab.id, { initData: opts.initData || null });
+    }
+    persistTabMeta();
+    return tab;
+  }
+
+  async function saveCurrentTabToStorage() {
+    if (!useIndexedDB) return;
+    const data = serializeNotebook();
+    try { await storage.saveNotebook(data); } catch (e) {}
+  }
+
+  async function activateTab(id, opts) {
+    opts = opts || {};
+    const tab = getTabById(id);
+    if (!tab) return;
+    if (isSwitching) return;
+    isSwitching = true;
+    try {
+      // 1) 保存当前 notebook 数据（先序列化，不动 DOM）
+      if (activeTabId && activeTabId !== id) {
+        try { await saveCurrentTabToStorage(); } catch (e) {}
+      }
+      // 2) 切换 NOTEBOOK_ID
+      NOTEBOOK_ID = id;
+      activeTabId = id;
+      // 3) 加载目标 notebook
+      let restored = false;
+      if (opts.initData) {
+        restored = restoreFromData(opts.initData);
+      } else if (useIndexedDB) {
+        try {
+          const data = await storage.loadNotebook(id);
+          if (data) restored = restoreFromData(data);
+        } catch (e) { console.warn('[tabs] 加载笔记本失败:', e); }
+      }
+      if (!restored) {
+        // 空白笔记本
+        restoreFromData({ cells: [] });
+      }
+      // 4) 更新 UI 状态
+      isUnsaved = false;
+      markSaved();
+      renderTabs();
+      persistTabMeta();
+    } finally {
+      isSwitching = false;
+    }
+  }
+
+  async function switchTab(id) {
+    if (id === activeTabId) return;
+    await activateTab(id);
+  }
+
+  async function closeTab(id) {
+    const idx = tabs.findIndex(t => t.id === id);
+    if (idx === -1) return;
+    const tab = tabs[idx];
+    // 未保存则提示
+    if (tab.unsaved && !confirm('笔记本「' + tab.title + '」尚未保存，关闭后将丢失未保存内容。确定关闭吗？')) {
+      return;
+    }
+    tabs.splice(idx, 1);
+    // 从 IndexedDB 删除
+    if (useIndexedDB) {
+      try { await storage.deleteNotebook(id); } catch (e) {}
+    }
+    if (tabs.length === 0) {
+      // 自动创建空白笔记本
+      await createTab({ skipSaveCurrent: true });
+    } else if (activeTabId === id) {
+      // 切到相邻 tab
+      const next = tabs[Math.min(idx, tabs.length - 1)];
+      await activateTab(next.id);
+    } else {
+      renderTabs();
+    }
+    persistTabMeta();
+    showToast('已关闭「' + tab.title + '」');
+  }
+
+  // 新建按钮
+  tabNewBtn?.addEventListener('click', () => createTab());
+
+  // Ctrl+T 新建标签
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't' && !e.shiftKey && !e.altKey) {
+      // 避免与浏览器新建标签冲突：使用 Ctrl+Alt+T
+    }
+    if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === 't') {
+      e.preventDefault();
+      createTab();
+    }
+    // Ctrl+Tab / Ctrl+Shift+Tab 切换标签
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Tab') {
+      e.preventDefault();
+      if (tabs.length < 2) return;
+      const idx = tabs.findIndex(t => t.id === activeTabId);
+      if (idx === -1) return;
+      const nextIdx = e.shiftKey
+        ? (idx - 1 + tabs.length) % tabs.length
+        : (idx + 1) % tabs.length;
+      switchTab(tabs[nextIdx].id);
+    }
+  });
 
   function markUnsaved() {
     isUnsaved = true;
     if (statusSave) {
       statusSave.textContent = '未保存 *';
       statusSave.style.color = '#f39c12';
+    }
+    // 同步 tab 状态
+    const t = getTabById(activeTabId);
+    if (t && !t.unsaved) {
+      t.unsaved = true;
+      const derived = deriveTitleFromCells();
+      if (derived) t.title = derived;
+      renderTabs();
     }
     scheduleAutosave();
   }
@@ -1908,6 +1967,12 @@
     if (statusSave) {
       statusSave.textContent = '已保存 ✓';
       statusSave.style.color = '#27ae60';
+    }
+    // 同步 tab 状态
+    const t = getTabById(activeTabId);
+    if (t && t.unsaved) {
+      t.unsaved = false;
+      renderTabs();
     }
   }
 
@@ -1974,7 +2039,7 @@
   }
 
   function restoreFromData(data) {
-    if (!data || !Array.isArray(data.cells) || data.cells.length === 0) return false;
+    const cellList = (data && Array.isArray(data.cells)) ? data.cells : [];
     // 清空现有
     cells.slice().forEach(c => {
       if (c.textarea && typeof c.textarea.destroy === 'function') c.textarea.destroy();
@@ -1982,7 +2047,7 @@
     });
     cells.length = 0;
     cellCounter = 0;
-    data.cells.forEach(s => {
+    cellList.forEach(s => {
       const newCell = createCell(null, s.content || '', { type: s.type === 'plaintext' ? 'plaintext' : 'markdown' });
       if (s.output_html) {
         newCell.output.innerHTML = s.output_html;
@@ -1994,39 +2059,101 @@
     if (cells.length === 0) createCell();
     renumberCells();
     updateStatusbar();
-    return true;
+    return cellList.length > 0;
   }
 
   async function loadAutosave() {
+    // 多标签页模式：从 meta 读取 tab 列表，逐个加载笔记本
     if (useIndexedDB) {
       try {
-        let data = await storage.loadNotebook(NOTEBOOK_ID);
-        if (!data) {
-          // 首次迁移：从 localStorage 读取旧数据
-          data = await storage.migrateFromLocalStorage(STORAGE_KEY, NOTEBOOK_ID);
+        let tabOrder = await storage.getMeta('tabOrder');
+        let savedActive = await storage.getMeta('activeTab');
+        // 兼容旧版本：无 tabOrder 但有 autosave 笔记本
+        if (!tabOrder || !Array.isArray(tabOrder) || tabOrder.length === 0) {
+          let legacyData = await storage.loadNotebook('autosave');
+          if (!legacyData) {
+            legacyData = await storage.migrateFromLocalStorage(STORAGE_KEY, 'autosave');
+          }
+          // 创建单个 tab 承载旧数据
+          const legacyId = (legacyData && legacyData.id) || 'autosave';
+          tabs = [{ id: legacyId, title: deriveTabTitleFromData(legacyData) || defaultTabTitle(1), unsaved: false }];
+          activeTabId = legacyId;
+          NOTEBOOK_ID = legacyId;
+          renderTabs();
+          if (legacyData) {
+            restoreFromData(legacyData);
+            return true;
+          }
+          return false;
         }
-        if (data) return restoreFromData(data);
-        return false;
+        // 多 tab 模式
+        tabs = tabOrder.map(t => ({ id: t.id, title: t.title || defaultTabTitle(1), unsaved: false }));
+        // 验证每个 tab 在 IndexedDB 中确实有数据；过滤掉没有数据的（可能是被外部清理）
+        const validTabs = [];
+        for (const t of tabs) {
+          const data = await storage.loadNotebook(t.id);
+          if (data) {
+            validTabs.push(t);
+          }
+        }
+        if (validTabs.length === 0) {
+          // 数据全丢失：清空 meta，建空白笔记本
+          tabs = [];
+          await createTab({ skipSaveCurrent: true });
+          return false;
+        }
+        tabs = validTabs;
+        // 选择激活 tab
+        let target = savedActive && tabs.find(t => t.id === savedActive) ? savedActive : tabs[0].id;
+        activeTabId = null; // 强制 activateTab 走完整加载流程
+        await activateTab(target);
+        return true;
       } catch (e) {
         console.warn('[autosave] IndexedDB 读取失败，回退 localStorage:', e);
         useIndexedDB = false;
-        // 回退到 localStorage
+        // 回退到 localStorage（单 tab 模式）
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) return restoreFromData(JSON.parse(raw));
+          if (raw) {
+            const data = JSON.parse(raw);
+            tabs = [{ id: 'autosave', title: deriveTabTitleFromData(data) || defaultTabTitle(1), unsaved: false }];
+            activeTabId = 'autosave';
+            NOTEBOOK_ID = 'autosave';
+            renderTabs();
+            restoreFromData(data);
+            return true;
+          }
         } catch (e2) {}
         return false;
       }
     }
-    // localStorage 兜底
+    // localStorage 兜底（单 tab）
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
-      return restoreFromData(JSON.parse(raw));
+      const data = JSON.parse(raw);
+      tabs = [{ id: 'autosave', title: deriveTabTitleFromData(data) || defaultTabTitle(1), unsaved: false }];
+      activeTabId = 'autosave';
+      NOTEBOOK_ID = 'autosave';
+      renderTabs();
+      restoreFromData(data);
+      return true;
     } catch (e) {
       showToast('恢复自动保存失败：数据可能已损坏');
       return false;
     }
+  }
+
+  function deriveTabTitleFromData(data) {
+    if (!data || !Array.isArray(data.cells)) return null;
+    for (const c of data.cells) {
+      const v = (c.content || '').trim();
+      if (v) {
+        const firstLine = v.split(/\r?\n/)[0].replace(/^#+\s*/, '').trim();
+        if (firstLine) return firstLine.slice(0, 30);
+      }
+    }
+    return null;
   }
 
   // 页面卸载前尽力保存（IndexedDB 异步，无法保证完成，但 1.5s 防抖通常已保存）
@@ -2036,6 +2163,8 @@
       if (useIndexedDB) {
         // fire-and-forget，浏览器会在卸载前尽量完成
         try { storage.saveNotebook(data); } catch (e) {}
+        try { storage.setMeta('tabOrder', tabs.map(t => ({ id: t.id, title: t.title }))); } catch (e) {}
+        try { storage.setMeta('activeTab', activeTabId); } catch (e) {}
       }
       // 同时写 localStorage 作为兜底（同步，确保完成）
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
@@ -2246,9 +2375,15 @@
   loadAutosave().then(restored => {
     if (restored) {
       showToast('已恢复上次会话');
+    } else if (tabs.length === 0) {
+      // 无历史数据，初始化第一个空白 tab
+      return createTab({ skipSaveCurrent: true });
     }
   }).catch(e => {
     console.warn('[autosave] 恢复失败:', e);
+    if (tabs.length === 0) {
+      createTab({ skipSaveCurrent: true }).catch(() => {});
+    }
   });
 
   } // end initEditor()

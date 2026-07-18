@@ -30,6 +30,12 @@ jobs:
       - name: Build File Tree
         run: node iris/scripts/build-file-tree.js
 
+      - name: Build Search Index
+        run: node iris/scripts/build-search-index.js
+
+      - name: Build Precache Manifest
+        run: node iris/scripts/build-precache.js
+
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
