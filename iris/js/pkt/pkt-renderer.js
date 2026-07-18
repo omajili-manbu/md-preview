@@ -1170,6 +1170,35 @@
         const portTypeM = body.match(/^\s*port\s+link-type\s+(\S+)/m);
         const portAccM = body.match(/^\s*port\s+default\s+vlan\s+(\S+)/m);
         const trunkAllowM = body.match(/^\s*port\s+trunk\s+allow-pass\s+vlan\s+(.+)$/m);
+        // VRRP：vrrp vrid N virtual-ip X.X.X.X / vrrp vrid N priority N / preempt-mode
+        const vrrpLines = body.split('\n')
+          .map(l => l.trim())
+          .filter(l => /^vrrp\s+vrid\s+\d+/i.test(l));
+        // Eth-Trunk：eth-trunk N（接口加入 eth-trunk）
+        const ethTrunkM = body.match(/^\s*eth-trunk\s+(\S+)/m);
+        // DHCP：dhcp select interface/relay/global + dhcp relay server-ip X
+        const dhcpSelM = body.match(/^\s*dhcp\s+select\s+(\S+)/m);
+        const dhcpRelayM = body.match(/^\s*dhcp\s+relay\s+server-ip\s+(\S+)/m);
+        // ACL 应用：traffic-filter N inbound/outbound（华为）或 ip access-group N in/out（兼容思科）
+        const trafficFilterM = body.match(/^\s*traffic-filter\s+(\S+)\s+(\S+)/m);
+        const aclGroupM = body.match(/^\s*ip\s+access-group\s+(\S+)\s+(\S+)/m);
+        // MTU
+        const mtuM = body.match(/^\s*mtu\s+(\S+)/m);
+        // IPv6
+        const ipv6EnM = body.match(/^\s*ipv6\s+enable/m);
+        const ipv6AddrM = body.match(/^\s*ipv6\s+address\s+(\S+)(?:\s+(\S+))?/m);
+        // NAT：nat outbound N / nat server protocol tcp global X.X.X.X PORT inside Y.Y.Y.Y PORT
+        const natOutM = body.match(/^\s*nat\s+outbound\s+(\S+)(?:\s+(\S+))?/m);
+        const natSrvLines = body.split('\n')
+          .map(l => l.trim())
+          .filter(l => /^nat\s+server\s+/i.test(l));
+        // Hybrid 端口
+        const hybridPvidM = body.match(/^\s*port\s+hybrid\s+pvid\s+vlan\s+(\S+)/m);
+        const hybridUntagM = body.match(/^\s*port\s+hybrid\s+untagged\s+vlan\s+(.+)$/m);
+        const hybridTagM = body.match(/^\s*port\s+hybrid\s+tagged\s+vlan\s+(.+)$/m);
+        // 子接口：dot1q termination vid N + arp broadcast enable
+        const dot1qM = body.match(/^\s*dot1q\s+termination\s+vid\s+(\S+)/m);
+        const arpBcastM = /arp\s+broadcast\s+enable/i.test(body);
         interfaces.push({
           name: ifName,
           ip: ipM ? ipM[1] : '',
@@ -1182,6 +1211,23 @@
           portType: portTypeM ? portTypeM[1] : '',
           portAccessVlan: portAccM ? portAccM[1] : '',
           trunkAllow: trunkAllowM ? trunkAllowM[1] : '',
+          vrrp: vrrpLines,
+          ethTrunk: ethTrunkM ? ethTrunkM[1] : '',
+          dhcpSelect: dhcpSelM ? dhcpSelM[1] : '',
+          dhcpRelay: dhcpRelayM ? dhcpRelayM[1] : '',
+          trafficFilter: trafficFilterM ? { acl: trafficFilterM[1], dir: trafficFilterM[2] } : null,
+          aclGroup: aclGroupM ? { acl: aclGroupM[1], dir: aclGroupM[2] } : null,
+          mtu: mtuM ? mtuM[1] : '',
+          ipv6Enable: !!ipv6EnM,
+          ipv6Addr: ipv6AddrM ? ipv6AddrM[1] : '',
+          ipv6Mask: ipv6AddrM ? (ipv6AddrM[2] || '') : '',
+          natOutbound: natOutM ? { acl: natOutM[1], pool: natOutM[2] || '' } : null,
+          natServers: natSrvLines,
+          hybridPvid: hybridPvidM ? hybridPvidM[1] : '',
+          hybridUntag: hybridUntagM ? hybridUntagM[1] : '',
+          hybridTag: hybridTagM ? hybridTagM[1] : '',
+          dot1qVid: dot1qM ? dot1qM[1] : '',
+          arpBroadcast: arpBcastM,
           rawBody: body,
         });
         continue;
@@ -1227,16 +1273,25 @@
         });
         continue;
       }
-      // ACL
-      const aclM = h.match(/^acl\s+(?:number\s+)?(\S+)/i);
+      // ACL：acl number N / acl N / acl name FOO [advance|basic]
+      const aclM = h.match(/^acl\s+(?:number\s+)?(\S+)(?:\s+(advance|basic))?/i);
       if (aclM) {
-        acls.push({
-          name: aclM[1],
-          body: sec.body,
-        });
+        const aclName = aclM[1];
+        // name FOO：aclM[1] 是 "name"，aclM[2] 是 advance/basic，实际名字在 body 第一行
+        if (/^name$/i.test(aclName)) {
+          // acl name FOO 形式：重新匹配
+          const namedM = h.match(/^acl\s+name\s+(\S+)(?:\s+(advance|basic))?/i);
+          if (namedM) {
+            acls.push({ name: namedM[1], kind: namedM[2] || '', body: sec.body, isNamed: true });
+          }
+        } else {
+          // acl N / acl number N 形式
+          acls.push({ name: aclName, kind: aclM[2] || '', body: sec.body, isNamed: false });
+        }
         continue;
       }
       // 静态路由（可能不在独立段内，单独扫描）
+      // 其他系统配置块收集在下面统一处理
     }
 
     // 静态路由：扫描全文 ip route-static
@@ -1249,6 +1304,143 @@
         nextHop: rsm[3],
         extra: rsm[4] || '',
       });
+    }
+
+    // IPv6 静态路由：ipv6 route-static X::X/N nextHop
+    const ipv6Routes = [];
+    const ipv6RouteRe = /^\s*ipv6\s+route-static\s+(\S+)\s+(\S+)(?:\s+(\S+)(?:\s+(.+))?)?$/gm;
+    let ipv6Rm;
+    while ((ipv6Rm = ipv6RouteRe.exec(configText)) !== null) {
+      ipv6Routes.push({
+        prefix: ipv6Rm[1],
+        mask: ipv6Rm[2] || '',
+        nextHop: ipv6Rm[3] || '',
+        extra: ipv6Rm[4] || '',
+      });
+    }
+
+    // NAT 地址组：nat address-group N X X（在全局视图，但段头不是 interface）
+    const natAddrGroups = [];
+    const natGroupRe = /^\s*nat\s+address-group\s+(\S+)\s+(\S+)(?:\s+(\S+))?/gm;
+    let natGm;
+    while ((natGm = natGroupRe.exec(configText)) !== null) {
+      natAddrGroups.push({
+        id: natGm[1],
+        start: natGm[2],
+        end: natGm[3] || natGm[2],
+      });
+    }
+
+    // DHCP 地址池：ip pool NAME
+    const dhcpPools = [];
+    const lines = configText.split(/\r?\n/);
+    let curPool = null;
+    for (let i = 0; i < lines.length; i++) {
+      const t = lines[i].trim();
+      const poolM = t.match(/^ip\s+pool\s+(\S+)/i);
+      if (poolM) {
+        curPool = { name: poolM[1], body: [] };
+        dhcpPools.push(curPool);
+        continue;
+      }
+      if (curPool && /^(network|gateway-list|dns-list|lease-day|lease-hour|lease-minute|excluded-ip-address|static-bind|mask)/i.test(t)) {
+        curPool.body.push(t);
+      }
+      if (curPool && /^#/.test(t)) {
+        curPool = null;
+      }
+    }
+
+    // NTP：ntp-service unicast-server X
+    const ntpServers = [];
+    const ntpRe = /^\s*ntp-service\s+unicast-server\s+(\S+)/gm;
+    let ntpM;
+    while ((ntpM = ntpRe.exec(configText)) !== null) ntpServers.push(ntpM[1]);
+
+    // SNMP：snmp-agent community / sys-info version
+    const snmpCommunities = [];
+    const snmpCommRe = /^\s*snmp-agent\s+community\s+(read|write)\s+(\S+)/gm;
+    let snmpM;
+    while ((snmpM = snmpCommRe.exec(configText)) !== null) {
+      snmpCommunities.push({ access: snmpM[1], name: snmpM[2] });
+    }
+    const snmpVerM = configText.match(/^\s*snmp-agent\s+sys-info\s+version\s+(.+)$/m);
+    const snmpLocationM = configText.match(/^\s*snmp-agent\s+sys-info\s+location\s+(.+)$/m);
+    const snmpContactM = configText.match(/^\s*snmp-agent\s+sys-info\s+contact\s+(.+)$/m);
+
+    // STP：stp mode / stp priority / stp region-configuration
+    const stpModeM = configText.match(/^\s*stp\s+mode\s+(\S+)/m);
+    const stpPriM = configText.match(/^\s*stp\s+priority\s+(\S+)/m);
+    const stpEnableM = /stp\s+enable/i.test(configText);
+
+    // 路由策略 route-policy NAME permit node N
+    const routePolicies = [];
+    const rpRe = /^route-policy\s+(\S+)\s+(permit|deny)\s+node\s+(\d+)/gmi;
+    let rpM;
+    while ((rpM = rpRe.exec(configText)) !== null) {
+      routePolicies.push({ name: rpM[1], action: rpM[2], node: rpM[3] });
+    }
+
+    // IP 前缀列表：ip ip-prefix NAME index N permit/deny X/Y
+    const ipPrefixes = [];
+    const ippRe = /^ip\s+ip-prefix\s+(\S+)\s+index\s+(\d+)\s+(permit|deny)\s+(\S+)\s+(\S+)/gmi;
+    let ippM;
+    while ((ippM = ippRe.exec(configText)) !== null) {
+      ipPrefixes.push({ name: ippM[1], index: ippM[2], action: ippM[3], ip: ippM[4], mask: ippM[5] });
+    }
+
+    // AAA / 本地用户：local-user X password cipher Y / service-type telnet ssh / privilege level N
+    const localUsers = [];
+    let curUser = null;
+    for (const line of lines) {
+      const t = line.trim();
+      const luM = t.match(/^local-user\s+(\S+)\s+password\s+(cipher|simple)\s+(\S+)/i);
+      if (luM) {
+        curUser = { name: luM[1], password: luM[3], cipher: luM[2] === 'cipher', services: [], level: '' };
+        localUsers.push(curUser);
+        continue;
+      }
+      const svcM = t.match(/^local-user\s+(\S+)\s+service-type\s+(.+)/i);
+      if (svcM && curUser && svcM[1] === curUser.name) {
+        curUser.services = svcM[2].trim().split(/\s+/);
+        continue;
+      }
+      const lvlM = t.match(/^local-user\s+(\S+)\s+privilege\s+level\s+(\d+)/i);
+      if (lvlM && curUser && lvlM[1] === curUser.name) {
+        curUser.level = lvlM[2];
+        continue;
+      }
+    }
+    // aaa authentication-scheme / domain
+    const aaaAuthM = configText.match(/^\s*aaa\b/im);
+    const aaaDomainM = configText.match(/^\s*authentication-scheme\s+(default|\S+)/m);
+
+    // VTY/Console：user-interface vty 0 4 / authentication-mode aaa / protocol inbound ssh
+    const vtyLines = [];
+    let inVty = false;
+    for (const line of lines) {
+      const t = line.trim();
+      if (/^user-interface\s+(vty|console)\s+/i.test(t)) {
+        inVty = true;
+        vtyLines.push({ header: t, body: [] });
+        continue;
+      }
+      if (inVty) {
+        if (/^#/.test(t) || /^(interface|ospf|bgp|rip|isis|acl|vlan|ip\s+pool)/i.test(t)) {
+          inVty = false;
+        } else {
+          vtyLines[vtyLines.length - 1].body.push(t);
+        }
+      }
+    }
+
+    // SSH 服务器配置：stelnet server enable / ssh user X authentication-type password / ssh user X service-type stelnet
+    const sshEnabled = /stelnet\s+server\s+enable/i.test(configText);
+    const sshUsers = [];
+    const sshUserRe = /^ssh\s+user\s+(\S+)\s+(authentication-type\s+\S+|service-type\s+\S+)/gm;
+    let sshM;
+    while ((sshM = sshUserRe.exec(configText)) !== null) {
+      sshUsers.push({ name: sshM[1], attr: sshM[2] });
     }
 
     // ---- 步骤 2：创建 VLAN ----
@@ -1286,17 +1478,46 @@
         if (iface.desc) cmds.push(`${ifPrompt}description ${iface.desc}`);
         if (iface.linkProtocol) cmds.push(`${ifPrompt}link-protocol ${iface.linkProtocol}`);
         if (iface.ip && iface.mask) cmds.push(`${ifPrompt}ip address ${iface.ip} ${iface.mask}`);
+        // IPv6
+        if (iface.ipv6Enable) cmds.push(`${ifPrompt}ipv6 enable`);
+        if (iface.ipv6Addr) {
+          cmds.push(`${ifPrompt}ipv6 address ${iface.ipv6Addr}` + (iface.ipv6Mask ? ` ${iface.ipv6Mask}` : ''));
+        }
+        // MTU
+        if (iface.mtu) cmds.push(`${ifPrompt}mtu ${iface.mtu}`);
         // 二层接口配置
         if (iface.portType) cmds.push(`${ifPrompt}port link-type ${iface.portType}`);
         if (iface.portAccessVlan) cmds.push(`${ifPrompt}port default vlan ${iface.portAccessVlan}`);
         if (iface.trunkAllow) cmds.push(`${ifPrompt}port trunk allow-pass vlan ${iface.trunkAllow}`);
+        // Hybrid 端口
+        if (iface.hybridPvid) cmds.push(`${ifPrompt}port hybrid pvid vlan ${iface.hybridPvid}`);
+        if (iface.hybridUntag) cmds.push(`${ifPrompt}port hybrid untagged vlan ${iface.hybridUntag}`);
+        if (iface.hybridTag) cmds.push(`${ifPrompt}port hybrid tagged vlan ${iface.hybridTag}`);
+        // 子接口 dot1q
+        if (iface.dot1qVid) cmds.push(`${ifPrompt}dot1q termination vid ${iface.dot1qVid}`);
+        if (iface.arpBroadcast) cmds.push(`${ifPrompt}arp broadcast enable`);
+        // Eth-Trunk 成员
+        if (iface.ethTrunk) cmds.push(`${ifPrompt}eth-trunk ${iface.ethTrunk}`);
+        // DHCP 中继/客户端
+        if (iface.dhcpSelect) cmds.push(`${ifPrompt}dhcp select ${iface.dhcpSelect}`);
+        if (iface.dhcpRelay) cmds.push(`${ifPrompt}dhcp relay server-ip ${iface.dhcpRelay}`);
+        // ACL 应用
+        if (iface.trafficFilter) cmds.push(`${ifPrompt}traffic-filter ${iface.trafficFilter.acl} ${iface.trafficFilter.dir}`);
+        if (iface.aclGroup) cmds.push(`${ifPrompt}ip access-group ${iface.aclGroup.acl} ${iface.aclGroup.dir}`);
+        // NAT
+        if (iface.natOutbound) {
+          cmds.push(`${ifPrompt}nat outbound ${iface.natOutbound.acl}` + (iface.natOutbound.pool ? ` address-group ${iface.natOutbound.pool}` : ''));
+        }
+        for (const ns of iface.natServers) cmds.push(`${ifPrompt}${ns}`);
         // 路由协议使能
         if (iface.isisEnable) cmds.push(`${ifPrompt}isis enable ${iface.isisEnable}`);
         if (iface.ospfEnable) cmds.push(`${ifPrompt}ospf enable ${iface.ospfEnable}`);
+        // VRRP
+        for (const v of iface.vrrp) cmds.push(`${ifPrompt}${v}`);
         // 接口使能
         if (iface.shutdown) {
           cmds.push(`${ifPrompt}shutdown`);
-        } else if (iface.ip || iface.linkProtocol) {
+        } else if (iface.ip || iface.linkProtocol || iface.ipv6Addr || iface.portType) {
           cmds.push(`${ifPrompt}undo shutdown`);
         }
         cmds.push(`${ifPrompt}quit`);
@@ -1316,13 +1537,28 @@
       cmds.push(`[${host}]isis ${isis.processId}`);
       const prompt = `[${host}-isis-${isis.processId}]`;
       const body = isis.rawBody;
-      const levelM = body.match(/^\s*is-level\s+(\S+)/m);
-      if (levelM) cmds.push(`${prompt}is-level ${levelM[1]}`);
-      const netM = body.match(/^\s*network-entity\s+(\S+)/m);
-      if (netM) cmds.push(`${prompt}network-entity ${netM[1]}`);
-      // 其他常见子命令
-      const costStyleM = body.match(/^\s*cost-style\s+(.+)/m);
-      if (costStyleM) cmds.push(`${prompt}cost-style ${costStyleM[1].trim()}`);
+      // 逐行解析，保证多 import-route / filter-policy 都被识别
+      const lines = body.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const levelM = trimmed.match(/^is-level\s+(\S+)/);
+        if (levelM) { cmds.push(`${prompt}is-level ${levelM[1]}`); continue; }
+        const netM = trimmed.match(/^network-entity\s+(\S+)/);
+        if (netM) { cmds.push(`${prompt}network-entity ${netM[1]}`); continue; }
+        const costStyleM = trimmed.match(/^cost-style\s+(.+)/);
+        if (costStyleM) { cmds.push(`${prompt}cost-style ${costStyleM[1].trim()}`); continue; }
+        const importM = trimmed.match(/^import-route\s+(.+)/);
+        if (importM) { cmds.push(`${prompt}import-route ${importM[1].trim()}`); continue; }
+        const filterM = trimmed.match(/^filter-policy\s+(.+)/);
+        if (filterM) { cmds.push(`${prompt}filter-policy ${filterM[1].trim()}`); continue; }
+        const prefM = trimmed.match(/^preference\s+(.+)/);
+        if (prefM) { cmds.push(`${prompt}preference ${prefM[1].trim()}`); continue; }
+        const flashM = trimmed.match(/^flash-flood\s+(.+)/);
+        if (flashM) { cmds.push(`${prompt}flash-flood ${flashM[1].trim()}`); continue; }
+        const silentM = trimmed.match(/^silent-interface\s+(.+)/);
+        if (silentM) { cmds.push(`${prompt}silent-interface ${silentM[1].trim()}`); continue; }
+      }
       cmds.push(`${prompt}quit`);
       steps.push({
         title: `配置 IS-IS 进程 ${isis.processId}`,
@@ -1337,9 +1573,11 @@
       cmds.push(`[${host}]ospf ${ospf.processId}` + (ospf.routerId ? ` router-id ${ospf.routerId}` : ''));
       const prompt = `[${host}-ospf-${ospf.processId}]`;
       const body = ospf.rawBody;
-      // 解析 area 块。area 子命令有：network / authentication-mode / vlink-peer / stub / nssa / default-cost
-      // 一旦遇到非 area 子命令的进程级命令（import-route / filter-policy / spf-delay 等），
-      // 视为退出 area 上下文，回到进程级。避免 currentArea 一直为真导致后续进程级命令被丢弃。
+      // 解析 area 块。area 子命令：network / authentication-mode / vlink-peer / stub / nssa /
+      //   default-cost / abr-summary / range
+      // 进程级命令：import-route / filter-policy / default-route-advertise / preference /
+      //   silent-interface / bandwidth-reference / spf-delay / asbr-summary
+      // 遇到进程级命令时退出 area 上下文，避免后续进程级命令被丢
       const areaLines = body.split('\n');
       let currentArea = '';
       let areaPrompt = '';
@@ -1370,9 +1608,26 @@
           cmds.push(`${areaPrompt}vlink-peer ${vlinkM[1]}`);
           continue;
         }
-        const stubM = trimmed.match(/^(stub|nssa)\b/);
+        const stubM = trimmed.match(/^(stub|nssa)(\s+.*)?$/);
         if (stubM && currentArea) {
-          cmds.push(`${areaPrompt}${stubM[1]}`);
+          cmds.push(`${areaPrompt}${stubM[1]}` + (stubM[2] ? stubM[2] : ''));
+          continue;
+        }
+        const defaultCostM = trimmed.match(/^default-cost\s+(\S+)/);
+        if (defaultCostM && currentArea) {
+          cmds.push(`${areaPrompt}default-cost ${defaultCostM[1]}`);
+          continue;
+        }
+        // 区域聚合路由：abr-summary X mask [advertise|not-advertise]
+        const abrSumM = trimmed.match(/^abr-summary\s+(\S+)\s+(\S+)(.*)/);
+        if (abrSumM && currentArea) {
+          cmds.push(`${areaPrompt}abr-summary ${abrSumM[1]} ${abrSumM[2]}${abrSumM[3]}`);
+          continue;
+        }
+        // ASBR 聚合：asbr-summary X mask
+        const asbrSumM = trimmed.match(/^asbr-summary\s+(\S+)\s+(\S+)(.*)/);
+        if (asbrSumM && currentArea) {
+          cmds.push(`${areaPrompt}asbr-summary ${asbrSumM[1]} ${asbrSumM[2]}${asbrSumM[3]}`);
           continue;
         }
         // 进程级命令：遇到这些命令说明已退出 area 上下文
@@ -1388,6 +1643,24 @@
           cmds.push(`${prompt}filter-policy ${filterM[1].trim()}`);
           continue;
         }
+        const defRouteM = trimmed.match(/^default-route-advertise\s*(.*)/);
+        if (defRouteM) {
+          exitArea();
+          cmds.push(`${prompt}default-route-advertise${defRouteM[1] ? ' ' + defRouteM[1].trim() : ''}`);
+          continue;
+        }
+        const silentM = trimmed.match(/^silent-interface\s+(.+)/);
+        if (silentM) {
+          exitArea();
+          cmds.push(`${prompt}silent-interface ${silentM[1].trim()}`);
+          continue;
+        }
+        const prefM = trimmed.match(/^preference\s+(.+)/);
+        if (prefM) {
+          exitArea();
+          cmds.push(`${prompt}preference ${prefM[1].trim()}`);
+          continue;
+        }
         const spfM = trimmed.match(/^spf-delay(?:-intelligent)?\s+(.+)/);
         if (spfM) {
           exitArea();
@@ -1396,6 +1669,12 @@
         }
         const bandwidthM = trimmed.match(/^bandwidth-reference\s+(.+)/);
         if (bandwidthM) {
+          exitArea();
+          cmds.push(`${prompt}${trimmed}`);
+          continue;
+        }
+        const enableM = trimmed.match(/^enable\s+(.+)/);
+        if (enableM) {
           exitArea();
           cmds.push(`${prompt}${trimmed}`);
           continue;
@@ -1418,16 +1697,42 @@
       const lines = body.split('\n');
       for (const line of lines) {
         const trimmed = line.trim();
+        if (!trimmed) continue;
+        // peer X as-number Y / peer X as-number Y (必须先于通用 peer X.* 匹配)
         const nbrM = trimmed.match(/^peer\s+(\S+)\s+as-number\s+(\S+)/);
-        if (nbrM) {
-          cmds.push(`${prompt}peer ${nbrM[1]} as-number ${nbrM[2]}`);
-          continue;
-        }
-        const netM = trimmed.match(/^network\s+(\S+)(?:\s+mask\s+(\S+))?/);
+        if (nbrM) { cmds.push(`${prompt}peer ${nbrM[1]} as-number ${nbrM[2]}`); continue; }
+        // peer X 其它属性：reflect-client / next-hop-local / route-policy / description / password / keepalive / route-limit
+        const peerAttrM = trimmed.match(/^peer\s+(\S+)\s+(reflect-client|next-hop-local|next-hop-remote|route-policy\s+\S+\s+\S+|description\s+.+|password\s+.+|keepalive\s+\S+\s+\S+|route-limit\s+\S+|connect-interface\s+\S+|preferred-value\s+\S+|allow-as-loop)/);
+        if (peerAttrM) { cmds.push(`${prompt}peer ${peerAttrM[1]} ${peerAttrM[2]}`); continue; }
+        // 通用 peer X ... 其它（如 peer X enable / peer X group）
+        const peerOtherM = trimmed.match(/^peer\s+(\S+)\s+(.+)/);
+        if (peerOtherM) { cmds.push(`${prompt}peer ${peerOtherM[1]} ${peerOtherM[2]}`); continue; }
+        // network X [mask Y] [route-map Z]
+        const netM = trimmed.match(/^network\s+(\S+)(?:\s+mask\s+(\S+))?(?:\s+(.+))?/);
         if (netM) {
-          cmds.push(`${prompt}network ${netM[1]}` + (netM[2] ? ` mask ${netM[2]}` : ''));
+          let cmd = `${prompt}network ${netM[1]}`;
+          if (netM[2]) cmd += ` mask ${netM[2]}`;
+          if (netM[3]) cmd += ` ${netM[3]}`;
+          cmds.push(cmd);
           continue;
         }
+        // aggregate X mask [detail] [as-set]
+        const aggM = trimmed.match(/^aggregate\s+(\S+)\s+(\S+)(.*)/);
+        if (aggM) { cmds.push(`${prompt}aggregate ${aggM[1]} ${aggM[2]}${aggM[3]}`); continue; }
+        // import-route direct/static/ospf/isis [route-policy X]
+        const importM = trimmed.match(/^import-route\s+(.+)/);
+        if (importM) { cmds.push(`${prompt}import-route ${importM[1].trim()}`); continue; }
+        // preferred-value / default local-preference
+        const prefM = trimmed.match(/^(preferred-value|default\s+local-preference)\s+(.+)/);
+        if (prefM) { cmds.push(`${prompt}${prefM[1]} ${prefM[2].trim()}`); continue; }
+        // filter-policy X export/import
+        const filterM = trimmed.match(/^filter-policy\s+(.+)/);
+        if (filterM) { cmds.push(`${prompt}filter-policy ${filterM[1].trim()}`); continue; }
+        // confederation / reflector cluster-id
+        const confedM = trimmed.match(/^confederation\s+(.+)/);
+        if (confedM) { cmds.push(`${prompt}confederation ${confedM[1].trim()}`); continue; }
+        const reflectorM = trimmed.match(/^reflector\s+cluster-id\s+(.+)/);
+        if (reflectorM) { cmds.push(`${prompt}reflector cluster-id ${reflectorM[1].trim()}`); continue; }
       }
       cmds.push(`${prompt}quit`);
       steps.push({
@@ -1446,6 +1751,7 @@
       const lines = body.split('\n');
       for (const line of lines) {
         const trimmed = line.trim();
+        if (!trimmed) continue;
         const netM = trimmed.match(/^network\s+(\S+)/);
         if (netM) { cmds.push(`${prompt}network ${netM[1]}`); continue; }
         const verM = trimmed.match(/^version\s+(\S+)/);
@@ -1458,6 +1764,16 @@
         if (silentM) { cmds.push(`${prompt}silent-interface ${silentM[1]}`); continue; }
         const defaultM = trimmed.match(/^default-route\s+originate/);
         if (defaultM) { cmds.push(`${prompt}default-route originate`); continue; }
+        const importM = trimmed.match(/^import-route\s+(.+)/);
+        if (importM) { cmds.push(`${prompt}import-route ${importM[1].trim()}`); continue; }
+        const filterM = trimmed.match(/^filter-policy\s+(.+)/);
+        if (filterM) { cmds.push(`${prompt}filter-policy ${filterM[1].trim()}`); continue; }
+        const prefM = trimmed.match(/^preference\s+(.+)/);
+        if (prefM) { cmds.push(`${prompt}preference ${prefM[1].trim()}`); continue; }
+        const maxM = trimmed.match(/^maximum\s+(.+)/);
+        if (maxM) { cmds.push(`${prompt}maximum ${maxM[1].trim()}`); continue; }
+        const timersM = trimmed.match(/^timers\s+(.+)/);
+        if (timersM) { cmds.push(`${prompt}timers ${timersM[1].trim()}`); continue; }
       }
       cmds.push(`${prompt}quit`);
       steps.push({
@@ -1485,13 +1801,24 @@
     // ---- 步骤 9：配置 ACL ----
     for (const acl of acls) {
       const cmds = [];
-      cmds.push(`[${host}]acl ${acl.name}`);
-      // 推断 ACL 提示符：数字 2000-2999 是 basic，3000-3999 是 advanced
-      const numMatch = acl.name.match(/^(\d+)/);
-      let aclPrompt = `[${host}-acl-adv-${acl.name}]`;
-      if (numMatch) {
-        const num = parseInt(numMatch[1], 10);
-        if (num >= 2000 && num <= 2999) aclPrompt = `[${host}-acl-basic-${acl.name}]`;
+      // 入口命令：acl N / acl number N / acl name FOO [advance|basic]
+      let aclPrompt;
+      if (acl.isNamed) {
+        // 命名 ACL：acl name FOO advance/basic
+        const kind = acl.kind || 'advance';
+        cmds.push(`[${host}]acl name ${acl.name} ${kind}`);
+        aclPrompt = kind === 'basic'
+          ? `[${host}-acl-basic-${acl.name}]`
+          : `[${host}-acl-adv-${acl.name}]`;
+      } else {
+        cmds.push(`[${host}]acl ${acl.name}`);
+        // 推断 ACL 提示符：数字 2000-2999 是 basic，3000-3999 是 advanced
+        const numMatch = String(acl.name).match(/^(\d+)/);
+        aclPrompt = `[${host}-acl-adv-${acl.name}]`;
+        if (numMatch) {
+          const num = parseInt(numMatch[1], 10);
+          if (num >= 2000 && num <= 2999) aclPrompt = `[${host}-acl-basic-${acl.name}]`;
+        }
       }
       for (const rule of acl.body) {
         const trimmed = rule.trim();
@@ -1501,6 +1828,167 @@
       steps.push({
         title: `配置 ACL ${acl.name}`,
         desc: '创建访问控制列表并添加规则',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 10：配置 IPv6 静态路由 ----
+    if (ipv6Routes.length) {
+      const cmds = [];
+      for (const r of ipv6Routes) {
+        let cmd = `[${host}]ipv6 route-static ${r.prefix} ${r.mask}`;
+        if (r.nextHop) cmd += ` ${r.nextHop}`;
+        if (r.extra) cmd += ` ${r.extra}`;
+        cmds.push(cmd);
+      }
+      steps.push({
+        title: '配置 IPv6 静态路由',
+        desc: '为 IPv6 网段配置静态路由',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 11：配置 NAT 地址组 ----
+    if (natAddrGroups.length) {
+      const cmds = [];
+      for (const g of natAddrGroups) {
+        cmds.push(`[${host}]nat address-group ${g.id} ${g.start} ${g.end}`);
+      }
+      steps.push({
+        title: '配置 NAT 地址组',
+        desc: '为 NAT Outbound 创建公网地址池',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 12：配置 DHCP 服务器地址池 ----
+    if (dhcpPools.length) {
+      const cmds = [];
+      cmds.push(`[${host}]dhcp enable`);
+      for (const pool of dhcpPools) {
+        cmds.push(`[${host}]ip pool ${pool.name}`);
+        const poolPrompt = `[${host}-ip-pool-${pool.name}]`;
+        for (const line of pool.body) {
+          cmds.push(`${poolPrompt}${line}`);
+        }
+        cmds.push(`${poolPrompt}quit`);
+      }
+      steps.push({
+        title: '配置 DHCP 服务器地址池',
+        desc: '启用 DHCP 服务并为各网段配置地址池（网关、DNS、租期）',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 13：配置 IP 前缀列表 ----
+    if (ipPrefixes.length) {
+      const cmds = [];
+      for (const p of ipPrefixes) {
+        cmds.push(`[${host}]ip ip-prefix ${p.name} index ${p.index} ${p.action} ${p.ip} ${p.mask}`);
+      }
+      steps.push({
+        title: '配置 IP 前缀列表',
+        desc: '用于路由过滤和策略匹配的精确前缀列表',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 14：配置路由策略 ----
+    if (routePolicies.length) {
+      const cmds = [];
+      for (const rp of routePolicies) {
+        cmds.push(`[${host}]route-policy ${rp.name} ${rp.action} node ${rp.node}`);
+        cmds.push(`[${host}-route-policy-${rp.name}-${rp.node}]quit`);
+      }
+      steps.push({
+        title: '配置路由策略',
+        desc: 'route-policy 用于路由引入和过滤的策略控制',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 15：配置 STP ----
+    if (stpModeM || stpPriM || stpEnableM) {
+      const cmds = [];
+      if (stpModeM) cmds.push(`[${host}]stp mode ${stpModeM[1]}`);
+      if (stpPriM) cmds.push(`[${host}]stp priority ${stpPriM[1]}`);
+      cmds.push(`[${host}]stp enable`);
+      steps.push({
+        title: '配置生成树协议',
+        desc: '设置 STP 模式、优先级并使能，防止二层环路',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 16：配置 NTP ----
+    if (ntpServers.length) {
+      const cmds = [];
+      for (const s of ntpServers) {
+        cmds.push(`[${host}]ntp-service unicast-server ${s}`);
+      }
+      steps.push({
+        title: '配置 NTP 时间同步',
+        desc: '与上游 NTP 服务器同步系统时间',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 17：配置 SNMP ----
+    if (snmpCommunities.length || snmpVerM) {
+      const cmds = [];
+      if (snmpVerM) cmds.push(`[${host}]snmp-agent sys-info version ${snmpVerM[1].trim()}`);
+      if (snmpContactM) cmds.push(`[${host}]snmp-agent sys-info contact ${snmpContactM[1].trim()}`);
+      if (snmpLocationM) cmds.push(`[${host}]snmp-agent sys-info location ${snmpLocationM[1].trim()}`);
+      for (const c of snmpCommunities) {
+        cmds.push(`[${host}]snmp-agent community ${c.access} ${c.name}`);
+      }
+      steps.push({
+        title: '配置 SNMP',
+        desc: '配置 SNMP 版本、联系人和只读/读写团体字',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 18：配置 AAA 与本地用户 ----
+    if (localUsers.length || aaaDomainM) {
+      const cmds = [];
+      cmds.push(`[${host}]aaa`);
+      const aaaPrompt = `[${host}-aaa]`;
+      if (aaaDomainM) cmds.push(`${aaaPrompt}authentication-scheme ${aaaDomainM[1]}`);
+      for (const u of localUsers) {
+        cmds.push(`${aaaPrompt}local-user ${u.name} password ${u.cipher ? 'cipher' : 'simple'} ${u.password}`);
+        if (u.services.length) cmds.push(`${aaaPrompt}local-user ${u.name} service-type ${u.services.join(' ')}`);
+        if (u.level) cmds.push(`${aaaPrompt}local-user ${u.name} privilege level ${u.level}`);
+      }
+      cmds.push(`${aaaPrompt}quit`);
+      steps.push({
+        title: '配置 AAA 与本地用户',
+        desc: '启用 AAA 认证，创建本地用户并分配服务类型与权限级别',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 19：配置 SSH/VTY ----
+    if (sshEnabled || sshUsers.length || vtyLines.length) {
+      const cmds = [];
+      if (sshEnabled) cmds.push(`[${host}]stelnet server enable`);
+      // 生成本地密钥（如果配了 ssh 通常需要）
+      if (sshEnabled) {
+        cmds.push(`[${host}]rsa local-key-pair create`);
+        cmds.push(`# 按提示输入密钥长度（如 2048）`);
+      }
+      for (const su of sshUsers) {
+        cmds.push(`[${host}]ssh user ${su.name} ${su.attr}`);
+      }
+      for (const v of vtyLines) {
+        cmds.push(`[${host}]${v.header}`);
+        const vtyPrompt = `[${host}-ui-${v.header.match(/vty|console/i)[0]}]`;
+        for (const line of v.body) cmds.push(`${vtyPrompt}${line}`);
+        cmds.push(`${vtyPrompt}quit`);
+      }
+      steps.push({
+        title: '配置 SSH 与 VTY',
+        desc: '使能 SSH 服务器、创建 SSH 用户并配置 VTY 用户界面认证方式',
         commands: cmds,
       });
     }
@@ -1545,6 +2033,7 @@
     const vlans = [];
     const interfaces = [];
     const ospfBlocks = [];
+    const eigrpBlocks = [];
     const bgpBlocks = [];
     const ripBlocks = [];
     const staticRoutes = [];
@@ -1573,6 +2062,28 @@
         const swAccM = body.match(/^\s*switchport\s+access\s+vlan\s+(\S+)/m);
         const swModeM = body.match(/^\s*switchport\s+mode\s+(\S+)/m);
         const swTrunkM = body.match(/^\s*switchport\s+trunk\s+(?:allowed\s+)?vlan\s+(.+)$/m);
+        // HSRP：standby N ip X.X.X.X / standby N priority N / standby N preempt / standby N track X
+        const hsrpLines = body.split('\n')
+          .map(l => l.trim())
+          .filter(l => /^standby\s+\d+/i.test(l));
+        // channel-group N mode active/passive/desirable/auto/on
+        const channelM = body.match(/^\s*channel-group\s+(\S+)\s+mode\s+(\S+)/m);
+        // DHCP relay / helper
+        const helperM = body.match(/^\s*ip\s+helper-address\s+(\S+)/m);
+        // ACL 应用
+        const aclGroupM = body.match(/^\s*ip\s+access-group\s+(\S+)\s+(\S+)/m);
+        // MTU
+        const mtuM = body.match(/^\s*mtu\s+(\S+)/m);
+        // IPv6
+        const ipv6EnM = body.match(/^\s*ipv6\s+enable/m);
+        const ipv6AddrM = body.match(/^\s*ipv6\s+address\s+(\S+)(?:\s+(\S+))?/m);
+        // NAT inside/outside
+        const natInM = /ip\s+nat\s+inside/i.test(body);
+        const natOutM = /ip\s+nat\s+outside/i.test(body);
+        // 子接口 encapsulation dot1Q N
+        const dot1qM = body.match(/^\s*encapsulation\s+dot1[qQ]\s+(\S+)/m);
+        // DHCP 客户端
+        const dhcpClientM = body.match(/^\s*ip\s+address\s+dhcp/m);
         interfaces.push({
           name: ifName,
           ip: ipM ? ipM[1] : '',
@@ -1584,6 +2095,18 @@
           swAccessVlan: swAccM ? swAccM[1] : '',
           swMode: swModeM ? swModeM[1] : '',
           swTrunkVlan: swTrunkM ? swTrunkM[1] : '',
+          hsrp: hsrpLines,
+          channelGroup: channelM ? { group: channelM[1], mode: channelM[2] } : null,
+          helper: helperM ? helperM[1] : '',
+          aclGroup: aclGroupM ? { acl: aclGroupM[1], dir: aclGroupM[2] } : null,
+          mtu: mtuM ? mtuM[1] : '',
+          ipv6Enable: !!ipv6EnM,
+          ipv6Addr: ipv6AddrM ? ipv6AddrM[1] : '',
+          ipv6Mask: ipv6AddrM ? (ipv6AddrM[2] || '') : '',
+          natInside: natInM,
+          natOutside: natOutM,
+          dot1qVlan: dot1qM ? dot1qM[1] : '',
+          dhcpClient: !!dhcpClientM,
           rawBody: body,
         });
         continue;
@@ -1593,6 +2116,16 @@
       if (ospfM) {
         ospfBlocks.push({
           processId: ospfM[1],
+          body: sec.body,
+          rawBody: sec.body.join('\n'),
+        });
+        continue;
+      }
+      // EIGRP
+      const eigrpM = h.match(/^router\s+eigrp\s+(\d+)/i);
+      if (eigrpM) {
+        eigrpBlocks.push({
+          asNumber: eigrpM[1],
           body: sec.body,
           rawBody: sec.body.join('\n'),
         });
@@ -1617,10 +2150,10 @@
         });
         continue;
       }
-      // ACL：命名 ACL（ip access-list extended NAME）— 整段 body 都是该 ACL 的规则
-      const aclNamedM = h.match(/^ip\s+access-list\s+(?:standard|extended)\s+(\S+)/i);
+      // ACL：命名 ACL（ip access-list standard|extended NAME）— 整段 body 都是该 ACL 的规则
+      const aclNamedM = h.match(/^ip\s+access-list\s+(standard|extended)\s+(\S+)/i);
       if (aclNamedM) {
-        acls.push({ name: aclNamedM[1], body: sec.body, isNamed: true });
+        acls.push({ name: aclNamedM[2], kind: aclNamedM[1], body: sec.body, isNamed: true });
         continue;
       }
       // 编号 ACL（access-list N permit/deny ...）不在这里处理，下面用全局正则扫描并按编号分组
@@ -1653,6 +2186,172 @@
       });
     }
 
+    // IPv6 静态路由：ipv6 route X::X/N nextHop
+    const ipv6Routes = [];
+    const ipv6RouteRe = /^\s*ipv6\s+route\s+(\S+)\s+(\S+)(?:\s+(\S+)(?:\s+(.+))?)?$/gm;
+    let ipv6Rm;
+    while ((ipv6Rm = ipv6RouteRe.exec(configText)) !== null) {
+      ipv6Routes.push({
+        prefix: ipv6Rm[1],
+        mask: ipv6Rm[2] || '',
+        nextHop: ipv6Rm[3] || '',
+        extra: ipv6Rm[4] || '',
+      });
+    }
+
+    // NAT 地址池：ip nat pool NAME START END netmask M [type rotary]
+    const natPools = [];
+    const natPoolRe = /^\s*ip\s+nat\s+pool\s+(\S+)\s+(\S+)\s+(\S+)\s+netmask\s+(\S+)/gm;
+    let natPoolM;
+    while ((natPoolM = natPoolRe.exec(configText)) !== null) {
+      natPools.push({ name: natPoolM[1], start: natPoolM[2], end: natPoolM[3], mask: natPoolM[4] });
+    }
+    // NAT 规则：ip nat inside source list N pool NAME [overload] / ip nat inside source static X X
+    const natRules = [];
+    const natRuleRe = /^\s*ip\s+nat\s+inside\s+source\s+(list\s+(\S+)\s+pool\s+(\S+)(\s+overload)?|static\s+(\S+)\s+(\S+))/gm;
+    let natRuleM;
+    while ((natRuleM = natRuleRe.exec(configText)) !== null) {
+      if (natRuleM[2]) {
+        natRules.push({ type: 'dynamic', acl: natRuleM[2], pool: natRuleM[3], overload: !!natRuleM[4] });
+      } else {
+        natRules.push({ type: 'static', inside: natRuleM[5], outside: natRuleM[6] });
+      }
+    }
+
+    // DHCP 地址池：ip dhcp pool NAME
+    const dhcpPools = [];
+    const lines = configText.split(/\r?\n/);
+    let curPool = null;
+    for (let i = 0; i < lines.length; i++) {
+      const t = lines[i].trim();
+      const poolM = t.match(/^ip\s+dhcp\s+pool\s+(\S+)/i);
+      if (poolM) {
+        curPool = { name: poolM[1], body: [] };
+        dhcpPools.push(curPool);
+        continue;
+      }
+      if (curPool && /^(network|default-router|dns-server|lease|domain-name|netbios-name-server|next-server|hardware-address|host)/i.test(t)) {
+        curPool.body.push(t);
+      }
+      if (curPool && /^!/.test(t)) {
+        curPool = null;
+      }
+    }
+    // DHCP 排除地址：ip dhcp excluded-address X [Y]
+    const dhcpExcluded = [];
+    const dhcpExRe = /^\s*ip\s+dhcp\s+excluded-address\s+(\S+)(?:\s+(\S+))?/gm;
+    let dhcpExM;
+    while ((dhcpExM = dhcpExRe.exec(configText)) !== null) {
+      dhcpExcluded.push({ start: dhcpExM[1], end: dhcpExM[2] || dhcpExM[1] });
+    }
+
+    // NTP：ntp server X
+    const ntpServers = [];
+    const ntpRe = /^\s*ntp\s+server\s+(\S+)/gm;
+    let ntpM;
+    while ((ntpM = ntpRe.exec(configText)) !== null) ntpServers.push(ntpM[1]);
+
+    // SNMP
+    const snmpCommunities = [];
+    const snmpCommRe = /^\s*snmp-server\s+community\s+(\S+)\s+(RO|RW)/gm;
+    let snmpM;
+    while ((snmpM = snmpCommRe.exec(configText)) !== null) {
+      snmpCommunities.push({ name: snmpM[1], access: snmpM[2] });
+    }
+    const snmpLocationM = configText.match(/^\s*snmp-server\s+location\s+(.+)$/m);
+    const snmpContactM = configText.match(/^\s*snmp-server\s+contact\s+(.+)$/m);
+
+    // STP
+    const stpModeM = configText.match(/^\s*spanning-tree\s+mode\s+(\S+)/m);
+    const stpPriM = configText.match(/^\s*spanning-tree\s+vlan\s+\S+\s+priority\s+(\S+)/m);
+    const stpPriAllM = configText.match(/^\s*spanning-tree\s+priority\s+(\S+)/m);
+
+    // 路由映射：route-map NAME permit/deny N
+    const routeMaps = [];
+    const rmRe = /^route-map\s+(\S+)\s+(permit|deny)\s+(\d+)/gmi;
+    let rmM;
+    while ((rmM = rmRe.exec(configText)) !== null) {
+      routeMaps.push({ name: rmM[1], action: rmM[2], node: rmM[3] });
+    }
+
+    // 前缀列表：ip prefix-list NAME seq N permit/deny X/Y
+    const prefixLists = [];
+    const plRe = /^ip\s+prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\S+)(?:\s+(\S+))?/gmi;
+    let plM;
+    while ((plM = plRe.exec(configText)) !== null) {
+      prefixLists.push({ name: plM[1], seq: plM[2], action: plM[3], prefix: plM[4], mask: plM[5] || '' });
+    }
+
+    // AAA + 本地用户
+    const aaaEnabled = /aaa\s+new-model/i.test(configText);
+    const aaaAuthM = configText.match(/^\s*aaa\s+authentication\s+(\S+)\s+(\S+)\s+(.+)/m);
+    const aaaAuthenM = configText.match(/^\s*aaa\s+authentication\s+login\s+(default|\S+)\s+(.+)/m);
+    const aaaAuthorM = configText.match(/^\s*aaa\s+authorization\s+exec\s+(default|\S+)\s+(.+)/m);
+    const localUsers = [];
+    const userMap = {};
+    for (const line of lines) {
+      const t = line.trim();
+      // username NAME [privilege N] (password|secret) [TYPE] PASS
+      // 例如：username admin secret 0 AdminPass
+      //      username admin privilege 15 secret 0 AdminPass
+      //      username admin password AdminPass
+      const luM = t.match(/^username\s+(\S+)\s+(?:(privilege)\s+(\d+)\s+)?(password|secret)(?:\s+(\d+))?\s+(\S+)/i);
+      if (luM) {
+        const name = luM[1];
+        const hasInlinePriv = luM[2] === 'privilege';
+        const inlineLevel = luM[3] || '';
+        const secretType = luM[4]; // password 或 secret
+        const encType = luM[5] || ''; // 0/5/7 等
+        const password = luM[6];
+        if (!userMap[name]) {
+          userMap[name] = { name, type: secretType, encType, password, level: '' };
+          localUsers.push(userMap[name]);
+        } else {
+          userMap[name].type = secretType;
+          userMap[name].encType = encType;
+          userMap[name].password = password;
+        }
+        if (hasInlinePriv) userMap[name].level = inlineLevel;
+        continue;
+      }
+      // 单独的 username NAME privilege N（不和 password 在同一行）
+      const luPrivOnlyM = t.match(/^username\s+(\S+)\s+privilege\s+(\d+)/i);
+      if (luPrivOnlyM) {
+        const name = luPrivOnlyM[1];
+        if (!userMap[name]) {
+          userMap[name] = { name, type: '', encType: '', password: '', level: luPrivOnlyM[2] };
+          localUsers.push(userMap[name]);
+        } else {
+          userMap[name].level = luPrivOnlyM[2];
+        }
+      }
+    }
+
+    // VTY/Console：line vty 0 4 / login local / transport input ssh / password X
+    const vtyLines = [];
+    let inLine = false;
+    for (const line of lines) {
+      const t = line.trim();
+      if (/^line\s+(vty|con|aux)\s+/i.test(t)) {
+        inLine = true;
+        vtyLines.push({ header: t, body: [] });
+        continue;
+      }
+      if (inLine) {
+        if (/^!/.test(t) || /^(interface|router|ip\s+dhcp|access-list|ip\s+nat)/i.test(t)) {
+          inLine = false;
+        } else {
+          vtyLines[vtyLines.length - 1].body.push(t);
+        }
+      }
+    }
+
+    // SSH：ip ssh / crypto key generate rsa
+    const sshEnabled = /ip\s+ssh\s+(server-enable|version|timeout|authentication)/i.test(configText)
+      || /crypto\s+key\s+generate\s+rsa/i.test(configText);
+    const sshVersionM = configText.match(/^\s*ip\s+ssh\s+version\s+(\S+)/m);
+    const sshTimeoutM = configText.match(/^\s*ip\s+ssh\s+time-out\s+(\S+)/m);
+
     // ---- 步骤 2：创建 VLAN ----
     if (vlans.length) {
       const cmds = [];
@@ -1680,13 +2379,38 @@
         cmds.push(`${host}(config)#interface ${iface.name}`);
         const ifPrompt = `${host}(config-if)#`;
         if (iface.desc) cmds.push(`${ifPrompt}description ${iface.desc}`);
-        if (iface.ip && iface.mask) cmds.push(`${ifPrompt}ip address ${iface.ip} ${iface.mask}`);
+        // 子接口封装 dot1Q
+        if (iface.dot1qVlan) cmds.push(`${ifPrompt}encapsulation dot1Q ${iface.dot1qVlan}`);
+        // IP / DHCP 客户端
+        if (iface.dhcpClient) {
+          cmds.push(`${ifPrompt}ip address dhcp`);
+        } else if (iface.ip && iface.mask) {
+          cmds.push(`${ifPrompt}ip address ${iface.ip} ${iface.mask}`);
+        }
+        // IPv6
+        if (iface.ipv6Enable) cmds.push(`${ifPrompt}ipv6 enable`);
+        if (iface.ipv6Addr) {
+          cmds.push(`${ifPrompt}ipv6 address ${iface.ipv6Addr}` + (iface.ipv6Mask ? ` ${iface.ipv6Mask}` : ''));
+        }
+        // MTU
+        if (iface.mtu) cmds.push(`${ifPrompt}mtu ${iface.mtu}`);
         if (iface.duplex) cmds.push(`${ifPrompt}duplex ${iface.duplex}`);
         if (iface.speed) cmds.push(`${ifPrompt}speed ${iface.speed}`);
         // 二层接口配置
         if (iface.swMode) cmds.push(`${ifPrompt}switchport mode ${iface.swMode}`);
         if (iface.swAccessVlan) cmds.push(`${ifPrompt}switchport access vlan ${iface.swAccessVlan}`);
         if (iface.swTrunkVlan) cmds.push(`${ifPrompt}switchport trunk allowed vlan ${iface.swTrunkVlan}`);
+        // channel-group
+        if (iface.channelGroup) cmds.push(`${ifPrompt}channel-group ${iface.channelGroup.group} mode ${iface.channelGroup.mode}`);
+        // DHCP 中继
+        if (iface.helper) cmds.push(`${ifPrompt}ip helper-address ${iface.helper}`);
+        // ACL 应用
+        if (iface.aclGroup) cmds.push(`${ifPrompt}ip access-group ${iface.aclGroup.acl} ${iface.aclGroup.dir}`);
+        // NAT inside/outside
+        if (iface.natInside) cmds.push(`${ifPrompt}ip nat inside`);
+        if (iface.natOutside) cmds.push(`${ifPrompt}ip nat outside`);
+        // HSRP
+        for (const h of iface.hsrp) cmds.push(`${ifPrompt}${h}`);
         // 接口使能
         if (iface.shutdown) {
           cmds.push(`${ifPrompt}shutdown`);
@@ -1710,17 +2434,86 @@
       cmds.push(`${host}(config)#router ospf ${ospf.processId}`);
       const prompt = `${host}(config-router)#`;
       const body = ospf.rawBody;
-      const netRe = /^\s*network\s+(\S+)\s+(\S+)\s+area\s+(\S+)/gm;
-      let nm;
-      while ((nm = netRe.exec(body)) !== null) {
-        cmds.push(`${prompt}network ${nm[1]} ${nm[2]} area ${nm[3]}`);
+      const lines = body.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        // network X wildcard area Y
+        const netM = trimmed.match(/^network\s+(\S+)\s+(\S+)\s+area\s+(\S+)/);
+        if (netM) { cmds.push(`${prompt}network ${netM[1]} ${netM[2]} area ${netM[3]}`); continue; }
+        // area N stub / area N nssa / area N range X Y
+        const areaStubM = trimmed.match(/^area\s+(\S+)\s+(stub|nssa)(\s+no-summary)?/);
+        if (areaStubM) {
+          cmds.push(`${prompt}area ${areaStubM[1]} ${areaStubM[2]}` + (areaStubM[3] ? areaStubM[3] : ''));
+          continue;
+        }
+        const areaRangeM = trimmed.match(/^area\s+(\S+)\s+range\s+(\S+)\s+(\S+)/);
+        if (areaRangeM) { cmds.push(`${prompt}area ${areaRangeM[1]} range ${areaRangeM[2]} ${areaRangeM[3]}`); continue; }
+        // area N virtual-link RID
+        const vlinkM = trimmed.match(/^area\s+(\S+)\s+virtual-link\s+(\S+)/);
+        if (vlinkM) { cmds.push(`${prompt}area ${vlinkM[1]} virtual-link ${vlinkM[2]}`); continue; }
+        // area N authentication
+        const areaAuthM = trimmed.match(/^area\s+(\S+)\s+authentication(\s+\S+)?/);
+        if (areaAuthM) { cmds.push(`${prompt}area ${areaAuthM[1]} authentication` + (areaAuthM[2] || '')); continue; }
+        // 进程级命令：redistribute / passive-interface / default-information / router-id / auto-cost
+        const redistM = trimmed.match(/^redistribute\s+(.+)/);
+        if (redistM) { cmds.push(`${prompt}redistribute ${redistM[1].trim()}`); continue; }
+        const passiveM = trimmed.match(/^passive-interface\s+(.+)/);
+        if (passiveM) { cmds.push(`${prompt}passive-interface ${passiveM[1].trim()}`); continue; }
+        const defInfoM = trimmed.match(/^default-information\s+originate(\s+.+)?/);
+        if (defInfoM) { cmds.push(`${prompt}default-information originate` + (defInfoM[1] || '')); continue; }
+        const ridM = trimmed.match(/^router-id\s+(\S+)/);
+        if (ridM) { cmds.push(`${prompt}router-id ${ridM[1]}`); continue; }
+        const autoCostM = trimmed.match(/^auto-cost\s+reference-bandwidth\s+(\S+)/);
+        if (autoCostM) { cmds.push(`${prompt}auto-cost reference-bandwidth ${autoCostM[1]}`); continue; }
+        const logM = trimmed.match(/^log-adjacency-changes(\s+detail)?/);
+        if (logM) { cmds.push(`${prompt}log-adjacency-changes` + (logM[1] || '')); continue; }
+        const defaultM = trimmed.match(/^default-metric\s+(\S+)/);
+        if (defaultM) { cmds.push(`${prompt}default-metric ${defaultM[1]}`); continue; }
+        const distanceM = trimmed.match(/^distance\s+ospf\s+(.+)/);
+        if (distanceM) { cmds.push(`${prompt}distance ospf ${distanceM[1].trim()}`); continue; }
+        const maxM = trimmed.match(/^maximum-paths\s+(\S+)/);
+        if (maxM) { cmds.push(`${prompt}maximum-paths ${maxM[1]}`); continue; }
       }
-      const logM = body.match(/^\s*log-adjacency-changes/m);
-      if (logM) cmds.push(`${prompt}log-adjacency-changes`);
       cmds.push(`${prompt}exit`);
       steps.push({
         title: `配置 OSPF 进程 ${ospf.processId}`,
         desc: '创建 OSPF 进程并宣告网段到对应区域',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 4.5：配置 EIGRP ----
+    for (const eigrp of eigrpBlocks) {
+      const cmds = [];
+      cmds.push(`${host}(config)#router eigrp ${eigrp.asNumber}`);
+      const prompt = `${host}(config-router)#`;
+      const body = eigrp.rawBody;
+      const lines = body.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const netM = trimmed.match(/^network\s+(\S+)(?:\s+(\S+))?/);
+        if (netM) { cmds.push(`${prompt}network ${netM[1]}` + (netM[2] ? ` ${netM[2]}` : '')); continue; }
+        const redistM = trimmed.match(/^redistribute\s+(.+)/);
+        if (redistM) { cmds.push(`${prompt}redistribute ${redistM[1].trim()}`); continue; }
+        const passiveM = trimmed.match(/^passive-interface\s+(.+)/);
+        if (passiveM) { cmds.push(`${prompt}passive-interface ${passiveM[1].trim()}`); continue; }
+        const noAutoM = trimmed.match(/^no\s+auto-summary/);
+        if (noAutoM) { cmds.push(`${prompt}no auto-summary`); continue; }
+        const autoM = trimmed.match(/^auto-summary/);
+        if (autoM) { cmds.push(`${prompt}auto-summary`); continue; }
+        const ridM = trimmed.match(/^eigrp\s+router-id\s+(\S+)/);
+        if (ridM) { cmds.push(`${prompt}eigrp router-id ${ridM[1]}`); continue; }
+        const metricM = trimmed.match(/^metric\s+weights\s+(.+)/);
+        if (metricM) { cmds.push(`${prompt}metric weights ${metricM[1].trim()}`); continue; }
+        const defInfoM = trimmed.match(/^redistribute\s+static/);
+        if (defInfoM) { cmds.push(`${prompt}redistribute static`); continue; }
+      }
+      cmds.push(`${prompt}exit`);
+      steps.push({
+        title: `配置 EIGRP AS ${eigrp.asNumber}`,
+        desc: '创建 EIGRP 进程并宣告网段',
         commands: cmds,
       });
     }
@@ -1734,14 +2527,40 @@
       const lines = body.split('\n');
       for (const line of lines) {
         const trimmed = line.trim();
+        if (!trimmed) continue;
+        // neighbor X remote-as Y（先于通用 neighbor X.* 匹配）
         const nbrM = trimmed.match(/^neighbor\s+(\S+)\s+remote-as\s+(\S+)/);
         if (nbrM) { cmds.push(`${prompt}neighbor ${nbrM[1]} remote-as ${nbrM[2]}`); continue; }
-        const netM = trimmed.match(/^network\s+(\S+)(?:\s+mask\s+(\S+))?/);
-        if (netM) { cmds.push(`${prompt}network ${netM[1]}` + (netM[2] ? ` mask ${netM[2]}` : '')); continue; }
+        // neighbor X 其它属性
+        const nbrAttrM = trimmed.match(/^neighbor\s+(\S+)\s+(next-hop-self|route-reflector-client|send-community|soft-reconfiguration\s+inbound|update-source\s+\S+|description\s+.+|password\s+.+|timers\s+\S+\s+\S+|distribute-list\s+\S+\s+\S+|route-map\s+\S+\s+\S+|prefix-list\s+\S+\s+\S+|maximum-prefix\s+\S+|shutdown|activate)/);
+        if (nbrAttrM) { cmds.push(`${prompt}neighbor ${nbrAttrM[1]} ${nbrAttrM[2]}`); continue; }
+        // network X [mask Y] [route-map Z]
+        const netM = trimmed.match(/^network\s+(\S+)(?:\s+mask\s+(\S+))?(?:\s+(.+))?/);
+        if (netM) {
+          let cmd = `${prompt}network ${netM[1]}`;
+          if (netM[2]) cmd += ` mask ${netM[2]}`;
+          if (netM[3]) cmd += ` ${netM[3]}`;
+          cmds.push(cmd);
+          continue;
+        }
+        // aggregate-address X Y [summary-only] [as-set]
+        const aggM = trimmed.match(/^aggregate-address\s+(\S+)\s+(\S+)(.*)/);
+        if (aggM) { cmds.push(`${prompt}aggregate-address ${aggM[1]} ${aggM[2]}${aggM[3]}`); continue; }
+        // redistribute direct/connected/static/ospf/eigrp/rip
+        const redistM = trimmed.match(/^redistribute\s+(.+)/);
+        if (redistM) { cmds.push(`${prompt}redistribute ${redistM[1].trim()}`); continue; }
         const noSyncM = trimmed.match(/^no\s+synchronization/);
         if (noSyncM) { cmds.push(`${prompt}no synchronization`); continue; }
+        const noAutoM = trimmed.match(/^no\s+auto-summary/);
+        if (noAutoM) { cmds.push(`${prompt}no auto-summary`); continue; }
         const logM = trimmed.match(/^bgp\s+log-neighbor-changes/);
         if (logM) { cmds.push(`${prompt}bgp log-neighbor-changes`); continue; }
+        const defInfoM = trimmed.match(/^default-information\s+originate/);
+        if (defInfoM) { cmds.push(`${prompt}default-information originate`); continue; }
+        const defaultM = trimmed.match(/^default-metric\s+(\S+)/);
+        if (defaultM) { cmds.push(`${prompt}default-metric ${defaultM[1]}`); continue; }
+        const maxPathM = trimmed.match(/^maximum-paths\s+(\S+)/);
+        if (maxPathM) { cmds.push(`${prompt}maximum-paths ${maxPathM[1]}`); continue; }
       }
       cmds.push(`${prompt}exit`);
       steps.push({
@@ -1757,13 +2576,31 @@
       cmds.push(`${host}(config)#router rip`);
       const prompt = `${host}(config-router)#`;
       const body = rip.rawBody;
-      const netRe = /^\s*network\s+(\S+)/gm;
-      let nm;
-      while ((nm = netRe.exec(body)) !== null) {
-        cmds.push(`${prompt}network ${nm[1]}`);
+      const lines = body.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const netM = trimmed.match(/^network\s+(\S+)/);
+        if (netM) { cmds.push(`${prompt}network ${netM[1]}`); continue; }
+        const verM = trimmed.match(/^version\s+(\S+)/);
+        if (verM) { cmds.push(`${prompt}version ${verM[1]}`); continue; }
+        const noAutoM = trimmed.match(/^no\s+auto-summary/);
+        if (noAutoM) { cmds.push(`${prompt}no auto-summary`); continue; }
+        const passiveM = trimmed.match(/^passive-interface\s+(.+)/);
+        if (passiveM) { cmds.push(`${prompt}passive-interface ${passiveM[1].trim()}`); continue; }
+        const redistM = trimmed.match(/^redistribute\s+(.+)/);
+        if (redistM) { cmds.push(`${prompt}redistribute ${redistM[1].trim()}`); continue; }
+        const defInfoM = trimmed.match(/^default-information\s+originate/);
+        if (defInfoM) { cmds.push(`${prompt}default-information originate`); continue; }
+        const nbrM = trimmed.match(/^neighbor\s+(\S+)/);
+        if (nbrM) { cmds.push(`${prompt}neighbor ${nbrM[1]}`); continue; }
+        const defMetricM = trimmed.match(/^default-metric\s+(\S+)/);
+        if (defMetricM) { cmds.push(`${prompt}default-metric ${defMetricM[1]}`); continue; }
+        const timersM = trimmed.match(/^timers\s+basic\s+(.+)/);
+        if (timersM) { cmds.push(`${prompt}timers basic ${timersM[1].trim()}`); continue; }
+        const maxPathM = trimmed.match(/^maximum-paths\s+(\S+)/);
+        if (maxPathM) { cmds.push(`${prompt}maximum-paths ${maxPathM[1]}`); continue; }
       }
-      const verM = body.match(/^\s*version\s+(\S+)/m);
-      if (verM) cmds.push(`${prompt}version ${verM[1]}`);
       cmds.push(`${prompt}exit`);
       steps.push({
         title: '配置 RIP',
@@ -1791,12 +2628,27 @@
     for (const acl of acls) {
       const cmds = [];
       // 命名 ACL（isNamed === true）进入子模式；编号 ACL（isNamed === false）直接全局配置
-      // 用显式标志而非 isNaN(name) 推断，避免数字命名的命名 ACL 被误判
       const isNamed = acl.isNamed !== false;
+      // 推断命名 ACL 的 standard/extended
+      let aclType = 'extended';
       if (isNamed) {
-        cmds.push(`${host}(config)#ip access-list extended ${acl.name}`);
+        // 命名 ACL 的 kind 字段可能在解析时已记录
+        if (acl.kind === 'standard') aclType = 'standard';
+        // 否则用编号范围推断：编号 ACL 1-99/1300-1999 是 standard，100-199/2000-2699 是 extended
+        const numStr = String(acl.name).match(/^(\d+)/);
+        if (numStr) {
+          const n = parseInt(numStr[1], 10);
+          if ((n >= 1 && n <= 99) || (n >= 1300 && n <= 1999)) aclType = 'standard';
+        }
+      } else {
+        // 编号 ACL 提示符不变
       }
-      const prompt = isNamed ? `${host}(config-ext-nacl)#` : `${host}(config)#`;
+      if (isNamed) {
+        cmds.push(`${host}(config)#ip access-list ${aclType} ${acl.name}`);
+      }
+      const prompt = isNamed
+        ? (aclType === 'standard' ? `${host}(config-std-nacl)#` : `${host}(config-ext-nacl)#`)
+        : `${host}(config)#`;
       for (const rule of acl.body) {
         const trimmed = rule.trim();
         if (!trimmed) continue;
@@ -1810,6 +2662,182 @@
       steps.push({
         title: `配置 ACL ${acl.name}`,
         desc: '创建访问控制列表并添加规则',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 9：配置 IPv6 静态路由 ----
+    if (ipv6Routes.length) {
+      const cmds = [];
+      for (const r of ipv6Routes) {
+        let cmd = `${host}(config)#ipv6 route ${r.prefix} ${r.mask}`;
+        if (r.nextHop) cmd += ` ${r.nextHop}`;
+        if (r.extra) cmd += ` ${r.extra}`;
+        cmds.push(cmd);
+      }
+      steps.push({
+        title: '配置 IPv6 静态路由',
+        desc: '为 IPv6 网段配置静态路由',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 10：配置 NAT ----
+    if (natPools.length || natRules.length) {
+      const cmds = [];
+      // 先定义 NAT 池
+      for (const p of natPools) {
+        cmds.push(`${host}(config)#ip nat pool ${p.name} ${p.start} ${p.end} netmask ${p.mask}`);
+      }
+      // 再定义 NAT 规则
+      for (const r of natRules) {
+        if (r.type === 'dynamic') {
+          cmds.push(`${host}(config)#ip nat inside source list ${r.acl} pool ${r.pool}` + (r.overload ? ' overload' : ''));
+        } else {
+          cmds.push(`${host}(config)#ip nat inside source static ${r.inside} ${r.outside}`);
+        }
+      }
+      cmds.push(`# 注意：接口视图下还需用 ip nat inside / ip nat outside 指明内外侧接口`);
+      steps.push({
+        title: '配置 NAT',
+        desc: '定义 NAT 地址池和动态/静态映射规则',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 11：配置 DHCP 服务器 ----
+    if (dhcpPools.length || dhcpExcluded.length) {
+      const cmds = [];
+      // service dhcp（一般默认开启，明确写出来）
+      cmds.push(`${host}(config)#service dhcp`);
+      for (const ex of dhcpExcluded) {
+        cmds.push(`${host}(config)#ip dhcp excluded-address ${ex.start}` + (ex.end !== ex.start ? ` ${ex.end}` : ''));
+      }
+      for (const pool of dhcpPools) {
+        cmds.push(`${host}(config)#ip dhcp pool ${pool.name}`);
+        const poolPrompt = `${host}(dhcp-config)#`;
+        for (const line of pool.body) {
+          cmds.push(`${poolPrompt}${line}`);
+        }
+        cmds.push(`${poolPrompt}exit`);
+      }
+      steps.push({
+        title: '配置 DHCP 服务器',
+        desc: '为各网段配置 DHCP 地址池（网段、默认网关、DNS、租期）并排除保留地址',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 12：配置前缀列表 ----
+    if (prefixLists.length) {
+      const cmds = [];
+      for (const p of prefixLists) {
+        cmds.push(`${host}(config)#ip prefix-list ${p.name} seq ${p.seq} ${p.action} ${p.prefix}` + (p.mask ? ` ${p.mask}` : ''));
+      }
+      steps.push({
+        title: '配置前缀列表',
+        desc: '用于路由过滤和策略匹配的精确前缀列表',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 13：配置路由映射 ----
+    if (routeMaps.length) {
+      const cmds = [];
+      for (const rm of routeMaps) {
+        cmds.push(`${host}(config)#route-map ${rm.name} ${rm.action} ${rm.node}`);
+        cmds.push(`${host}(config-route-map)#exit`);
+      }
+      steps.push({
+        title: '配置路由映射',
+        desc: 'route-map 用于路由引入、过滤和策略路由',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 14：配置生成树 ----
+    if (stpModeM || stpPriM || stpPriAllM) {
+      const cmds = [];
+      if (stpModeM) cmds.push(`${host}(config)#spanning-tree mode ${stpModeM[1]}`);
+      if (stpPriM) cmds.push(`${host}(config)#spanning-tree vlan <N> priority ${stpPriM[1]}`);
+      if (stpPriAllM) cmds.push(`${host}(config)#spanning-tree priority ${stpPriAllM[1]}`);
+      steps.push({
+        title: '配置生成树协议',
+        desc: '设置 STP 模式和优先级，防止二层环路',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 15：配置 NTP ----
+    if (ntpServers.length) {
+      const cmds = [];
+      for (const s of ntpServers) {
+        cmds.push(`${host}(config)#ntp server ${s}`);
+      }
+      steps.push({
+        title: '配置 NTP 时间同步',
+        desc: '与上游 NTP 服务器同步系统时间',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 16：配置 SNMP ----
+    if (snmpCommunities.length || snmpLocationM || snmpContactM) {
+      const cmds = [];
+      if (snmpContactM) cmds.push(`${host}(config)#snmp-server contact ${snmpContactM[1].trim()}`);
+      if (snmpLocationM) cmds.push(`${host}(config)#snmp-server location ${snmpLocationM[1].trim()}`);
+      for (const c of snmpCommunities) {
+        cmds.push(`${host}(config)#snmp-server community ${c.name} ${c.access}`);
+      }
+      steps.push({
+        title: '配置 SNMP',
+        desc: '配置 SNMP 联系人、位置和只读/读写团体字',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 17：配置 AAA 与本地用户 ----
+    if (aaaEnabled || localUsers.length) {
+      const cmds = [];
+      if (aaaEnabled) cmds.push(`${host}(config)#aaa new-model`);
+      if (aaaAuthenM) cmds.push(`${host}(config)#aaa authentication login ${aaaAuthenM[1]} ${aaaAuthenM[2].trim()}`);
+      if (aaaAuthorM) cmds.push(`${host}(config)#aaa authorization exec ${aaaAuthorM[1]} ${aaaAuthorM[2].trim()}`);
+      for (const u of localUsers) {
+        // 还原：username NAME [privilege N] (password|secret) [TYPE] PASS
+        let cmd = `${host}(config)#username ${u.name}`;
+        if (u.level) cmd += ` privilege ${u.level}`;
+        if (u.type) {
+          cmd += ` ${u.type}`;
+          if (u.encType) cmd += ` ${u.encType}`;
+          if (u.password) cmd += ` ${u.password}`;
+        }
+        cmds.push(cmd);
+      }
+      steps.push({
+        title: '配置 AAA 与本地用户',
+        desc: '启用 AAA 认证授权，创建本地用户名和密码',
+        commands: cmds,
+      });
+    }
+
+    // ---- 步骤 18：配置 SSH 与 VTY ----
+    if (sshEnabled || vtyLines.length) {
+      const cmds = [];
+      if (sshEnabled) {
+        cmds.push(`${host}(config)#crypto key generate rsa`);
+        cmds.push(`# 按提示输入密钥长度（如 1024 或 2048）`);
+        if (sshVersionM) cmds.push(`${host}(config)#ip ssh version ${sshVersionM[1]}`);
+        if (sshTimeoutM) cmds.push(`${host}(config)#ip ssh time-out ${sshTimeoutM[1]}`);
+      }
+      for (const v of vtyLines) {
+        cmds.push(`${host}(config)#${v.header}`);
+        const linePrompt = `${host}(config-line)#`;
+        for (const line of v.body) cmds.push(`${linePrompt}${line}`);
+        cmds.push(`${linePrompt}exit`);
+      }
+      steps.push({
+        title: '配置 SSH 与 VTY/Console',
+        desc: '生成本地 RSA 密钥使能 SSH 服务，并配置 VTY/Console 线路认证',
         commands: cmds,
       });
     }
