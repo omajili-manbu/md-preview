@@ -2,6 +2,26 @@
   window.MarkdownPreview = window.MarkdownPreview || {};
 
   const { dom, state, CONFIG } = window.MarkdownPreview;
+  // 共享渲染模块：Alerts / LaTeX / Renderer / 画廊分组 / 轮播 / 代码高亮
+  const mdRender = window.MarkdownPreview.mdRender;
+
+  // ============== 注册 marked-footnote 扩展 ==============
+  // 支持 [^id] 引用 与 [^id]: 定义 语法，渲染为带回链的脚注区
+  if (typeof marked !== 'undefined' && typeof markedFootnote !== 'undefined') {
+    try {
+      marked.use(markedFootnote({
+        prefixId: 'fn-',
+        description: '脚注',
+        refMarkers: false,
+        footnoteDivider: true,
+        sectionClass: 'footnotes',
+        headingClass: 'footnotes-heading',
+        backRefLabel: '返回引用 {0}'
+      }));
+    } catch (e) {
+      console.warn('[markdown] markedFootnote 注册失败:', e);
+    }
+  }
 
   async function loadMarkdownFile(path) {
     try {
@@ -84,89 +104,12 @@
     return Math.ceil(englishMinutes + chineseMinutes);
   }
 
-  function processGitHubAlerts(markdownText) {
-    const alertTypes = {
-      'NOTE': { icon: 'ℹ️', class: 'alert-note', title: 'Note' },
-      'IMPORTANT': { icon: '💡', class: 'alert-important', title: 'Important' },
-      'WARNING': { icon: '⚠️', class: 'alert-warning', title: 'Warning' },
-      'TIP': { icon: '💡', class: 'alert-tip', title: 'Tip' },
-      'CAUTION': { icon: '⚠️', class: 'alert-caution', title: 'Caution' }
-    };
+  // ============== GitHub Alerts / LaTeX 保护 ==============
+  // 已迁移至共享模块 md-render.js，这里保留薄封装以兼容内部调用。
+  // markdown.js 使用默认 emoji 版 Alert 图标（与编辑器 SVG 版区分）。
+  const processGitHubAlerts = (text) => mdRender.processGitHubAlerts(text);
+  const protectLaTeXBlocks = (text) => mdRender.protectLaTeXBlocks(text);
 
-    let processed = markdownText;
-    let result = '';
-    const lines = markdownText.split('\n');
-    let i = 0;
-
-    while (i < lines.length) {
-      const line = lines[i];
-      const alertMatch = line.match(/^> \[!([A-Z]+)\](.*)$/);
-
-      if (alertMatch) {
-        const alertType = alertTypes[alertMatch[1]];
-        if (alertType) {
-          const alertContentLines = [];
-          i++;
-
-          while (i < lines.length && (lines[i].startsWith('> ') || lines[i].trim() === '')) {
-            if (lines[i].trim() === '') {
-              alertContentLines.push('');
-            } else {
-              alertContentLines.push(lines[i].substring(2));
-            }
-            i++;
-          }
-
-          const alertContent = alertContentLines.join('\n').trim();
-          const parsedContent = marked.parse(alertContent, { breaks: true, gfm: true });
-
-          result += `<div class="alert ${alertType.class}">
-            <div class="alert-header">
-              <span class="alert-icon">${alertType.icon}</span>
-              <span class="alert-title">${alertType.title}</span>
-            </div>
-            <div class="alert-content">${parsedContent}</div>
-          </div>\n`;
-        } else {
-          result += line + '\n';
-          i++;
-        }
-      } else {
-        result += line + '\n';
-        i++;
-      }
-    }
-
-    return result;
-  }
-
-  function protectLaTeXBlocks(markdownText) {
-    const latexBlocks = [];
-    let index = 0;
-
-    const processed = markdownText.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
-      const placeholder = `LATEXPROTECT_${index}_`;
-      const lines = match.split('\n');
-      const cleanedLines = [];
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (i === 0) {
-          cleanedLines.push(line.replace(/^\$\$\s*/, ''));
-        } else if (i === lines.length - 1) {
-          cleanedLines.push(line.replace(/\s*\$\$$/, ''));
-        } else {
-          cleanedLines.push(line.replace(/^    /, ''));
-        }
-      }
-      const cleanedBlock = cleanedLines.join('\n').trim();
-      latexBlocks.push(cleanedBlock);
-      index++;
-      return placeholder;
-    });
-
-    return { processed, latexBlocks };
-  }
-  
   function resolveImageSrc(src, currentPath) {
     if (!src) return src;
     
@@ -198,31 +141,31 @@
   
   function processImages(container, currentPath = '') {
     const images = container.querySelectorAll('img');
-    
+
     images.forEach(img => {
       img.setAttribute('loading', 'lazy');
-      
+
       const originalSrc = img.getAttribute('src') || '';
-      
+
       // 解析相对路径为相对于仓库根目录的路径
-      if (currentPath && originalSrc && 
-          !originalSrc.startsWith('http://') && 
-          !originalSrc.startsWith('https://') && 
+      if (currentPath && originalSrc &&
+          !originalSrc.startsWith('http://') &&
+          !originalSrc.startsWith('https://') &&
           !originalSrc.startsWith('data:') &&
           !originalSrc.startsWith('//')) {
         const resolvedSrc = resolveImageSrc(originalSrc, currentPath);
         img.setAttribute('src', resolvedSrc);
         img.setAttribute('data-original-src', originalSrc);
       }
-      
+
       const src = img.getAttribute('src') || '';
       const filename = src.split('/').pop() || 'image';
       const alt = img.getAttribute('alt') || filename;
-      
+
       img.onerror = function() {
         this.onerror = null;
         this.style.display = 'none';
-        
+
         const placeholder = document.createElement('div');
         placeholder.className = 'image-placeholder';
         placeholder.innerHTML = `
@@ -230,160 +173,23 @@
           <div class="placeholder-text">${alt}</div>
           <div class="placeholder-filename">${filename}</div>
         `;
-        
+
         this.parentNode.insertBefore(placeholder, this);
       };
     });
-    
-    if (images.length < 2) return;
 
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = container.innerHTML;
-
-    const allElements = Array.from(tempDiv.childNodes);
-    const galleryGroups = [];
-    let currentGroup = [];
-    // 待应用的画廊样式（来自紧邻图片组前的 @style 标记）
-    let pendingStyle = null;
-    // 已收集到样式的标记节点，分组完成后从 DOM 移除
-    const markersToRemove = [];
-
-    allElements.forEach((node, index) => {
-      if (node.nodeName === 'P') {
-        // 画廊样式标记：<p class="gallery-style-marker" data-style="xxx">
-        if (node.classList && node.classList.contains('gallery-style-marker')) {
-          // 上一组若未闭合则先结束（标记本身是分隔符）
-          if (currentGroup.length >= 2) {
-            galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-          }
-          currentGroup = [];
-          // 记录新样式，等待下一个图片组消费
-          pendingStyle = node.getAttribute('data-style') || null;
-          markersToRemove.push(node);
-          return;
-        }
-
-        const imgs = node.querySelectorAll('img');
-        if (imgs.length > 0 && node.textContent.trim() === '') {
-          currentGroup.push(...Array.from(imgs));
-
-          const nextNode = allElements[index + 1];
-          if (!nextNode || nextNode.nodeName !== 'P' || nextNode.querySelectorAll('img').length === 0) {
-            if (currentGroup.length >= 2) {
-              galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-            }
-            currentGroup = [];
-            // 标记被消费，清空
-            pendingStyle = null;
-          }
-        } else {
-          if (currentGroup.length >= 2) {
-            galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-          }
-          currentGroup = [];
-          // 遇到非图片段落，待应用的样式失效
-          pendingStyle = null;
-        }
-      } else {
-        if (currentGroup.length >= 2) {
-          galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-        }
-        currentGroup = [];
-        pendingStyle = null;
-      }
-    });
-
-    if (currentGroup.length >= 2) {
-      galleryGroups.push({ imgs: [...currentGroup], style: pendingStyle });
-    }
-
-    // 移除所有标记节点
-    markersToRemove.forEach(node => node.remove());
-
-    galleryGroups.forEach(group => {
-      if (group.imgs.length < 2) return;
-
-      const firstImg = group.imgs[0];
-      const parentP = firstImg.closest('p');
-      if (!parentP) return;
-
-      const galleryDiv = document.createElement('div');
-      // 基础类 + 样式修饰类
-      galleryDiv.className = 'image-gallery';
-      if (group.style) {
-        galleryDiv.classList.add(`image-gallery--${group.style}`);
-      }
-
-      group.imgs.forEach(img => {
-        galleryDiv.appendChild(img.cloneNode(true));
-      });
-
-      parentP.replaceWith(galleryDiv);
-    });
-
-    container.innerHTML = tempDiv.innerHTML;
+    // 画廊分组（@style 标记 + 相邻图片段落合并）已迁移至共享模块
+    mdRender.groupGalleries(container);
   }
 
-  // 幻灯片自动轮播：为每个 .image-gallery--slider 创建 track + 指示点，
-  // 定时切换并循环，hover 暂停
-  function initSliders(container) {
-    const sliders = container.querySelectorAll('.image-gallery--slider');
-    sliders.forEach(slider => {
-      const imgs = Array.from(slider.querySelectorAll('img'));
-      if (imgs.length < 2) return;
-
-      // 将图片包裹进 track 容器
-      const track = document.createElement('div');
-      track.className = 'slider-track';
-      imgs.forEach(img => track.appendChild(img));
-      slider.appendChild(track);
-
-      // 创建指示点
-      const dots = document.createElement('div');
-      dots.className = 'slider-dots';
-      imgs.forEach((_, i) => {
-        const dot = document.createElement('span');
-        if (i === 0) dot.classList.add('active');
-        dots.appendChild(dot);
-      });
-      slider.appendChild(dots);
-
-      const count = imgs.length;
-      const INTERVAL = 4000;
-      let index = 0;
-      let timer = null;
-
-      function go(i) {
-        index = ((i % count) + count) % count;
-        track.style.transform = `translateX(-${index * 100}%)`;
-        dots.querySelectorAll('span').forEach((d, di) => {
-          d.classList.toggle('active', di === index);
-        });
-      }
-
-      function start() {
-        stop();
-        timer = setInterval(() => go(index + 1), INTERVAL);
-      }
-
-      function stop() {
-        if (timer) {
-          clearInterval(timer);
-          timer = null;
-        }
-      }
-
-      slider.addEventListener('mouseenter', stop);
-      slider.addEventListener('mouseleave', start);
-      start();
-    });
-  }
+  // 幻灯片自动轮播：已迁移至共享模块 mdRender.initSliders
+  const initSliders = (container) => mdRender.initSliders(container);
 
   function wrapTables(container) {
     const tables = container.querySelectorAll('table');
     tables.forEach(table => {
       if (table.parentElement.classList.contains('table-wrapper')) return;
-      
+
       const wrapper = document.createElement('div');
       wrapper.className = 'table-wrapper';
       table.parentNode.insertBefore(wrapper, table);
@@ -408,47 +214,8 @@
 
     state.currentFrontmatter = frontmatter;
 
-    const { processed: alertProcessed, latexBlocks } = protectLaTeXBlocks(content);
-    const processedContent = processGitHubAlerts(alertProcessed);
-    const renderer = new marked.Renderer();
-    renderer.code = function({ text, lang }) {
-      const language = lang || '';
-      const escapedText = text;
-      const languageClass = language ? ` class="language-${language}"` : '';
-      const langLabel = language ? `<span class="code-lang-label">${language}</span>` : '';
-      return `<pre class="code-block"${language ? ` data-lang="${language}"` : ''}><button class="copy-btn" aria-label="复制代码">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-        </button>${langLabel}<code${languageClass}>${escapedText}</code></pre>`;
-    };
-    // 识别画廊样式标记：单独一段 @style（如 @cardstack）转为隐藏标记节点
-    // 支持 @xxx 或 @xxx 备注（备注会被忽略）
-    renderer.paragraph = function(token) {
-      const trimmed = (token && token.text ? token.text : '').trim();
-      const markerMatch = trimmed.match(/^@([a-zA-Z][\w-]*)(\s.*)?$/);
-      if (markerMatch) {
-        const style = markerMatch[1].toLowerCase();
-        // 仅识别已注册的画廊样式，未知的原样输出
-        const knownStyles = ['grid', 'cardstack', 'filmstrip', 'polaroid', 'stack', 'mosaic', 'scattered', 'hexagon', 'coverflow', 'tape', 'duotone', 'frame', 'arch', 'masonry', 'slider', 'ticket', 'panorama'];
-        if (knownStyles.includes(style)) {
-          return `<p class="gallery-style-marker" data-style="${style}"></p>`;
-        }
-      }
-      // 默认渲染
-      return `<p>${this.parser.parseInline(token.tokens)}</p>`;
-    };
-    let html = marked.parse(processedContent, {
-      breaks: true,
-      gfm: true,
-      renderer
-    });
-
-    html = html.replace(/LATEXPROTECT_(\d+)_/g, (match, idx) => {
-      const latex = latexBlocks[parseInt(idx)];
-      return `<div class="katex-block">${latex}</div>`;
-    });
+    // Markdown → HTML（LaTeX 保护 + Alerts + 自定义 Renderer）已迁移至共享模块
+    const { html } = mdRender.parseMarkdown(content);
 
     const plainText = content.replace(/[#*`\[\]()_{}]/g, '').replace(/\n+/g, ' ').trim();
     const readingTime = calculateReadingTime(plainText);
@@ -480,16 +247,16 @@
     });
 
     setupClickDelegate();
-    highlightCodeBlocks();
+    mdRender.highlightCodeBlocks(dom.markdownContent);
 
     interceptLinks(currentPath);
-    
+
     processImages(dom.markdownContent, currentPath);
 
     initSliders(dom.markdownContent);
 
     wrapTables(dom.markdownContent);
-    
+
     setTimeout(async () => {
       console.log('[Markdown] Starting render cycle');
       const plugins = window.MarkdownPreview.plugins;
@@ -953,16 +720,9 @@
     }, 1500);
   }
 
+  // 高亮 dom.markdownContent 内的代码块（共享实现）
   function highlightCodeBlocks() {
-    if (typeof hljs === 'undefined') return;
-    const blocks = dom.markdownContent.querySelectorAll('pre code');
-    blocks.forEach(block => {
-      try {
-        hljs.highlightElement(block);
-      } catch (e) {
-        console.warn('Highlight error:', e);
-      }
-    });
+    mdRender.highlightCodeBlocks(dom.markdownContent);
   }
 
   // 代码块复制已由 setupClickDelegate 事件委托处理，无需单独绑定

@@ -956,6 +956,67 @@
   text-align: center;
 }
 
+/* ============ 脚注 ============ */
+.markdown-body .footnotes {
+  margin-top: 2.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--color-border, #e0e0e0);
+  font-size: 0.9em;
+  color: var(--color-text-muted, #666);
+}
+
+.markdown-body .footnotes-heading {
+  margin: 0 0 0.6em;
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--color-text, #333);
+}
+
+.markdown-body .footnotes ol {
+  padding-left: 1.5em;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.markdown-body .footnotes li {
+  margin-bottom: 0.4em;
+  word-break: break-word;
+}
+
+.markdown-body .footnotes li > p {
+  display: inline;
+  margin: 0;
+}
+
+/* 脚注引用上标 */
+.markdown-body sup > a[data-fnref],
+.markdown-body sup > a[href^="#fn-"] {
+  font-size: 0.75em;
+  padding: 0 0.2em;
+  color: var(--color-accent-purple, #9b6db5);
+  text-decoration: none;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.markdown-body sup > a[href^="#fn-"]:hover {
+  background: rgba(155, 109, 181, 0.12);
+  text-decoration: underline;
+}
+
+/* 回链 */
+.markdown-body .footnotes a[data-fnbackref],
+.markdown-body .footnotes a[href^="#fnref-"] {
+  font-size: 0.85em;
+  text-decoration: none;
+  color: var(--color-accent-purple, #9b6db5);
+  margin-left: 0.3em;
+}
+
+.markdown-body .footnotes a[href^="#fnref-"]:hover {
+  text-decoration: underline;
+}
+
 /* ============ 图片灯箱 ============ */
 /* 非链接内的图片可点击放大 */
 .markdown-body img {

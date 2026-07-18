@@ -276,6 +276,269 @@ body.editor-mode .floating-menu {
   background: rgba(212, 165, 201, 0.1);
 }
 
+/* ============== 图片上传设置弹出层 ============== */
+
+.image-upload-popover {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 360px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 300;
+  animation: dropdownFade 0.15s ease;
+}
+
+.image-upload-popover.visible {
+  display: block;
+}
+
+.image-upload-popover-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 10px;
+}
+
+.image-upload-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.image-upload-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.image-upload-radio input {
+  cursor: pointer;
+}
+
+.image-upload-host-config {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: rgba(212, 165, 201, 0.05);
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.image-upload-input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+
+.image-upload-input:focus {
+  outline: none;
+  border-color: var(--color-accent-purple);
+}
+
+.image-upload-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.image-upload-hint code {
+  padding: 1px 4px;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--color-bg);
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+.image-upload-hint kbd {
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+}
+
+.image-upload-hint-tip {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.image-upload-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.image-upload-actions .toolbar-btn,
+.image-upload-actions .toolbar-run-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
+/* 编辑区拖拽悬浮态 */
+.cell.drag-over .cell-cm-host {
+  outline: 2px dashed var(--color-accent-purple);
+  outline-offset: -2px;
+  background: rgba(212, 165, 201, 0.06);
+}
+
+/* ============== 多标签页栏 ============== */
+
+.tab-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0 8px;
+  height: 36px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.tab-bar::-webkit-scrollbar {
+  height: 4px;
+}
+.tab-bar::-webkit-scrollbar-thumb {
+  background: rgba(212, 165, 201, 0.3);
+  border-radius: 2px;
+}
+
+.tab-list {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  min-width: 80px;
+  padding: 0 8px 0 12px;
+  margin-top: 4px;
+  height: 30px;
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: rgba(212, 165, 201, 0.04);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tab-item:hover {
+  background: rgba(212, 165, 201, 0.1);
+  color: var(--color-text);
+}
+
+.tab-item.active {
+  background: var(--color-bg);
+  color: var(--color-accent-purple-deep);
+  border-color: var(--color-accent-purple);
+  font-weight: 500;
+  height: 32px;
+  margin-top: 2px;
+}
+
+.tab-title {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.tab-unsaved-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f39c12;
+  flex-shrink: 0;
+  display: none;
+}
+
+.tab-item.unsaved .tab-unsaved-dot {
+  display: inline-block;
+}
+
+.tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab-close:hover {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+}
+
+.tab-close svg {
+  width: 11px;
+  height: 11px;
+}
+
+.tab-new-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 4px 0 0 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tab-new-btn:hover {
+  background: rgba(212, 165, 201, 0.12);
+  color: var(--color-accent-purple);
+  border-color: var(--color-accent-purple);
+}
+
+/* 暗色模式微调 */
+body.editor-dark-mode .tab-item.active {
+  background: var(--color-surface);
+}
+
 /* ============== 下拉菜单 ============== */
 
 .toolbar-dropdown {
@@ -486,23 +749,30 @@ body.editor-mode .floating-menu {
   background: rgba(231, 76, 60, 0.1);
 }
 
-/* 编辑区 textarea */
-.cell-editor {
+/* 编辑区 CodeMirror 6 */
+.cell-cm-host {
   width: 100%;
   min-height: 120px;
-  padding: 14px 16px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
+}
+
+.cell-cm-host .cm-editor {
+  height: 100%;
+  min-height: 120px;
+}
+
+.cell-cm-host .cm-scroller {
+  font-family: 'JetBrains Mono', monospace;
   line-height: 1.6;
-  color: var(--color-text);
-  background: var(--color-bg);
-  border: none;
-  resize: vertical;
-  outline: none;
+}
+
+.cell-cm-host .cm-content {
+  padding: 14px 16px;
   tab-size: 2;
 }
 
-.cell-editor::placeholder {
+.cell-cm-host .cm-placeholder {
   color: var(--color-text-muted);
 }
 
@@ -801,8 +1071,11 @@ body.editor-mode .floating-menu {
     padding: 12px 8px 60px;
   }
 
-  .cell-editor {
+  .cell-cm-host {
     font-size: 13px;
+  }
+
+  .cell-cm-host .cm-content {
     padding: 10px 12px;
   }
 
@@ -957,7 +1230,7 @@ body.editor-mode .floating-menu {
 
 /* ============== Cell 折叠状态 ============== */
 
-.cell.cell-editor-collapsed .cell-editor {
+.cell.cell-editor-collapsed .cell-cm-host {
   display: none;
 }
 
@@ -969,7 +1242,7 @@ body.editor-mode .floating-menu {
   border-bottom: none;
 }
 
-.cell.cell-collapsed .cell-editor,
+.cell.cell-collapsed .cell-cm-host,
 .cell.cell-collapsed .cell-output {
   display: none;
 }
@@ -1064,31 +1337,17 @@ body.editor-mode .floating-menu {
   background: rgba(212, 165, 201, 0.24);
 }
 
-/* ============== 行号侧边栏 ============== */
+/* ============== 编辑器布局 ============== */
 
 .cell-editor-wrap {
   position: relative;
-  display: flex;
   background: var(--color-bg);
+  border: 1px solid var(--color-border);
 }
 
-.cell-line-numbers {
-  flex: 0 0 auto;
-  padding: 14px 8px 14px 12px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--color-text-muted);
-  text-align: right;
-  user-select: none;
+/* CM6 编辑器填充容器 */
+.cell-editor-wrap .cm-editor {
   background: var(--color-bg);
-  border-right: 1px solid var(--color-border);
-  overflow: hidden;
-  white-space: pre;
-}
-
-.cell-editor-wrap .cell-editor {
-  border-left: none;
 }
 
 /* ============== 编辑器暗色主题 ============== */
