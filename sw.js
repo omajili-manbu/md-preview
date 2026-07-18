@@ -1,4 +1,4 @@
-const CACHE_NAME = 'md-preview-v6.16';
+const CACHE_NAME = 'md-preview-v6.17';
 const RUNTIME_CACHE = 'md-preview-runtime-v6.16';
 
 // 预缓存：首屏关键静态资源

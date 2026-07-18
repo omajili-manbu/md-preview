@@ -1089,10 +1089,67 @@
   }
 
   // ============== 通用分段工具 ==============
+  // 命令缩写归一化：对行首的常见缩写做保守展开，避免误伤 body 中的参数
+  // 每行最多应用一条规则，避免链式替换；只处理最安全、最高频的缩写
+  function normalizeAbbreviations(text) {
+    // 规则按"行首(去缩进后)"匹配；[indent, content] 分离后只对 content 应用
+    const rules = [
+      [/^int(\s)/, 'interface$1'],
+      [/^osp(\s)/, 'ospf$1'],
+      [/^bg(\s)/, 'bgp$1'],
+      [/^rou(\s)/, 'router$1'],
+      // 两段缩写：router osp / router bg / router eig
+      [/^router\s+osp(\s)/, 'router ospf$1'],
+      [/^router\s+bg(\s)/, 'router bgp$1'],
+      [/^router\s+eig(\s)/, 'router eigrp$1'],
+      // ip add → ip address（注意 address 不会被误匹配，因为 add 后要求 \s）
+      [/^ip\s+add(\s)/, 'ip address$1'],
+      // no sh → no shutdown（no show 不是合法配置命令，安全）
+      [/^no\s+sh(\s|$)/, 'no shutdown$1'],
+    ];
+    return text.split(/\r?\n/).map(line => {
+      const indent = line.match(/^(\s*)/)[1];
+      const content = line.slice(indent.length);
+      for (const [re, rep] of rules) {
+        const newContent = content.replace(re, rep);
+        if (newContent !== content) {
+          return indent + newContent;
+        }
+      }
+      return line;
+    }).join('\n');
+  }
+
   // 将配置文本按段分隔符切成 [header, bodyLines[]] 列表
+  // 若分隔符出现频率过低（如直接粘贴 display current-configuration 部分输出），fallback 到基于缩进的切分
   function splitConfigSections(configText, delimiter) {
     const sections = [];
-    const rawSections = configText.split(new RegExp('^' + delimiter + '\\s*$', 'm'));
+    const allLines = configText.split(/\r?\n/);
+    const delimRe = new RegExp('^' + delimiter + '\\s*$');
+    const delimCount = allLines.filter(l => delimRe.test(l)).length;
+    const nonEmptyCount = allLines.filter(l => l.trim() !== '').length;
+    // 至少 3 个分隔符且占非空行 >= 10%，才认为是分隔格式
+    const useDelim = nonEmptyCount > 0 && delimCount >= 3 && (delimCount / nonEmptyCount >= 0.1);
+
+    let rawSections;
+    if (useDelim) {
+      rawSections = configText.split(new RegExp('^' + delimiter + '\\s*$', 'm'));
+    } else {
+      // fallback：基于缩进切分。未缩进的非空行作为新 section 的 header，缩进行作为上一个 section 的 body
+      rawSections = [];
+      let current = [];
+      for (const line of allLines) {
+        if (line.trim() === '') continue;
+        const isIndented = /^\s/.test(line);
+        if (!isIndented && current.length > 0) {
+          rawSections.push(current.join('\n'));
+          current = [];
+        }
+        current.push(line);
+      }
+      if (current.length > 0) rawSections.push(current.join('\n'));
+    }
+
     for (const raw of rawSections) {
       const lines = raw.split(/\r?\n/).map(l => l).filter(l => l.trim() !== '');
       if (!lines.length) continue;
@@ -1106,6 +1163,8 @@
   // ============== Huawei VRP 配置过程生成 ==============
   function generateHuaweiSteps(configText, devName, devType) {
     const steps = [];
+    // 命令缩写归一化（int→interface / osp→ospf / bg→bgp 等），避免缩写导致漏识别
+    configText = normalizeAbbreviations(configText);
     // 提取 sysname 作为提示符中的设备名
     const sysnameMatch = configText.match(/^\s*sysname\s+(\S+)/m);
     const host = sysnameMatch ? sysnameMatch[1] : (devName || 'Huawei');
@@ -1232,12 +1291,13 @@
         });
         continue;
       }
-      // OSPF
-      const ospfM = h.match(/^ospf\s+(\d+)(?:\s+router-id\s+(\S+))?/i);
+      // OSPF（支持 vpn-instance NAME）
+      const ospfM = h.match(/^ospf\s+(\d+)(?:\s+vpn-instance\s+(\S+))?(?:\s+router-id\s+(\S+))?/i);
       if (ospfM) {
         ospfBlocks.push({
           processId: ospfM[1],
-          routerId: ospfM[2] || '',
+          vpnInstance: ospfM[2] || '',
+          routerId: ospfM[3] || '',
           body: sec.body,
           rawBody: sec.body.join('\n'),
         });
@@ -1570,7 +1630,7 @@
     // ---- 步骤 5：配置 OSPF ----
     for (const ospf of ospfBlocks) {
       const cmds = [];
-      cmds.push(`[${host}]ospf ${ospf.processId}` + (ospf.routerId ? ` router-id ${ospf.routerId}` : ''));
+      cmds.push(`[${host}]ospf ${ospf.processId}` + (ospf.vpnInstance ? ` vpn-instance ${ospf.vpnInstance}` : '') + (ospf.routerId ? ` router-id ${ospf.routerId}` : ''));
       const prompt = `[${host}-ospf-${ospf.processId}]`;
       const body = ospf.rawBody;
       // 解析 area 块。area 子命令：network / authentication-mode / vlink-peer / stub / nssa /
@@ -1682,7 +1742,7 @@
       }
       cmds.push(`${prompt}quit`);
       steps.push({
-        title: `配置 OSPF 进程 ${ospf.processId}`,
+        title: `配置 OSPF 进程 ${ospf.processId}` + (ospf.vpnInstance ? ` (VPN-instance: ${ospf.vpnInstance})` : ''),
         desc: '创建 OSPF 进程，设置 Router-ID，划分区域并宣告网段',
         commands: cmds,
       });
@@ -1695,22 +1755,52 @@
       const prompt = `[${host}-bgp]`;
       const body = bgp.rawBody;
       const lines = body.split('\n');
+      // 地址族子视图提示符管理：afPrompt 跟随当前所在视图（主视图 or ipv4/ipv6/vpnv4/vrf 地址族）
+      let afPrompt = prompt;
+      let currentAf = '';
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
-        // peer X as-number Y / peer X as-number Y (必须先于通用 peer X.* 匹配)
+        // 地址族切换：ipv4-family unicast / vpnv4 / vpn-instance NAME
+        const af4M = trimmed.match(/^ipv4-family\s+(unicast|vpnv4|vpn-instance\s+(\S+))/i);
+        if (af4M) {
+          if (currentAf) cmds.push(`${afPrompt}quit`);
+          const kind = af4M[1].toLowerCase();
+          if (kind === 'unicast') {
+            currentAf = 'ipv4';
+            afPrompt = `[${host}-bgp-af]`;
+          } else if (kind === 'vpnv4') {
+            currentAf = 'vpnv4';
+            afPrompt = `[${host}-bgp-af-vpnv4]`;
+          } else if (af4M[2]) {
+            currentAf = `vrf-${af4M[2]}`;
+            afPrompt = `[${host}-bgp-af-${af4M[2]}]`;
+          }
+          cmds.push(`${prompt}${trimmed}`);
+          continue;
+        }
+        // ipv6-family unicast / vpnv6
+        const af6M = trimmed.match(/^ipv6-family\s+(unicast|vpnv6)/i);
+        if (af6M) {
+          if (currentAf) cmds.push(`${afPrompt}quit`);
+          currentAf = 'ipv6';
+          afPrompt = `[${host}-bgp-af-ipv6]`;
+          cmds.push(`${prompt}${trimmed}`);
+          continue;
+        }
+        // peer X as-number Y (必须先于通用 peer X.* 匹配)
         const nbrM = trimmed.match(/^peer\s+(\S+)\s+as-number\s+(\S+)/);
-        if (nbrM) { cmds.push(`${prompt}peer ${nbrM[1]} as-number ${nbrM[2]}`); continue; }
+        if (nbrM) { cmds.push(`${afPrompt}peer ${nbrM[1]} as-number ${nbrM[2]}`); continue; }
         // peer X 其它属性：reflect-client / next-hop-local / route-policy / description / password / keepalive / route-limit
         const peerAttrM = trimmed.match(/^peer\s+(\S+)\s+(reflect-client|next-hop-local|next-hop-remote|route-policy\s+\S+\s+\S+|description\s+.+|password\s+.+|keepalive\s+\S+\s+\S+|route-limit\s+\S+|connect-interface\s+\S+|preferred-value\s+\S+|allow-as-loop)/);
-        if (peerAttrM) { cmds.push(`${prompt}peer ${peerAttrM[1]} ${peerAttrM[2]}`); continue; }
+        if (peerAttrM) { cmds.push(`${afPrompt}peer ${peerAttrM[1]} ${peerAttrM[2]}`); continue; }
         // 通用 peer X ... 其它（如 peer X enable / peer X group）
         const peerOtherM = trimmed.match(/^peer\s+(\S+)\s+(.+)/);
-        if (peerOtherM) { cmds.push(`${prompt}peer ${peerOtherM[1]} ${peerOtherM[2]}`); continue; }
+        if (peerOtherM) { cmds.push(`${afPrompt}peer ${peerOtherM[1]} ${peerOtherM[2]}`); continue; }
         // network X [mask Y] [route-map Z]
         const netM = trimmed.match(/^network\s+(\S+)(?:\s+mask\s+(\S+))?(?:\s+(.+))?/);
         if (netM) {
-          let cmd = `${prompt}network ${netM[1]}`;
+          let cmd = `${afPrompt}network ${netM[1]}`;
           if (netM[2]) cmd += ` mask ${netM[2]}`;
           if (netM[3]) cmd += ` ${netM[3]}`;
           cmds.push(cmd);
@@ -1718,22 +1808,24 @@
         }
         // aggregate X mask [detail] [as-set]
         const aggM = trimmed.match(/^aggregate\s+(\S+)\s+(\S+)(.*)/);
-        if (aggM) { cmds.push(`${prompt}aggregate ${aggM[1]} ${aggM[2]}${aggM[3]}`); continue; }
+        if (aggM) { cmds.push(`${afPrompt}aggregate ${aggM[1]} ${aggM[2]}${aggM[3]}`); continue; }
         // import-route direct/static/ospf/isis [route-policy X]
         const importM = trimmed.match(/^import-route\s+(.+)/);
-        if (importM) { cmds.push(`${prompt}import-route ${importM[1].trim()}`); continue; }
+        if (importM) { cmds.push(`${afPrompt}import-route ${importM[1].trim()}`); continue; }
         // preferred-value / default local-preference
         const prefM = trimmed.match(/^(preferred-value|default\s+local-preference)\s+(.+)/);
-        if (prefM) { cmds.push(`${prompt}${prefM[1]} ${prefM[2].trim()}`); continue; }
+        if (prefM) { cmds.push(`${afPrompt}${prefM[1]} ${prefM[2].trim()}`); continue; }
         // filter-policy X export/import
         const filterM = trimmed.match(/^filter-policy\s+(.+)/);
-        if (filterM) { cmds.push(`${prompt}filter-policy ${filterM[1].trim()}`); continue; }
+        if (filterM) { cmds.push(`${afPrompt}filter-policy ${filterM[1].trim()}`); continue; }
         // confederation / reflector cluster-id
         const confedM = trimmed.match(/^confederation\s+(.+)/);
-        if (confedM) { cmds.push(`${prompt}confederation ${confedM[1].trim()}`); continue; }
+        if (confedM) { cmds.push(`${afPrompt}confederation ${confedM[1].trim()}`); continue; }
         const reflectorM = trimmed.match(/^reflector\s+cluster-id\s+(.+)/);
-        if (reflectorM) { cmds.push(`${prompt}reflector cluster-id ${reflectorM[1].trim()}`); continue; }
+        if (reflectorM) { cmds.push(`${afPrompt}reflector cluster-id ${reflectorM[1].trim()}`); continue; }
       }
+      // 退出地址族（如果还在），再退出 BGP
+      if (currentAf) cmds.push(`${afPrompt}quit`);
       cmds.push(`${prompt}quit`);
       steps.push({
         title: `配置 BGP AS ${bgp.asNumber}`,
@@ -2010,6 +2102,8 @@
   // ============== Cisco IOS 配置过程生成 ==============
   function generateCiscoSteps(configText, devName, devType) {
     const steps = [];
+    // 命令缩写归一化（int→interface / rou→router / ip add→ip address 等），避免缩写导致漏识别
+    configText = normalizeAbbreviations(configText);
     // 提取 hostname
     const hostM = configText.match(/^\s*hostname\s+(\S+)/m);
     const host = hostM ? hostM[1] : (devName || 'Router');
@@ -2111,11 +2205,12 @@
         });
         continue;
       }
-      // OSPF
-      const ospfM = h.match(/^router\s+ospf\s+(\d+)/i);
+      // OSPF（支持 vrf NAME）
+      const ospfM = h.match(/^router\s+ospf\s+(\d+)(?:\s+vrf\s+(\S+))?/i);
       if (ospfM) {
         ospfBlocks.push({
           processId: ospfM[1],
+          vrf: ospfM[2] || '',
           body: sec.body,
           rawBody: sec.body.join('\n'),
         });
@@ -2431,7 +2526,7 @@
     // ---- 步骤 4：配置 OSPF ----
     for (const ospf of ospfBlocks) {
       const cmds = [];
-      cmds.push(`${host}(config)#router ospf ${ospf.processId}`);
+      cmds.push(`${host}(config)#router ospf ${ospf.processId}` + (ospf.vrf ? ` vrf ${ospf.vrf}` : ''));
       const prompt = `${host}(config-router)#`;
       const body = ospf.rawBody;
       const lines = body.split('\n');
@@ -2477,7 +2572,7 @@
       }
       cmds.push(`${prompt}exit`);
       steps.push({
-        title: `配置 OSPF 进程 ${ospf.processId}`,
+        title: `配置 OSPF 进程 ${ospf.processId}` + (ospf.vrf ? ` (VRF: ${ospf.vrf})` : ''),
         desc: '创建 OSPF 进程并宣告网段到对应区域',
         commands: cmds,
       });
@@ -2525,19 +2620,37 @@
       const prompt = `${host}(config-router)#`;
       const body = bgp.rawBody;
       const lines = body.split('\n');
+      // 地址族子视图提示符管理：afPrompt 跟随当前所在视图
+      let afPrompt = prompt;
+      let currentAf = '';
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
+        // address-family ipv4/ipv6/vpnv4/vpnv6 [vrf NAME] [unicast]
+        const afM = trimmed.match(/^address-family\s+(ipv4|ipv6|vpnv4|vpnv6)(?:\s+vrf\s+(\S+))?(?:\s+(unicast|multicast))?/i);
+        if (afM) {
+          if (currentAf) cmds.push(`${afPrompt}exit-address-family`);
+          currentAf = afM[2] ? `vrf-${afM[2]}` : (afM[3] || afM[1]);
+          afPrompt = `${host}(config-router-af)#`;
+          cmds.push(`${prompt}${trimmed}`);
+          continue;
+        }
+        // exit-address-family 退出地址族
+        const exitAfM = trimmed.match(/^exit-address-family/i);
+        if (exitAfM) {
+          if (currentAf) { cmds.push(`${afPrompt}exit-address-family`); currentAf = ''; afPrompt = prompt; }
+          continue;
+        }
         // neighbor X remote-as Y（先于通用 neighbor X.* 匹配）
         const nbrM = trimmed.match(/^neighbor\s+(\S+)\s+remote-as\s+(\S+)/);
-        if (nbrM) { cmds.push(`${prompt}neighbor ${nbrM[1]} remote-as ${nbrM[2]}`); continue; }
+        if (nbrM) { cmds.push(`${afPrompt}neighbor ${nbrM[1]} remote-as ${nbrM[2]}`); continue; }
         // neighbor X 其它属性
         const nbrAttrM = trimmed.match(/^neighbor\s+(\S+)\s+(next-hop-self|route-reflector-client|send-community|soft-reconfiguration\s+inbound|update-source\s+\S+|description\s+.+|password\s+.+|timers\s+\S+\s+\S+|distribute-list\s+\S+\s+\S+|route-map\s+\S+\s+\S+|prefix-list\s+\S+\s+\S+|maximum-prefix\s+\S+|shutdown|activate)/);
-        if (nbrAttrM) { cmds.push(`${prompt}neighbor ${nbrAttrM[1]} ${nbrAttrM[2]}`); continue; }
+        if (nbrAttrM) { cmds.push(`${afPrompt}neighbor ${nbrAttrM[1]} ${nbrAttrM[2]}`); continue; }
         // network X [mask Y] [route-map Z]
         const netM = trimmed.match(/^network\s+(\S+)(?:\s+mask\s+(\S+))?(?:\s+(.+))?/);
         if (netM) {
-          let cmd = `${prompt}network ${netM[1]}`;
+          let cmd = `${afPrompt}network ${netM[1]}`;
           if (netM[2]) cmd += ` mask ${netM[2]}`;
           if (netM[3]) cmd += ` ${netM[3]}`;
           cmds.push(cmd);
@@ -2545,23 +2658,25 @@
         }
         // aggregate-address X Y [summary-only] [as-set]
         const aggM = trimmed.match(/^aggregate-address\s+(\S+)\s+(\S+)(.*)/);
-        if (aggM) { cmds.push(`${prompt}aggregate-address ${aggM[1]} ${aggM[2]}${aggM[3]}`); continue; }
+        if (aggM) { cmds.push(`${afPrompt}aggregate-address ${aggM[1]} ${aggM[2]}${aggM[3]}`); continue; }
         // redistribute direct/connected/static/ospf/eigrp/rip
         const redistM = trimmed.match(/^redistribute\s+(.+)/);
-        if (redistM) { cmds.push(`${prompt}redistribute ${redistM[1].trim()}`); continue; }
+        if (redistM) { cmds.push(`${afPrompt}redistribute ${redistM[1].trim()}`); continue; }
         const noSyncM = trimmed.match(/^no\s+synchronization/);
-        if (noSyncM) { cmds.push(`${prompt}no synchronization`); continue; }
+        if (noSyncM) { cmds.push(`${afPrompt}no synchronization`); continue; }
         const noAutoM = trimmed.match(/^no\s+auto-summary/);
-        if (noAutoM) { cmds.push(`${prompt}no auto-summary`); continue; }
+        if (noAutoM) { cmds.push(`${afPrompt}no auto-summary`); continue; }
         const logM = trimmed.match(/^bgp\s+log-neighbor-changes/);
-        if (logM) { cmds.push(`${prompt}bgp log-neighbor-changes`); continue; }
+        if (logM) { cmds.push(`${afPrompt}bgp log-neighbor-changes`); continue; }
         const defInfoM = trimmed.match(/^default-information\s+originate/);
-        if (defInfoM) { cmds.push(`${prompt}default-information originate`); continue; }
+        if (defInfoM) { cmds.push(`${afPrompt}default-information originate`); continue; }
         const defaultM = trimmed.match(/^default-metric\s+(\S+)/);
-        if (defaultM) { cmds.push(`${prompt}default-metric ${defaultM[1]}`); continue; }
+        if (defaultM) { cmds.push(`${afPrompt}default-metric ${defaultM[1]}`); continue; }
         const maxPathM = trimmed.match(/^maximum-paths\s+(\S+)/);
-        if (maxPathM) { cmds.push(`${prompt}maximum-paths ${maxPathM[1]}`); continue; }
+        if (maxPathM) { cmds.push(`${afPrompt}maximum-paths ${maxPathM[1]}`); continue; }
       }
+      // 退出地址族（如果还在），再退出 BGP
+      if (currentAf) cmds.push(`${afPrompt}exit-address-family`);
       cmds.push(`${prompt}exit`);
       steps.push({
         title: `配置 BGP AS ${bgp.asNumber}`,
