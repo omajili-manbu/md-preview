@@ -336,10 +336,10 @@
             'target-arrow-shape': 'none',
             'arrow-scale': 0.8,
             'opacity': 0.7,
-            // 中间网段标签（如 172.16.1.0/24），用 label 数据字段
-            // 注意：Cytoscape 3.x 中 source/target 标签共享主标签的
-            // color/font-size/text-background-* 样式，无法单独设置颜色
-            'label': 'data(label)',
+            // 中间网段标签（如 172.16.1.0/24）
+            // 注意：不能用 'data(label)' 数据绑定形式，否则后续 edge.style('label', ...) 静态赋值会被忽略
+            // 这里留空，由 applyEdgeLabels() 在初始化和切换时统一设置
+            'label': '',
             'font-size': '9px',
             'color': '#666',
             'text-valign': 'center',
@@ -349,11 +349,11 @@
             'text-background-padding': '2px',
             'text-background-shape': 'round-rectangle',
             // 源端接口名常驻标注（简化后，如 Fa0/0）
-            'source-label': 'data(source-text)',
+            'source-label': '',
             'source-text-offset': 20,
             'source-text-margin-y': 8,
             // 目的端接口名常驻标注
-            'target-label': 'data(target-text)',
+            'target-label': '',
             'target-text-offset': 20,
             'target-text-margin-y': 8,
           },
@@ -548,6 +548,9 @@
       btn.classList.toggle('active', labelState.showSubnet);
       applyEdgeLabels();
     });
+
+    // 初始默认显示接口名和网段（因为上面样式里留空了，需要主动调一次填充）
+    applyEdgeLabels();
 
     wrapper.querySelector('[data-action="fit"]').addEventListener('click', () => {
       const fitEls = computeFitElements(cy, jsonData);
